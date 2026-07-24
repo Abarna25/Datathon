@@ -1,4 +1,3 @@
-const ConversationService = require('../services/ConversationService');
 const ContextBuilderService = require('../services/ContextBuilderService');
 const RetrievalService = require('../services/RetrievalService');
 const SuggestionService = require('../services/SuggestionService');
@@ -7,18 +6,26 @@ const glmClient = require('../services/glmClient');
 const glmStreamClient = require('../services/glmStreamClient');
 const { buildSystemPrompt } = require('../prompts/investigationChatPrompt');
 const { extractCitations, enrichCitations } = require('../utils/citationParser');
+const crypto = require('crypto');
 
 const MAX_TOKENS = 1536;
+
+// In-memory session store for chat conversations to prevent querying nonexistent database tables
+const memoryConversations = {}; // conversationId -> conversation details
+const memoryMessages = {};      // conversationId -> array of messages
 
 class ConversationController {
     static async list(req, res) {
         try {
-            const { caseId, officerId } = req.query;
-            if (!caseId || !officerId) {
-                return res.status(400).json({ success: false, error: 'caseId and officerId are required' });
+            const { caseId } = req.query;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId is required' });
             }
-            const conversations = await ConversationService.listConversations(req, { caseId, officerId });
-            res.status(200).json({ success: true, data: conversations });
+            
+            const list = Object.values(memoryConversations).filter(
+                c => String(c.caseId) === String(caseId)
+            );
+            res.status(200).json({ success: true, data: list });
         } catch (error) {
             console.error('Error in ConversationController.list:', error);
             res.status(500).json({ success: false, error: 'Failed to list conversations' });
@@ -28,10 +35,25 @@ class ConversationController {
     static async create(req, res) {
         try {
             const { caseId, officerId, title } = req.body;
-            if (!caseId || !officerId) {
-                return res.status(400).json({ success: false, error: 'caseId and officerId are required' });
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId is required' });
             }
-            const conversation = await ConversationService.createConversation(req, { caseId, officerId, title });
+            
+            const id = crypto.randomUUID();
+            const conversation = {
+                id,
+                caseId,
+                officerId: officerId || req.user?.id || 'System',
+                title: title || 'New Investigation Chat',
+                isBookmarked: false,
+                isArchived: false,
+                lastMessageAt: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            
+            memoryConversations[id] = conversation;
+            memoryMessages[id] = [];
+            
             res.status(201).json({ success: true, data: conversation });
         } catch (error) {
             console.error('Error in ConversationController.create:', error);
@@ -41,20 +63,19 @@ class ConversationController {
 
     static async getOne(req, res) {
         try {
-            const conversation = await ConversationService.getConversation(req, req.params.id);
+            const { id } = req.params;
+            const conversation = memoryConversations[id];
             if (!conversation) {
-                return res.status(200).json({
-                    success: true,
-                    data: {
-                        id: req.params.id,
-                        caseId: '1',
-                        officerId: 'IND-POL-8802',
-                        title: 'New Investigation Chat',
-                        messages: []
-                    }
-                });
+                return res.status(404).json({ success: false, error: 'Conversation not found.' });
             }
-            res.status(200).json({ success: true, data: conversation });
+            
+            res.status(200).json({
+                success: true,
+                data: {
+                    ...conversation,
+                    messages: memoryMessages[id] || []
+                }
+            });
         } catch (error) {
             console.error('Error in ConversationController.getOne:', error);
             res.status(500).json({ success: false, error: 'Failed to load conversation' });
@@ -63,8 +84,19 @@ class ConversationController {
 
     static async update(req, res) {
         try {
+            const { id } = req.params;
             const { title, isBookmarked, isArchived } = req.body;
-            const conversation = await ConversationService.updateConversation(req, req.params.id, { title, isBookmarked, isArchived });
+            
+            const conversation = memoryConversations[id];
+            if (!conversation) {
+                return res.status(404).json({ success: false, error: 'Conversation not found.' });
+            }
+            
+            if (title !== undefined) conversation.title = title;
+            if (isBookmarked !== undefined) conversation.isBookmarked = !!isBookmarked;
+            if (isArchived !== undefined) conversation.isArchived = !!isArchived;
+            conversation.lastMessageAt = new Date().toISOString();
+            
             res.status(200).json({ success: true, data: conversation });
         } catch (error) {
             console.error('Error in ConversationController.update:', error);
@@ -74,7 +106,9 @@ class ConversationController {
 
     static async remove(req, res) {
         try {
-            await ConversationService.deleteConversation(req, req.params.id);
+            const { id } = req.params;
+            delete memoryConversations[id];
+            delete memoryMessages[id];
             res.status(200).json({ success: true });
         } catch (error) {
             console.error('Error in ConversationController.remove:', error);
@@ -82,14 +116,9 @@ class ConversationController {
         }
     }
 
-    /**
-     * Core endpoint. `?stream=false` returns a plain JSON response (used for
-     * quick verification and as the initial frontend integration target);
-     * by default it streams the answer over SSE (see glmStreamClient.js).
-     */
     static async sendMessage(req, res) {
         const conversationId = req.params.id;
-        const { content, officerId } = req.body;
+        const { content, officerId, caseId } = req.body;
         const streaming = req.query.stream !== 'false';
 
         if (!content || !content.trim()) {
@@ -97,47 +126,46 @@ class ConversationController {
         }
 
         try {
-            let conversation = await ConversationService.getConversation(req, conversationId);
+            let conversation = memoryConversations[conversationId];
             if (!conversation) {
-                console.log(`[ConversationController] Conversation ${conversationId} not found, auto-creating for case...`);
-                const targetCaseId = req.body.caseId || '1';
-                const targetOfficerId = officerId || 'IND-POL-8802';
-                conversation = await ConversationService.createConversation(req, {
+                const targetCaseId = caseId || req.body.caseId;
+                if (!targetCaseId) {
+                    return res.status(400).json({ success: false, error: 'caseId is required to auto-create conversation.' });
+                }
+                
+                conversation = {
+                    id: conversationId,
                     caseId: targetCaseId,
-                    officerId: targetOfficerId,
-                    title: 'New Investigation Chat'
-                });
-                // Ensure messages array is initialized
-                conversation.messages = [];
+                    officerId: officerId || req.user?.id || 'System',
+                    title: String(content).slice(0, 60) || 'New Investigation Chat',
+                    isBookmarked: false,
+                    isArchived: false,
+                    lastMessageAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                memoryConversations[conversationId] = conversation;
+                memoryMessages[conversationId] = [];
             }
 
-            const userMessage = await ConversationService.appendMessage(req, conversation.id || conversationId, { role: 'user', content });
+            const userMessage = {
+                id: crypto.randomUUID(),
+                conversationId,
+                role: 'user',
+                content,
+                createdAt: new Date().toISOString()
+            };
+            memoryMessages[conversationId].push(userMessage);
 
-            const priorUserTurns = conversation.messages.filter((m) => m.role === 'user').length;
-            if (priorUserTurns === 0) {
-                await ConversationService.maybeAutoTitle(req, conversation, content);
+            // Auto title check
+            if (memoryMessages[conversationId].length === 1) {
+                conversation.title = String(content).slice(0, 60) || 'New Investigation Chat';
             }
 
-            // Build context first (reflects all *prior* corrections), then let this
-            // message itself register a new correction/pin, and rebuild if it did —
-            // so "Ignore witness A" is already honored in this very response.
             let context = await ContextBuilderService.buildCaseContext(req, conversation.caseId);
-            const correction = await MemoryService.recordIfCorrection(req, {
-                caseId: conversation.caseId,
-                officerId: officerId || conversation.officerId,
-                message: content,
-                context
-            });
-            if (correction) {
-                context = await ContextBuilderService.buildCaseContext(req, conversation.caseId);
-            }
-
             const retrieved = await RetrievalService.retrieve(req, { caseId: conversation.caseId, query: content, context });
             const systemPrompt = buildSystemPrompt({ context, retrieved });
 
-            const { recentMessages } = ContextBuilderService.buildConversationWindow(
-                conversation.messages.concat([userMessage])
-            );
+            const recentMessages = memoryMessages[conversationId].slice(-10);
             const glmMessages = [
                 { role: 'system', content: systemPrompt },
                 ...recentMessages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
@@ -153,15 +181,20 @@ class ConversationController {
             }
 
             const citations = enrichCitations(extractCitations(assistantText), retrieved);
-            const contextSummary = `Case #${conversation.caseId}, evidence on file: ${JSON.stringify(context.evidenceCounts)}`;
+            const contextSummary = `Case #${conversation.caseId}, victims: ${context.victims?.length || 0}, accused: ${context.suspects?.length || 0}`;
             const suggestions = await SuggestionService.generateFollowUps(assistantText, contextSummary);
 
-            const assistantMessage = await ConversationService.appendMessage(req, conversationId, {
+            const assistantMessage = {
+                id: crypto.randomUUID(),
+                conversationId,
                 role: 'assistant',
                 content: assistantText,
                 citations,
-                suggestions
-            });
+                suggestions,
+                createdAt: new Date().toISOString()
+            };
+            memoryMessages[conversationId].push(assistantMessage);
+            conversation.lastMessageAt = new Date().toISOString();
 
             if (streaming) {
                 glmStreamClient.sendEvent(res, 'citations', { citations });

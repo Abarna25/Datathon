@@ -1,36 +1,22 @@
-const catalyst = require('zcatalyst-sdk-node');
+const datastoreClient = require('../queries/datastoreClient');
 const ReportAgent = require('../agents/ReportAgent');
 
 class ReportService {
     static async getReports(req) {
-        const app = catalyst.initialize(req);
-        const datastore = app.datastore();
-
         try {
-            // Fetch Cases to list as reports
-            const casesResponse = await datastore.table('CaseMaster').getPagedRows({ maxRows: 10 }).catch(() => ({ data: [] }));
-            const cases = casesResponse.data || [];
-
+            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 10 }).catch(() => []);
             let reports = [];
 
             if (cases.length > 0) {
-                cases.forEach((c) => {
-                    const caseRow = Object.values(c)[0] || {};
+                cases.forEach((caseRow) => {
+                    const id = String(caseRow.CaseMasterID || caseRow.ROWID);
                     reports.push({
-                        id: caseRow.ROWID,
-                        title: `Case Report: FIR #${caseRow.ROWID}`,
-                        summary: `AI generated intelligence report for case in ${caseRow.Jurisdiction || 'Unknown Jurisdiction'}`,
-                        date: caseRow.CREATEDTIME,
-                        status: caseRow.Status || 'Closed',
+                        id,
+                        title: `Case Report: FIR #${caseRow.CrimeNo || id}`,
+                        summary: `AI generated intelligence report for case in Station ${caseRow.PoliceStationID || 'Unknown'}`,
+                        date: caseRow.CrimeRegisteredDate || caseRow.CREATEDTIME,
+                        status: caseRow.CaseStatusID ? `Status ${caseRow.CaseStatusID}` : 'Active',
                     });
-                });
-            } else {
-                reports.push({
-                    id: 'sample-1',
-                    title: 'Sample Case Report: FIR #000',
-                    summary: 'System generated placeholder report (No Datastore data found)',
-                    date: new Date().toISOString(),
-                    status: 'N/A'
                 });
             }
 
@@ -42,17 +28,14 @@ class ReportService {
     }
 
     static async generateReport(req) {
-        const app = catalyst.initialize(req);
-        const datastore = app.datastore();
         const { caseId } = req.body;
 
         try {
-            // Deterministically gather context
-            const caseRow = await datastore.table('CaseMaster').getRow(caseId).catch(() => null);
+            const caseRow = await datastoreClient.getRowById(req, 'CaseMaster', caseId).catch(() => null);
             if (!caseRow) throw new Error("Case not found");
 
             const context = {
-                case_details: Object.values(caseRow)[0] || {}
+                case_details: caseRow
             };
 
             // Call GLM ReportAgent to synthesize a professional PDF-ready markdown document

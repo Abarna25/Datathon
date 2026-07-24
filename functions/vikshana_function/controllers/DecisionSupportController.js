@@ -1,220 +1,337 @@
-/**
- * DecisionSupportController.js
- * Investigator Decision Support backend controller (Requirement #6 Complete).
- */
-
 const glmClient = require('../services/glmClient');
+const ContextBuilderService = require('../services/ContextBuilderService');
 const AILogService = require('../services/AILogService');
-
-const DECISION_CASES_DB = {
-    'CASE-2026-8841': {
-        overview: {
-            caseId: 'CASE-2026-8841',
-            firNumber: 'FIR-2026-091',
-            crimeType: 'Armed Intrusion & Gold Vault Heist',
-            crimeSeverity: 'CRITICAL (LEVEL 1)',
-            investigationStatus: 'ACTIVE_72HR_WINDOW',
-            officerAssigned: 'Insp. R. Singh (Badge #8841)',
-            priority: 'HIGH_PRIORITY',
-            district: 'Peri-Urban',
-            dateOpened: '2026-05-12T21:45:00Z',
-            lastUpdated: '2026-07-22T22:30:00Z'
-        },
-        aiCaseSummary: {
-            executiveSummary: 'Armed breach at Sector 18 Commercial Vault Alley involving 3 masked suspects and stolen dark grey sedan KL-07-BX-4410. 2.4 kg gold bullion stolen.',
-            crimeSummary: 'Hydraulic cutters used on rear fire-escape steel grate at 22:15 hrs. Guard Ramesh Patel neutralized with blunt trauma.',
-            investigationProgress: '72-Hour Evidentiary Window Active. ANPR camera flagged escape vehicle heading North toward Peri-Urban border.',
-            majorFindings: [
-                'Ballistics confirmed 9mm semi-automatic casing match linked to Vikram Sharma (OFF-101).',
-                'Hydraulic wire cutter tool marks match FIR-2025-412 precedent.'
-            ],
-            currentStatus: 'Active Lead Pursuit · Mobile Patrols Deployed'
-        },
-        victimSummary: {
-            details: { name: 'Ramesh Patel', age: 48, role: 'Head Security Officer', contact: '+91 98765-11223' },
-            timeline: [
-                { time: '22:15:10', event: 'First confrontational alert logged by Ramesh Patel' },
-                { time: '22:16:40', event: 'Subdued by suspect armed with 9mm pistol; blunt trauma inflicted' }
-            ],
-            injurySummary: 'Blunt force trauma to temporal region; stabilized at City Hospital.',
-            riskFactors: ['Single-guard night shift vulnerability', 'Unmonitored rear alley access'],
-            relatedCases: ['FIR-2025-412', 'FIR-2024-118']
-        },
-        suspectSummary: {
-            offenderId: 'OFF-101',
-            name: 'Vikram Sharma (alias Vicky)',
-            riskScore: 88,
-            riskLevel: 'CRITICAL',
-            currentCharges: 'IPC 392/397 (Armed Robbery with Deadly Weapon)',
-            behaviourSummary: 'Calculated pre-meditated vault intrusion during shift change windows.',
-            knownAssociates: ['Imran Khan (Getaway Driver)', 'Rajesh Kumar (Fence)']
-        },
-        evidenceSummary: {
-            physical: ['9mm Semi-Automatic Shell Casing (EVD-9901)', 'Severed Hydraulic Wire Cutter Tool Marks (EVD-9902)'],
-            digital: ['CCTV Camera #4 Footage Stream (EVD-9903)', 'ANPR Decoy License Plate Log'],
-            financial: ['Flagged Pawn Broker Accounts (TXN-904)', 'Unregistered Cash Remittance Trail'],
-            witnessStatements: ['Statement by Ramesh Patel (Guard)', 'Local Merchant Night Patrol Log'],
-            forensicReports: ['Ballistic Match Report #BAL-882', 'Hydraulic Tool Mark Forensics #TMR-104'],
-            timeline: [
-                { time: '22:15', event: 'Rear door cut' },
-                { time: '22:18', event: 'Vehicle getaway' }
-            ],
-            status: 'PHYSICAL_SECURED',
-            missingEvidence: ['Primary getaway vehicle recovery', 'Stolen gold bullion recovery']
-        },
-        witnessSummary: {
-            witnesses: [
-                { name: 'Ramesh Patel', role: 'Security Guard / Eyewitness', reliability: 'HIGH (92%)', interviewStatus: 'COMPLETED', followUp: 'Re-interview after medical discharge' },
-                { name: 'Suresh Verma', role: 'Teastall Vendor nearby', reliability: 'MEDIUM (74%)', interviewStatus: 'SCHEDULED', followUp: 'Verify grey sedan arrival time' }
-            ]
-        },
-        investigationProgress: {
-            timeline: [
-                { date: '2026-05-12 22:15', task: 'Incident Reported via 112 Dispatch' },
-                { date: '2026-05-12 22:40', task: 'Crime Scene Forensics & Ballistics Secured' },
-                { date: '2026-05-13 09:00', task: 'ANPR Camera Trace & Offender Match (OFF-101)' }
-            ],
-            completedTasks: ['Crime Scene Cordoned', '9mm Casing Secured', 'ANPR Vehicle Flagged'],
-            pendingTasks: ['Issue Cell Tower Dump Query', 'Interrogate Imran Khan', 'Pawn Shop Accounts Audit'],
-            investigationScore: 82,
-            completionPercentage: '68%',
-            officerNotes: 'High probability of stolen gold recovery if pawn shop network audited within next 24 hours.'
-        },
-        aiExecutiveSummary: {
-            currentSituation: 'Active 72-hour pursuit of Vikram Sharma syndicate following Sector 18 vault heist.',
-            strongEvidence: ['Ballistic match to OFF-101 weapon profile', 'ANPR license plate match to associate sedan'],
-            weakEvidence: ['CCTV footage doused by night darkness in alleyway'],
-            riskAssessment: 'CRITICAL RISK — Suspect is armed, highly mobile, and has repeat recidivism record.',
-            recommendations: [
-                'Issue emergency ZCQL query for cell-tower dump at Sector 18 Alley between 21:30 and 22:30 hrs.',
-                'Audit pawn shop accounts linked to Rajesh Kumar in West Electronics Market.',
-                'Deploy high-visibility mobile patrols along Sector 18 Commercial Vault Alley.'
-            ],
-            confidence: 'HIGH (91%)',
-            evidenceReferences: ['EVD-9901', 'EVD-9902', 'ANPR Log #8821']
-        },
-        // ─── FINAL PHASE FEATURES ───────────────────────────────────────────────
-        leadRecommendations: {
-            highestPrioritySuspect: { name: 'Vikram Sharma (OFF-101)', reason: 'Ballistic casing match & ANPR getaway vehicle link', action: 'Issue Non-Bailable Arrest Warrant' },
-            highestPriorityEvidence: { name: '9mm Semi-Automatic Shell Casing (EVD-9901)', reason: 'Matches weapon profile used in 2 prior robberies', action: 'Submit for Urgent IBIS Ballistic Database Cross-Match' },
-            recommendedWitness: { name: 'Suresh Verma (Teastall Vendor)', reason: 'Positioned at alley entrance 15 mins prior to incident', action: 'Conduct Formal Section 161 CrPC Statement Recording' },
-            digitalInvestigation: 'Execute ZCQL Cell Tower Dump for Sector 18 Alley (21:30 - 22:30 hrs)',
-            financialInvestigation: 'Audit Pawn Shop Remittance Accounts linked to Fence Rajesh Kumar',
-            searchWarrant: 'Execute Search Warrant for Safehouse #4, Peri-Urban North Border',
-            surveillance: 'Deploy Highway ANPR Patrols along State Highway 12 Transit Corridor',
-            arrestRecommendation: 'Issue Immediate Look-Out Circular (LOC) for Vikram Sharma and Imran Khan'
-        },
-        missingEvidence: {
-            documents: ['Vault Maintenance Audit Log for Q1 2026', 'Guard Shift Roster Authorization'],
-            forensicReports: ['DNA Swab Results from Hydraulic Cutter Handle', 'Vehicle Paint Scraping Analysis'],
-            witnessInterviews: ['Secondary Guard Shift Interview', 'Night Courier Driver Statement'],
-            digitalEvidence: ['CCTV Stream from Adjacent Commercial Bank #2', 'Cell Tower Dump Data'],
-            approvals: ['Magistrate Authorization for Safehouse Warrant', 'Bank Account Freeze Order']
-        },
-        investigationRisk: {
-            caseRisk: 'HIGH (Level 3)',
-            evidenceRisk: 'MEDIUM (Alleyway CCTV affected by low ambient lighting)',
-            witnessRisk: 'LOW (Guard stabilized; vendor cooperative)',
-            offenderEscapeRisk: 'CRITICAL (Suspect has cross-district transportation networks)',
-            evidenceTamperingRisk: 'HIGH (Pawn broker fence network active in adjacent district)'
-        },
-        investigationPriority: {
-            priorityScore: 89,
-            crimeSeverityScore: 92,
-            offenderHistoryScore: 88,
-            evidenceStrengthScore: 85,
-            victimRiskScore: 78,
-            timeSensitivityScore: 95,
-            priorityTier: 'TIER 1 - CRITICAL (IMMEDIATE ACTION)'
-        }
-    }
-};
+const datastoreClient = require('../queries/datastoreClient');
 
 class DecisionSupportController {
+    static async getContextAndGenerate(req, caseId) {
+        const context = await ContextBuilderService.buildCaseContext(req, caseId);
+        if (!context || !context.case) {
+            throw new Error(`Case not found: ${caseId}`);
+        }
+
+        // Fetch all other cases for similar cases query
+        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 100 }).catch(() => []);
+
+        const systemPrompt = `You are a Senior Investigator Decision Support AI system.
+        Analyze the following active Case Context and Historical Cases:
+        
+        Active Case Context:
+        ${JSON.stringify(context)}
+        
+        Historical Cases (for identifying similar cases):
+        ${JSON.stringify(allCases)}
+
+        Your task is to analyze the details, suspects, victims, evidence, witnesses, and timeline to produce a comprehensive, structured decision support report.
+        You MUST return ONLY a valid JSON object matching this exact schema (no prose, no code fences):
+        {
+          "overview": {
+            "caseId": "ID of active case",
+            "firNumber": "FIR number or case number",
+            "crimeType": "Type of crime",
+            "crimeSeverity": "CRITICAL (LEVEL 1) | HIGH | MEDIUM | LOW",
+            "investigationStatus": "ACTIVE_72HR_WINDOW | UNDER_INVESTIGATION | SUSPENDED",
+            "officerAssigned": "Name of assigned officer",
+            "priority": "HIGH_PRIORITY | MEDIUM | LOW",
+            "district": "Precinct or district name",
+            "dateOpened": "ISO date opened",
+            "lastUpdated": "ISO date last updated"
+          },
+          "aiCaseSummary": {
+            "executiveSummary": "Brief overview of the situation...",
+            "crimeSummary": "Brief summary of the offense details...",
+            "investigationProgress": "Brief summary of what has been accomplished...",
+            "majorFindings": ["Finding 1", "Finding 2"],
+            "currentStatus": "Summary status line"
+          },
+          "victimSummary": {
+            "details": { "name": "Name", "age": 35, "role": "Victim role", "contact": "Phone or N/A" },
+            "timeline": [{ "time": "Time", "event": "Event description" }],
+            "injurySummary": "Description of physical or economic impact",
+            "riskFactors": ["Risk factor 1", "Risk factor 2"],
+            "relatedCases": []
+          },
+          "suspectSummary": {
+            "offenderId": "ROWID of prime suspect",
+            "name": "Name of suspect",
+            "riskScore": 85,
+            "riskLevel": "CRITICAL | HIGH | MEDIUM | LOW",
+            "currentCharges": "Charges sections",
+            "behaviourSummary": "MO pattern description...",
+            "knownAssociates": []
+          },
+          "evidenceSummary": {
+            "physical": ["Physical evidence items"],
+            "digital": ["Digital/ANPR/CCTV evidence items"],
+            "financial": ["Financial transactions flagged"],
+            "witnessStatements": ["Witness interviews log"],
+            "forensicReports": ["Forensic/Ballistic matches"],
+            "timeline": [{ "time": "Time", "event": "Evidence discovery event" }],
+            "status": "PHYSICAL_SECURED",
+            "missingEvidence": ["Critical gaps in evidence"]
+          },
+          "witnessSummary": {
+            "witnesses": [
+              { "name": "Witness Name", "role": "Role description", "reliability": "90%", "interviewStatus": "COMPLETED | SCHEDULED", "followUp": "Action item" }
+            ]
+          },
+          "investigationProgress": {
+            "timeline": [{ "date": "Date", "task": "Completed/pending step" }],
+            "completedTasks": ["Task 1", "Task 2"],
+            "pendingTasks": ["Task A", "Task B"],
+            "investigationScore": 75,
+            "completionPercentage": "65%",
+            "officerNotes": "Key recommendation from lead investigator..."
+          },
+          "aiExecutiveSummary": {
+            "currentSituation": "Detailed tactical summary...",
+            "strongEvidence": ["Evidentiary pillar 1", "Evidentiary pillar 2"],
+            "weakEvidence": ["Evidentiary gap 1"],
+            "riskAssessment": "Threat assessment...",
+            "recommendations": ["Action item 1", "Action item 2"],
+            "confidence": "HIGH (90%)",
+            "evidenceReferences": []
+          },
+          "leadRecommendations": {
+            "highestPrioritySuspect": { "name": "Name", "reason": "Reason...", "action": "Action to take..." },
+            "highestPriorityEvidence": { "name": "Name", "reason": "Reason...", "action": "Action to take..." },
+            "recommendedWitness": { "name": "Name", "reason": "Reason...", "action": "Action to take..." },
+            "digitalInvestigation": "Action item",
+            "financialInvestigation": "Action item",
+            "searchWarrant": "Action item",
+            "surveillance": "Action item",
+            "arrestRecommendation": "Action item"
+          },
+          "missingEvidence": {
+            "documents": ["Missing document 1"],
+            "forensicReports": ["Missing forensic report 1"],
+            "witnessInterviews": ["Witness to interview"],
+            "digitalEvidence": ["Digital dump/CCTV to collect"],
+            "approvals": ["Warrants/freezes to request"]
+          },
+          "investigationRisk": {
+            "caseRisk": "HIGH (Level 3) | MEDIUM | LOW",
+            "evidenceRisk": "HIGH | MEDIUM | LOW",
+            "witnessRisk": "HIGH | MEDIUM | LOW",
+            "offenderEscapeRisk": "CRITICAL | HIGH | MEDIUM | LOW",
+            "evidenceTamperingRisk": "HIGH | MEDIUM | LOW"
+          },
+          "investigationPriority": {
+            "priorityScore": 85,
+            "crimeSeverityScore": 85,
+            "offenderHistoryScore": 80,
+            "evidenceStrengthScore": 75,
+            "victimRiskScore": 70,
+            "timeSensitivityScore": 90,
+            "priorityTier": "TIER 1 - CRITICAL | TIER 2 | TIER 3"
+          },
+          "similarCasesRecommendation": [
+            { "caseId": "Similar historical case ID", "matchReason": "Why it matches active case", "recommendedStrategy": "Strategy to replicate..." }
+          ],
+          "automaticTimeline": [
+            { "time": "Time of event", "title": "Title", "description": "Details..." }
+          ]
+        }`;
+
+        const res = await glmClient.generate([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: 'Generate consolidated decision support report JSON.' }
+        ], { temperature: 0.2 });
+
+        const raw = res.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+        return JSON.parse(raw);
+    }
+
     static async getSummary(req, res) {
         try {
-            res.status(200).json({ success: true, data: DECISION_CASES_DB['CASE-2026-8841'].aiCaseSummary });
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
+            const summaryData = {
+                overview: data.aiCaseSummary?.executiveSummary || data.aiCaseSummary?.crimeSummary || 'No case overview compiled.',
+                victimSummary: data.victimSummary?.injurySummary || (data.victimSummary?.details?.name ? `Victim: ${data.victimSummary.details.name}` : 'No victim details resolved.'),
+                accusedSummary: data.suspectSummary?.behaviourSummary || (data.suspectSummary?.name ? `Accused: ${data.suspectSummary.name}` : 'No suspect details resolved.'),
+                evidenceSummary: data.evidenceSummary?.status || 'No evidence records resolved.'
+            };
+            res.status(200).json({ success: true, data: summaryData });
         } catch (error) {
+            console.error('Error in DecisionSupportController.getSummary:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async getTimeline(req, res) {
         try {
-            res.status(200).json({ success: true, data: DECISION_CASES_DB['CASE-2026-8841'].automaticTimeline });
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
+            const timelineEvents = (data.automaticTimeline || []).map(t => ({
+                timestamp: new Date().toISOString(),
+                type: 'AUTOMATED',
+                title: t.title || 'Timeline Event',
+                description: t.description || 'No description.',
+                source: 'AI Analysis'
+            }));
+            res.status(200).json({ success: true, data: timelineEvents });
         } catch (error) {
+            console.error('Error in DecisionSupportController.getTimeline:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async getSimilarCases(req, res) {
         try {
-            res.status(200).json({ success: true, data: DECISION_CASES_DB['CASE-2026-8841'].similarCasesRecommendation });
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
+            const precedents = (data.similarCasesRecommendation || []).map(c => ({
+                title: `Case match for ID ${c.caseId}`,
+                caseId: c.caseId,
+                matchReason: c.matchReason || 'Highly matching MO patterns.',
+                evidenceMatch: ['Modus Operandi', 'Crime Category'],
+                similarityScore: '85%'
+            }));
+            res.status(200).json({ success: true, data: precedents });
         } catch (error) {
+            console.error('Error in DecisionSupportController.getSimilarCases:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async getLeadRecommendations(req, res) {
         try {
-            res.status(200).json({ success: true, data: DECISION_CASES_DB['CASE-2026-8841'].leadRecommendations });
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
+            const recommendations = [];
+            const lr = data.leadRecommendations || {};
+            if (lr.highestPrioritySuspect) {
+                recommendations.push({
+                    category: 'Accused Priority',
+                    confidence: 'HIGH',
+                    recommendation: `Interrogate Accused: ${lr.highestPrioritySuspect.name}`,
+                    reason: lr.highestPrioritySuspect.reason || lr.highestPrioritySuspect.action
+                });
+            }
+            if (lr.highestPriorityEvidence) {
+                recommendations.push({
+                    category: 'Evidence Collection',
+                    confidence: 'HIGH',
+                    recommendation: `Secure evidence: ${lr.highestPriorityEvidence.name}`,
+                    reason: lr.highestPriorityEvidence.reason || lr.highestPriorityEvidence.action
+                });
+            }
+            if (lr.recommendedWitness) {
+                recommendations.push({
+                    category: 'Witness Interview',
+                    confidence: 'MEDIUM',
+                    recommendation: `Interview Complainant/Witness: ${lr.recommendedWitness.name}`,
+                    reason: lr.recommendedWitness.reason || lr.recommendedWitness.action
+                });
+            }
+            if (lr.digitalInvestigation) {
+                recommendations.push({
+                    category: 'Digital Investigation',
+                    confidence: 'HIGH',
+                    recommendation: 'Digital Device Analysis',
+                    reason: lr.digitalInvestigation
+                });
+            }
+            if (lr.arrestRecommendation) {
+                recommendations.push({
+                    category: 'Legal Action',
+                    confidence: 'CRITICAL',
+                    recommendation: 'Arrest Order Recommendation',
+                    reason: lr.arrestRecommendation
+                });
+            }
+            res.status(200).json({ success: true, data: recommendations });
         } catch (error) {
+            console.error('Error in DecisionSupportController.getLeadRecommendations:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async getFullCaseSupport(req, res) {
         try {
-            const caseId = req.params.caseId || 'CASE-2026-8841';
-            const data = DECISION_CASES_DB[caseId] || DECISION_CASES_DB['CASE-2026-8841'];
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
             res.status(200).json({ success: true, data });
         } catch (error) {
+            console.error('Error in DecisionSupportController.getFullCaseSupport:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async generateExecutiveSummary(req, res) {
         try {
             const { caseId } = req.body || {};
-            const data = DECISION_CASES_DB[caseId] || DECISION_CASES_DB['CASE-2026-8841'];
-            
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId is required in body' });
+            }
+            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
             const aiData = data.aiExecutiveSummary;
-            AILogService.logInteraction(req, req.user, caseId, 'Generate Executive Summary', 'crm-di-glm47b', aiData.confidence, aiData.evidenceReferences);
-
+            await AILogService.logInteraction(req, req.user, caseId, 'Generate Executive Summary', 'crm-di-glm47b', aiData.confidence, aiData.evidenceReferences);
             res.status(200).json({ success: true, data: aiData });
         } catch (error) {
+            console.error('Error in DecisionSupportController.generateExecutiveSummary:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }
-
+ 
     static async queryAIAssistant(req, res) {
         try {
             const { prompt, caseId } = req.body || {};
-            const data = DECISION_CASES_DB[caseId] || DECISION_CASES_DB['CASE-2026-8841'];
-            
-            let responseText = '';
-            if (prompt?.includes('next') || prompt?.includes('strategy')) {
-                responseText = `RECOMMENDED STRATEGY:\n1. Execute ZCQL cell-tower dump for Sector 18 Alley.\n2. Freeze pawn broker accounts linked to Rajesh Kumar.\n3. Interrogate driver Imran Khan.`;
-            } else if (prompt?.includes('missing')) {
-                responseText = `MISSING EVDENCE DETECTED:\n- DNA Swab Results from Hydraulic Cutter\n- Safehouse Magistrate Authorization\n- Adjacent Bank CCTV Stream.`;
-            } else {
-                responseText = `CASE BRIEFING (${data.overview.caseId}):\nPrimary Suspect: Vikram Sharma (OFF-101).\nEvidence Secured: 9mm Casing (EVD-9901).\nPriority Score: 89/100 (TIER 1 CRITICAL).`;
+            if (!prompt) {
+                return res.status(400).json({ success: false, error: 'prompt is required.' });
             }
-
-            const responseData = {
-                answer: responseText,
-                confidence: 'HIGH (93%)',
-                evidenceReferences: ['EVD-9901', 'EVD-9902', 'ANPR-8821'],
-                dataSources: ['Catalyst Data Store', 'FIR Ledger', 'Ballistic Forensics']
-            };
-
-            AILogService.logInteraction(req, req.user, caseId, prompt, 'crm-di-glm47b', responseData.confidence, responseData.evidenceReferences);
-
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId is required.' });
+            }
+ 
+            const context = await ContextBuilderService.buildCaseContext(req, caseId);
+ 
+            const promptTemplate = `You are a Senior Investigator AI Assistant.
+            Analyze the following active Case Context:
+            ${JSON.stringify(context)}
+ 
+            Answer the investigator's question: "${prompt}"
+            Return a STRICT JSON response matching this schema:
+            {
+              "answer": "Detailed answer addressing question based on evidence context...",
+              "confidence": "HIGH | MEDIUM | LOW",
+              "evidenceReferences": ["Reference RowIDs/Evidence IDs used"],
+              "dataSources": ["Source names"]
+            }
+            Do NOT include markdown blocks.`;
+ 
+            const resGLM = await glmClient.generate([
+                { role: 'system', content: promptTemplate },
+                { role: 'user', content: prompt }
+            ], { temperature: 0.3 });
+ 
+            const cleaned = resGLM.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+            const responseData = JSON.parse(cleaned);
+ 
+            await AILogService.logInteraction(req, req.user, caseId, prompt, 'crm-di-glm47b', responseData.confidence, responseData.evidenceReferences);
+ 
             res.status(200).json({
                 success: true,
                 data: responseData
             });
         } catch (error) {
+            console.error('Error in DecisionSupportController.queryAIAssistant:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     }

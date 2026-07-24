@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Search, Filter, Download, FileText, Calendar, Activity, Clock } from 'lucide-react';
-import api from '../context/AuthContext'; // Using existing api setup or I can import axios instance
+import api from '../services/api';
 import { exportAuditLogsPDF } from '../utils/pdfExport';
 import { exportToCSV } from '../utils/csvExport';
-
-// Actually, I should use the api instance
-import axios from 'axios';
-const API_BASE_URL = 'http://localhost:3000/server/vikshana_function';
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('vikshana_auth_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -34,14 +26,13 @@ const AuditLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      // Build query string
-      const params = new URLSearchParams();
-      if (actionFilter) params.append('action', actionFilter);
-      if (statusFilter) params.append('status', statusFilter);
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      const params = {};
+      if (actionFilter) params.action = actionFilter;
+      if (statusFilter) params.status = statusFilter;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
 
-      const response = await axios.get(`${API_BASE_URL}/audit?${params.toString()}`, { headers: getAuthHeaders() });
+      const response = await api.get('/audit', { params });
       if (response.data.success) {
         setLogs(response.data.data);
       } else {
@@ -72,16 +63,15 @@ const AuditLogs = () => {
 
   const handleExportCSV = async () => {
     exportToCSV(filteredLogs, `vikshana_audit_logs_${Date.now()}.csv`);
-    // Log the export action
     try {
-      await axios.post(`${API_BASE_URL}/audit`, { action: 'Exported Report', resource: 'Audit Logs CSV' }, { headers: getAuthHeaders() });
+      await api.post('/audit', { action: 'Exported Report', resource: 'Audit Logs CSV' });
     } catch (e) {}
   };
 
   const handleExportPDF = async () => {
     await exportAuditLogsPDF(filteredLogs);
     try {
-      await axios.post(`${API_BASE_URL}/audit`, { action: 'Downloaded PDF', resource: 'Audit Logs PDF' }, { headers: getAuthHeaders() });
+      await api.post('/audit', { action: 'Downloaded PDF', resource: 'Audit Logs PDF' });
     } catch (e) {}
   };
 

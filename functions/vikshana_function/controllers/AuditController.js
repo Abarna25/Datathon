@@ -14,7 +14,7 @@ class AuditController {
                 startDate: req.query.startDate,
                 endDate: req.query.endDate
             };
-            const logs = await AuditService.getLogs(filters);
+            const logs = await AuditService.getLogs(req, filters);
             return res.json({ success: true, data: logs });
         } catch (error) {
             console.error('[AuditController] Error fetching logs:', error);

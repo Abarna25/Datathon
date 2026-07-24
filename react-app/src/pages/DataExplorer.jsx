@@ -3,11 +3,13 @@ import QueryInput from '../components/DataExplorer/QueryInput';
 import ResultRenderer from '../components/DataExplorer/ResultRenderer';
 import ExplanationPanel from '../components/DataExplorer/ExplanationPanel';
 import api from '../services/api';
+import { useAppContext } from '../context/AppContext';
 import { Database, AlertTriangle } from 'lucide-react';
 
 const DataExplorer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { activeCaseId } = useAppContext();
   const [queryState, setQueryState] = useState({
     query: '',
     sql: '',
@@ -20,8 +22,8 @@ const DataExplorer = () => {
     setError(null);
 
     try {
-      // Endpoint created in the textToSql.routes.js backend module
-      const response = await api.post('/text-to-sql/query', { query });
+      // Pass the globally active case ID to scope the AI query generation
+      const response = await api.post('/text-to-sql/query', { query, caseId: activeCaseId });
       
       if (response.data.success) {
         setQueryState({
@@ -46,10 +48,10 @@ const DataExplorer = () => {
       <header style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '28px', color: 'var(--text-primary)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Database size={32} color="var(--accent-primary)" />
-          AI Data Explorer
+          Text-to-SQL AI Data Explorer
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '15px' }}>
-          Use natural language to query the Data Store. The AI securely translates your requests into ZCQL and explains the findings.
+          Use natural language to query the Data Store. The AI securely translates your requests into ZCQL and scopes the search to the active case.
         </p>
       </header>
 
@@ -76,7 +78,7 @@ const DataExplorer = () => {
         <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <Database size={48} color="rgba(255,255,255,0.1)" />
           <p style={{ margin: 0, maxWidth: '400px' }}>
-            Enter a query above to start exploring. Example: <em>"Find robbery cases involving firearms"</em>.
+            Enter a query above to start exploring. Example: <em>"Find suspects matching the active case"</em>.
           </p>
         </div>
       )}

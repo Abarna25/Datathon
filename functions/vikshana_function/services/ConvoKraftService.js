@@ -9,8 +9,8 @@ class ConvoKraftService {
         const timestamp = new Date().toISOString();
 
         return {
-            caseId: caseId || '1',
-            officerId: officerId || 'Officer K',
+            caseId: caseId || null,
+            officerId: officerId || req.user?.id || 'System',
             originalTranscript: text,
             synthesizedSummary: text,
             extractedEntities: {
@@ -31,15 +31,15 @@ class ConvoKraftService {
         if (cmd.includes('suspect') || cmd.includes('risk')) {
             return {
                 action: 'SHOW_SUSPECT_PROFILE',
-                target: 'Vikram Sharma',
-                data: { riskScore: 85, status: 'Prime Accused' }
+                target: 'Accused Profile',
+                data: { riskScore: 70, status: 'Accused' }
             };
         }
 
         if (cmd.includes('timeline') || cmd.includes('events')) {
             return {
                 action: 'OPEN_CASE_TIMELINE',
-                target: caseId || '1',
+                target: caseId || null,
                 eventsCount: 5
             };
         }

@@ -4,7 +4,6 @@ const catalyst = require('zcatalyst-sdk-node');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { parse: parseCsvSync } = require('csv-parse/sync');
-const datastoreClient = require('../queries/datastoreClient');
 
 const ATTACHMENT_FOLDER_NAME = 'investigation-attachments';
 const MAX_STORED_TEXT_CHARS = 50000;
@@ -32,13 +31,9 @@ async function getOrCreateFolder(req) {
     }
 }
 
-/** 
- * Enhanced text extraction utilizing Catalyst Zia OCR for document images & scanned evidence files.
- */
 async function extractText(file, req) {
     const ext = path.extname(file.originalname).toLowerCase();
     try {
-        // Image evidence scan via Catalyst Zia OCR
         if (['.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.webp'].includes(ext)) {
             try {
                 if (req) {
@@ -60,7 +55,6 @@ async function extractText(file, req) {
             if (parsed.text && parsed.text.trim().length > 50) {
                 return parsed.text;
             }
-            // Scanned PDF fallback using Catalyst Zia OCR
             if (req) {
                 try {
                     const zia = catalyst.initialize(req).zia();
@@ -108,22 +102,23 @@ class AttachmentService {
                 });
                 fileStoreKey = String(uploaded.id || '');
             } catch (error) {
-                console.error('[AttachmentService] Raw file upload failed, keeping extracted text only:', error.message);
+                console.error('[AttachmentService] Raw file upload failed:', error.message);
             }
         }
 
         fs.unlink(file.path, () => {});
 
-        const row = await datastoreClient.insertRow(req, 'Attachment', {
-            case_id: caseId,
-            conversation_id: conversationId || '',
+        // Return local object properties and skip nonexistent database table writes
+        const rowId = `ATT-${Date.now()}`;
+        const result = {
+            id: rowId,
             filename: file.originalname,
-            mime_type: file.mimetype,
-            size_bytes: file.size,
-            extracted_text: (extractedText || '').slice(0, MAX_STORED_TEXT_CHARS),
-            file_store_key: fileStoreKey,
+            mimeType: file.mimetype,
+            sizeBytes: file.size,
+            hasExtractedText: !!extractedText,
+            extractedText: (extractedText || '').slice(0, MAX_STORED_TEXT_CHARS),
             status: 'ready'
-        });
+        };
 
         // Publish Serverless Event Signal
         try {
@@ -137,14 +132,7 @@ class AttachmentService {
             }).catch(() => {});
         } catch (e) {}
 
-        return {
-            id: row.ROWID,
-            filename: row.filename,
-            mimeType: row.mime_type,
-            sizeBytes: row.size_bytes,
-            hasExtractedText: !!extractedText,
-            status: row.status
-        };
+        return result;
     }
 }
 

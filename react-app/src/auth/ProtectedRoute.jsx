@@ -34,7 +34,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
               <div style={{marginTop: '8px'}}><strong>Current Role:</strong> <span style={{color: 'var(--text-muted)'}}>{userRole}</span></div>
             </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button onClick={() => window.location.href = '/app/dashboard'} style={{ padding: '10px 20px', background: 'var(--accent-primary)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
+              <button onClick={() => window.location.href = '#/dashboard'} style={{ padding: '10px 20px', background: 'var(--accent-primary)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
                 Return to Dashboard
               </button>
             </div>

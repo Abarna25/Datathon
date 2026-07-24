@@ -1,74 +1,95 @@
-const catalyst = require('zcatalyst-sdk-node');
+const datastoreClient = require('../queries/datastoreClient');
+
+/**
+ * DashboardService — Uses ONLY real Catalyst dataset tables:
+ *
+ * ✅ CaseMaster         (CaseMasterID, CrimeNo, CaseNo, CaseStatusID, CaseCategoryID, BriefFacts)
+ * ✅ Victim             (VictimMasterID, CaseMasterID, VictimName)
+ * ✅ Accused            (AccusedMasterID, CaseMasterID, AccusedName)  ← was "Suspect"
+ * ✅ ArrestSurrender    (ArrestSurrenderID, CaseMasterID, AccusedMasterID)
+ * ✅ ChargesheetDetails (CSID, CaseMasterID, csdate)
+ * ✅ ComplainantDetails (ComplainantID, CaseMasterID, ComplainantName)
+ * ✅ Inv_OccuranceTime  (CaseMasterID, OccuranceFromDate)
+ *
+ * ❌ Suspect, Evidence, TimelineEvent, FIRMaster — NOT in dataset, queries removed
+ */
 
 class DashboardService {
     static async getDashboardData(req) {
-        const app = catalyst.initialize(req);
-        const datastore = app.datastore();
-
         try {
-            // Fetch from CaseMaster and CaseCategory in parallel
-            const [casesResponse, categoryResponse] = await Promise.all([
-                datastore.table('CaseMaster').getPagedRows({ maxRows: 100 }).catch(() => ({ data: [] })),
-                datastore.table('CaseCategory').getPagedRows({ maxRows: 10 }).catch(() => ({ data: [] }))
+            const [
+                casesCountRes,
+                victimsCountRes,
+                accusedCountRes,
+                arrestsCountRes,
+                chargesheetCountRes,
+                cases
+            ] = await Promise.all([
+                datastoreClient.query(req, 'SELECT COUNT(CaseMasterID) FROM CaseMaster').catch(() => []),
+                datastoreClient.query(req, 'SELECT COUNT(VictimMasterID) FROM Victim').catch(() => []),
+                datastoreClient.query(req, 'SELECT COUNT(AccusedMasterID) FROM Accused').catch(() => []),
+                datastoreClient.query(req, 'SELECT COUNT(ArrestSurrenderID) FROM ArrestSurrender').catch(() => []),
+                datastoreClient.query(req, 'SELECT COUNT(CSID) FROM ChargesheetDetails').catch(() => []),
+                datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => [])
             ]);
 
-            const cases = casesResponse.data || [];
-            const categories = categoryResponse.data || [];
+            const getCount = (res) => {
+                if (!res || !res.length) return 0;
+                const row = res[0];
+                const inner = Object.values(row)[0] || {};
+                const val = typeof inner === 'object' ? Object.values(inner)[0] : inner;
+                return parseInt(val || 0, 10);
+            };
 
-            // Calculate basic stats based on datastore rows
-            const totalCases = cases.length;
-            
-            // Assume cases have a Status column, otherwise mock it
-            const openCases = cases.filter(c => {
-                const row = Object.values(c)[0] || {};
-                return row.Status === 'Open';
-            }).length || (totalCases > 0 ? Math.floor(totalCases / 2) : 0);
+            const totalCases     = getCount(casesCountRes);
+            const totalVictims   = getCount(victimsCountRes);
+            const totalAccused   = getCount(accusedCountRes);
+            const totalArrests   = getCount(arrestsCountRes);
+            const totalCharges   = getCount(chargesheetCountRes);
 
-            // Map categories
-            let crimeCategories = categories.map(c => {
-                const row = Object.values(c)[0] || {};
-                return {
-                    category: row.Name || row.CategoryName || 'Unknown Category',
-                    count: parseInt(row.Count || row.TotalCount || 0, 10) || 1
-                };
+            // CaseStatusID: 1=Open/Active, 4=Closed (based on data sample)
+            const openCases = (cases || []).filter(c => {
+                const status = String(c.CaseStatusID || '').trim();
+                return status === '1' || status === '2' || status === '3';
+            }).length;
+
+            // Group by CaseCategoryID to build crime category distribution
+            const categoryCounts = {};
+            (cases || []).forEach(c => {
+                const cat = c.CaseCategoryID ? `Category ${c.CaseCategoryID}` : 'General';
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
             });
-
-            if (crimeCategories.length === 0) {
-                crimeCategories = [
-                    { category: 'Data missing in CaseCategory', count: 0 }
-                ];
-            }
+            const crimeCategories = Object.entries(categoryCounts)
+                .map(([category, count]) => ({ category, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 8);
 
             return {
                 stats: {
-                    totalCases: totalCases,
-                    openCases: openCases,
-                    todaysFIR: totalCases > 0 ? 1 : 0,
-                    crimeTrend: "LIVE"
+                    totalCases,
+                    openCases,
+                    totalVictims,
+                    totalAccused,
+                    totalArrests,
+                    totalCharges,
+                    todaysFIR: totalCases,
+                    crimeTrend: 'LIVE'
                 },
                 recentAlerts: [
-                    { id: 1, title: `Successfully fetched ${totalCases} cases from Catalyst`, severity: 'SUCCESS', time: new Date().toLocaleTimeString() }
+                    {
+                        id: 1,
+                        title: `Catalyst connected: ${totalCases} cases, ${totalVictims} victims, ${totalAccused} accused, ${totalArrests} arrests on record.`,
+                        severity: 'SUCCESS',
+                        time: new Date().toLocaleTimeString()
+                    }
                 ],
-                crimeCategories: crimeCategories
+                crimeCategories: crimeCategories.length
+                    ? crimeCategories
+                    : [{ category: 'No cases on file', count: 0 }]
             };
-
         } catch (error) {
-            console.error("Catalyst Datastore Error:", error);
-            // Fallback mock data
-            return {
-                stats: {
-                    totalCases: "ERR",
-                    openCases: "ERR",
-                    todaysFIR: 0,
-                    crimeTrend: "ERR"
-                },
-                recentAlerts: [
-                    { id: 1, title: 'Datastore Error: ' + error.message, severity: 'CRITICAL', time: new Date().toLocaleTimeString() }
-                ],
-                crimeCategories: [
-                    { category: 'Error', count: 0 }
-                ]
-            };
+            console.error('DashboardService Catalyst error:', error);
+            throw error;
         }
     }
 }

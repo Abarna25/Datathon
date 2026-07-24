@@ -28,7 +28,7 @@ async function getFreshAccessToken() {
         return token;
     } catch (e) {
         console.warn('[GLMClient] Could not refresh token from CLI, falling back to env:', e.message);
-        return process.env.CATALYST_TOKEN || 'DEMO_FALLBACK_TOKEN';
+        return process.env.CATALYST_TOKEN || '';
     }
 }
 
@@ -72,85 +72,24 @@ class GLMClient {
         this.org = process.env.CATALYST_ORG;
     }
 
-    getFallbackResponse(messages) {
-        const fullPrompt = messages.map(m => m.content).join('\n');
-        const lastUserMsg = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
-
-        // 1. Text-to-SQL Query Generation
-        if (fullPrompt.includes('ZCQL Rules') || fullPrompt.includes('database query generator')) {
-            const lowerQuery = lastUserMsg.toLowerCase();
-            if (lowerQuery.includes('robbery') || lowerQuery.includes('firearm') || lowerQuery.includes('burglary')) {
-                return "SELECT * FROM CaseMaster WHERE category = 'Robbery'";
-            } else if (lowerQuery.includes('victim')) {
-                return "SELECT * FROM Victim";
-            } else if (lowerQuery.includes('arrest') || lowerQuery.includes('suspect')) {
-                return "SELECT * FROM ArrestSurrender";
-            }
-            return "SELECT * FROM CaseMaster";
-        }
-
-        // 2. FIR Narrative Understanding
-        if (fullPrompt.includes('FIR (First Information Report)') || fullPrompt.includes('narrative_summary')) {
-            return JSON.stringify({
-                summary: {
-                    summary_text: "FIR processed successfully. Incident involves reported robbery and suspicious activity.",
-                    crime_type: "Robbery / Theft",
-                    ipc_sections: "Section 392, 395 IPC",
-                    location: "Main Street, Mysore",
-                    date: new Date().toISOString().split('T')[0],
-                    time: "21:30 HRS"
-                },
-                entities: [
-                    { entity_type: "Person", entity_value: "Vikram Sharma", extracted_from: lastUserMsg.slice(0, 50), confidence: 0.95, reasoning: "Primary suspect mentioned in narrative" },
-                    { entity_type: "Person", entity_value: "Vicky", extracted_from: lastUserMsg.slice(0, 50), confidence: 0.90, reasoning: "Identified alias of Vikram Sharma" },
-                    { entity_type: "Vehicle", entity_value: "White Sedan (KA-09-1234)", extracted_from: "Escaped in white vehicle", confidence: 0.88, reasoning: "Getaway vehicle" }
-                ],
-                aliases: [
-                    { primary_name: "Vikram Sharma", alias_name: "Vicky", reason: "Name match and witness testimony" }
-                ],
-                relationships: [
-                    { source_entity: "Vicky", target_entity: "Vikram Sharma", relationship_type: "Alias of", confidence: 0.92 },
-                    { source_entity: "Vikram Sharma", target_entity: "White Sedan (KA-09-1234)", relationship_type: "Drove", confidence: 0.85 }
-                ],
-                timeline: [
-                    { event_time: "21:15", title: "Suspect Arrived", description: "Suspect arrived in white sedan", source_type: "FIR" },
-                    { event_time: "21:30", title: "Incident Occurred", description: "Robbery reported at venue", source_type: "FIR" }
-                ],
-                investigation_leads: [
-                    { lead_type: "Most suspicious entity", reasoning: "Vikram Sharma matches suspect profile", evidence: "Witness statement", priority: "High", confidence: 0.91 }
-                ]
-            });
-        }
-
-        // 3. Copilot Assistant (Phase 3)
-        if (fullPrompt.includes('VIKSHANA AI Investigation Copilot')) {
-            return JSON.stringify({
-                answer: `Based on the case evidence context, ${lastUserMsg.includes('missing') ? 'the key missing items include unverified CCTV footage and financial records.' : 'the suspect profile aligns with known physical and digital evidence.'}`,
-                confidence: 0.92,
-                evidence_used: ["EVID-001", "EVID-002"],
-                reasoning: "Correlated across case files and witness records."
-            });
-        }
-
-        // 4. Default AI Chatbot Response
-        return `I have analyzed your query regarding "${lastUserMsg}". Based on the investigation memory and case records on file, all relevant entities have been mapped. Let me know if you would like me to generate a formal report or perform cross-evidence correlation.`;
-    }
-
     async generate(messages, options = {}) {
         const {
             temperature = 0.7,
             maxTokens = 2048,
             tools = undefined,
             retries = 2,
-            timeoutMs = 15000
+            timeoutMs = 30000
         } = options;
 
         if (!this.endpoint || !this.model) {
-            console.warn('[GLMClient] GLM_ENDPOINT or GLM_MODEL not configured — using intelligent fallback response.');
-            return { content: this.getFallbackResponse(messages) };
+            console.warn('[GLMClient] GLM_ENDPOINT or GLM_MODEL not configured. Returning graceful offline message.');
+            return {
+                content: "The AI Copilot is currently operating in offline mode (GLM service unconfigured). Catalyst datastore query features remain active, but advanced AI reasoning is unavailable."
+            };
         }
 
         let attempt = 0;
+        let lastError = null;
         
         while (attempt < retries) {
             try {
@@ -171,7 +110,6 @@ class GLMClient {
                 });
 
                 const data = response.data;
-                
                 if (!data || !data.response) {
                     throw new Error("Invalid response structure from GLM: " + JSON.stringify(data));
                 }
@@ -180,27 +118,25 @@ class GLMClient {
 
             } catch (error) {
                 attempt++;
+                lastError = error;
                 if (error.response && error.response.status === 401) {
                     _cachedToken = null;
                 }
                 console.warn(`[GLMClient] Attempt ${attempt} failed:`, error.message);
-                if (attempt >= retries) {
-                    console.warn('[GLMClient] All GLM API attempts failed — engaging intelligent fallback response.');
-                    return { content: this.getFallbackResponse(messages) };
+                if (attempt < retries) {
+                    await new Promise(res => setTimeout(res, 500 * attempt));
                 }
-                await new Promise(res => setTimeout(res, 500 * attempt));
             }
         }
 
-        return { content: this.getFallbackResponse(messages) };
+        console.error('[GLMClient] All GLM API attempts failed. Returning graceful error message.');
+        return {
+            content: "The AI Copilot is currently offline (GLM service returned an error). Catalyst datastore query features remain active, but advanced AI reasoning is unavailable."
+        };
     }
 }
 
-<<<<<<< Updated upstream
 const client = new GLMClient();
 client.getFreshAccessToken = getFreshAccessToken;
 
 module.exports = client;
-=======
-module.exports = new GLMClient();
->>>>>>> Stashed changes

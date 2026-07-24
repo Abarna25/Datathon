@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Shield, LayoutDashboard, Search, Network, Clock,
-  FileText, Settings, ShieldAlert, Compass, UserCheck, Lock, Cpu, TrendingUp, Database, FileText as FileTextIcon, Hexagon
+  Shield, LayoutDashboard, Search, Network, Compass,
+  FileText, ShieldAlert, UserCheck, Lock, Database, FileText as FileTextIcon, Hexagon
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import useAuth from '../hooks/useAuth';
@@ -18,6 +18,7 @@ const Sidebar = () => {
   const roleBadgeColors = {
     Administrator: { bg: 'rgba(239, 68, 68, 0.15)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
     Investigator: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' },
+    Officer: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' },
     Analyst: { bg: 'rgba(139, 92, 246, 0.15)', text: '#8b5cf6', border: 'rgba(139, 92, 246, 0.3)' },
     Supervisor: { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' },
     Policymaker: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)' },
@@ -27,21 +28,15 @@ const Sidebar = () => {
   const activeBadge = roleBadgeColors[role] || roleBadgeColors.Viewer;
 
   const allItems = [
-    { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'] },
-    { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor'] },
-    { id: 'decision-support', name: t('nav.decisionSupport', 'Decision Support'), icon: Compass, path: '/decision-support', roles: ['Administrator', 'Investigator', 'Supervisor'] },
-    { id: 'intelligence', name: t('nav.crimeIntelligence', 'Crime Intelligence'), icon: ShieldAlert, path: '/intelligence', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'] },
-    { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor'] },
-    { id: 'timeline', name: t('nav.caseTimeline', 'Case Timeline'), icon: Clock, path: '/timeline', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'] },
-    { id: 'evidence', name: t('nav.evidenceLedger', 'Evidence Ledger'), icon: Shield, path: '/evidence', roles: ['Administrator', 'Investigator', 'Supervisor'] },
-    { id: 'reports', name: t('nav.reports', 'Reports'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'] },
-    { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] },
-    { id: 'ai-logs', name: 'AI Traceability', icon: Cpu, path: '/ai-logs', roles: ['Administrator', 'Supervisor'] },
-    { id: 'evidence-intelligence', name: 'Evidence Intelligence', icon: Hexagon, path: '/evidence-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'] },
-    { id: 'fir-intelligence', name: 'FIR Intelligence', icon: FileTextIcon, path: '/fir-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor'] },
-    { id: 'data-explorer', name: 'Data Explorer', icon: Database, path: '/data-explorer', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'] },
-    { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Analyst', 'Policymaker'] },
-    { id: 'sociological', name: 'Sociological Insights', icon: Network, path: '/sociological', roles: ['Analyst', 'Policymaker'] }
+    { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
+    { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'decision-support', name: 'Decision Support', icon: Compass, path: '/decision-support', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'fir-intelligence', name: 'FIR Intelligence', icon: FileTextIcon, path: '/fir-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'data-explorer', name: 'Text-to-SQL', icon: Database, path: '/data-explorer', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'] },
+    { id: 'evidence-intelligence', name: 'Evidence Intelligence', icon: Hexagon, path: '/evidence-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'reports', name: t('nav.reports', 'Reports'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
+    { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
   ];
 
   const filteredMenuItems = allItems.filter(item => item.roles.includes(role));
@@ -112,25 +107,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      {/* Settings (Admin Only) */}
-      {role === 'Administrator' && (
-        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
-          <NavLink
-            to="/settings"
-            style={({ isActive }) => ({
-              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-              textDecoration: 'none', fontSize: '13.5px',
-              background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-              borderRadius: '8px'
-            })}
-          >
-            <Settings size={19} />
-            <span>{t('nav.settings', 'Settings')}</span>
-          </NavLink>
-        </div>
-      )}
     </aside>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Upload, Loader2, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
@@ -16,6 +16,34 @@ const FIRNarrativeUnderstanding = () => {
   const [analysisData, setAnalysisData] = useState(null);
   const [selectedEntity, setSelectedEntity] = useState(null);
   const { activeCaseId } = useAppContext();
+
+  // Load existing FIR text for the active case on mount or active case change
+  useEffect(() => {
+    if (!activeCaseId) return;
+    
+    const loadFIRText = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setAnalysisData(null);
+        setSelectedEntity(null);
+        
+        const res = await api.get(`/cases/${activeCaseId}/full-bundle`);
+        if (res.data?.success && res.data.data?.firSummary?.firText) {
+          setFirText(res.data.data.firSummary.firText);
+        } else {
+          setFirText('');
+        }
+      } catch (err) {
+        console.error('[FIRNarrative] Failed to retrieve case bundle:', err);
+        setFirText('');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFIRText();
+  }, [activeCaseId]);
 
   const handleAnalyze = async () => {
     if (!firText.trim()) return;
@@ -48,7 +76,7 @@ const FIRNarrativeUnderstanding = () => {
           FIR Intelligence
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '15px' }}>
-          Upload FIR narrative to automatically extract entities, resolve aliases, and build investigation timelines.
+          Automatically extract entities, resolve aliases, and build investigation timelines from the active case FIR narrative.
         </p>
       </header>
 
@@ -58,7 +86,7 @@ const FIRNarrativeUnderstanding = () => {
           
           <div className="glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Input Narrative</h3>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Input Narrative (Active Case)</h3>
               <button
                 onClick={handleAnalyze}
                 disabled={isLoading || !firText.trim()}
@@ -75,7 +103,7 @@ const FIRNarrativeUnderstanding = () => {
             <textarea
               value={firText}
               onChange={(e) => setFirText(e.target.value)}
-              placeholder="Paste the FIR narrative text here..."
+              placeholder="FIR narrative text is fetched dynamically or can be pasted here..."
               disabled={isLoading}
               style={{
                 width: '100%', height: '150px', padding: '16px', borderRadius: '8px',

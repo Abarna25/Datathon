@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { ConversationProvider, useConversationContext } from '../context/ConversationContext';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatHeader from '../components/chat/ChatHeader';
@@ -10,12 +9,10 @@ import EvidenceModal from '../components/chat/EvidenceModal';
 import { resolveSlashCommand, SLASH_COMMANDS } from '../utils/slashCommands';
 import * as conversationService from '../services/conversationService';
 import { exportAsMarkdown } from '../utils/exportConversation';
-import DecisionSupportPanel from '../components/investigation/DecisionSupportPanel';
 import FIRSummaryPanel from '../components/investigation/FIRSummaryPanel';
-import QuickActionsBar from '../components/investigation/QuickActionsBar';
-import CaseSelector from '../components/investigation/CaseSelector';
 import { useAppContext } from '../context/AppContext';
 import styles from './InvestigationWorkspace.module.css';
+import { Loader2 } from 'lucide-react';
 
 const HELP_TEXT = `**Available commands**\n\n${SLASH_COMMANDS.map((c) => `- \`${c.command}\` — ${c.description}`).join('\n')}`;
 
@@ -41,7 +38,8 @@ const InvestigationChat = ({ caseId }) => {
         error
     } = useConversationContext();
 
-    const [contextCollapsed, setContextCollapsed] = useState(false);
+    // Default Case Context panel to collapsed/hidden state
+    const [contextCollapsed, setContextCollapsed] = useState(true);
     const [contextRefreshKey, setContextRefreshKey] = useState(0);
     const [evidenceModal, setEvidenceModal] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -152,19 +150,23 @@ const InvestigationChat = ({ caseId }) => {
 
     return (
         <div className={styles.page}>
-            <div data-vik-no-print>
-                <ChatSidebar
-                    conversations={conversations}
-                    activeConversationId={activeConversationId}
-                    onSelect={selectConversation}
-                    onNew={startNewConversation}
-                    onRename={renameConversation}
-                    onToggleBookmark={toggleBookmark}
-                    onArchive={archiveConversation}
-                    onDelete={removeConversation}
-                />
-            </div>
+            {/* Left Sidebar: Hidden if history is empty */}
+            {conversations && conversations.length > 0 && (
+                <div data-vik-no-print>
+                    <ChatSidebar
+                        conversations={conversations}
+                        activeConversationId={activeConversationId}
+                        onSelect={selectConversation}
+                        onNew={startNewConversation}
+                        onRename={renameConversation}
+                        onToggleBookmark={toggleBookmark}
+                        onArchive={archiveConversation}
+                        onDelete={removeConversation}
+                    />
+                </div>
+            )}
 
+            {/* Center Area: AI Investigation Copilot */}
             <div className={styles.center} data-vik-print-area>
                 <div data-vik-no-print>
                     <ChatHeader
@@ -175,7 +177,7 @@ const InvestigationChat = ({ caseId }) => {
                         onToggleBookmark={toggleBookmark}
                     />
                 </div>
-                <div style={{ padding: '16px 0 0 0' }} data-vik-no-print>
+                <div style={{ padding: '8px 0 0 0' }} data-vik-no-print>
                     <FIRSummaryPanel bundle={currentCase} />
                 </div>
 
@@ -193,15 +195,8 @@ const InvestigationChat = ({ caseId }) => {
                 {error && <div className={styles.errorBanner} data-vik-no-print>{error}</div>}
                 {uploading && <div className={styles.uploadBanner} data-vik-no-print>Uploading &amp; analyzing files...</div>}
 
-                <div data-vik-no-print>
-                    <QuickActionsBar onAction={(qa) => {
-                        if (qa.command) {
-                            const resolved = resolveSlashCommand(qa.command);
-                            if (resolved) executeResolved(resolved);
-                        } else if (qa.prompt) {
-                            handleSend(qa.prompt);
-                        }
-                    }} />
+                {/* Input & Suggestions */}
+                <div data-vik-no-print style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
                     <ChatInput
                         onSend={handleRawSend}
                         onRunQuickAction={runQuickAction}
@@ -211,14 +206,10 @@ const InvestigationChat = ({ caseId }) => {
                         disabled={loading || uploading}
                     />
                 </div>
-
-                {/* Investigator Decision Support Module */}
-                <div style={{ marginTop: '16px' }} data-vik-no-print>
-                    <DecisionSupportPanel caseId={caseId} />
-                </div>
             </div>
 
-            <div data-vik-no-print>
+            {/* Right Sidebar: Case Context Accordion Panel */}
+            <div data-vik-no-print style={{ width: contextCollapsed ? '40px' : '300px', transition: 'width 0.2s', flexShrink: 0 }}>
                 <ContextPanel
                     caseId={caseId}
                     collapsed={contextCollapsed}
@@ -232,20 +223,29 @@ const InvestigationChat = ({ caseId }) => {
     );
 };
 
-
 const InvestigationWorkspace = () => {
-    const { caseId } = useParams();
-    const { activeCaseId } = useAppContext();
-    const resolvedCaseId = caseId || activeCaseId || null;
+    const { activeCaseId, loadingCases } = useAppContext();
 
-    // If no case is selected, show the Case Selector screen
-    if (!resolvedCaseId) {
-        return <CaseSelector />;
+    if (loadingCases) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '16px', color: 'var(--text-secondary)' }}>
+                <Loader2 size={40} className="spin" color="var(--accent-primary)" />
+                <p>Loading active case bundle...</p>
+            </div>
+        );
+    }
+
+    if (!activeCaseId) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-secondary)' }}>
+                No active investigation case available. Please ensure cases exist in Catalyst.
+            </div>
+        );
     }
 
     return (
-        <ConversationProvider caseId={resolvedCaseId}>
-            <InvestigationChat caseId={resolvedCaseId} />
+        <ConversationProvider caseId={activeCaseId}>
+            <InvestigationChat caseId={activeCaseId} />
         </ConversationProvider>
     );
 };

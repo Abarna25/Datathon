@@ -1,11 +1,20 @@
 /**
  * AuthController.js
- * In-App Custom Authentication Controller powered by Zoho Catalyst.
- * Zero redirects, background REST authentication, JWT session tokens, and role-based access.
+ * Predefined-user authentication for VIKSHANA hackathon demo.
+ * JWT session tokens + role-based access. All other modules remain on live Catalyst data.
  */
 
 const crypto = require('crypto');
 const JWT_SECRET = process.env.JWT_SECRET || 'vikshana-catalyst-secret-key-2026';
+
+// ── Predefined hackathon users ───────────────────────────────────────────────
+const USERS = [
+    { id: 'admin',        username: 'admin',        password: 'admin123',        role: 'Administrator', name: 'System Administrator',  department: 'HQ Command',    aliases: ['admin@vikshana.ai', 'administrator'] },
+    { id: 'investigator', username: 'investigator', password: 'investigator123', role: 'Investigator',  name: 'Investigation Officer', department: 'Field Ops',     aliases: ['investigator@vikshana.ai'] },
+    { id: 'analyst',      username: 'analyst',      password: 'analyst123',      role: 'Analyst',       name: 'Crime Analyst',         department: 'Intelligence',  aliases: ['analyst@vikshana.ai'] },
+    { id: 'supervisor',   username: 'supervisor',   password: 'supervisor123',   role: 'Supervisor',    name: 'Police Supervisor',     department: 'Oversight',     aliases: ['supervisor@vikshana.ai'] },
+    { id: 'policymaker',  username: 'policymaker',  password: 'policy123',       role: 'Policymaker',   name: 'Policy Advisor',        department: 'Strategy',      aliases: ['policymaker@vikshana.ai'] },
+];
 
 function signToken(payload) {
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -21,66 +30,57 @@ function verifyToken(token) {
         if (!token) return null;
         const parts = token.split('.');
         if (parts.length !== 3) return null;
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-        return payload;
+        return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
     } catch (e) {
         return null;
     }
 }
 
-const datastoreClient = require('../queries/datastoreClient');
-const AuditService = require('../services/AuditService');
-
-// Helper to check password hash
-function verifyPassword(inputPassword, hashedPassword) {
-    const inputHash = crypto.createHash('sha256').update(inputPassword).digest('hex');
-    return inputHash === hashedPassword;
-}
-
-function hashPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex');
-}
-
 class AuthController {
     static async login(req, res) {
         try {
-            const { email, password, rememberMe } = req.body || {};
+            const { email, password } = req.body || {};
 
             if (!email || !password) {
-                return res.status(400).json({ success: false, message: 'Email and password are required.' });
+                return res.status(400).json({ success: false, message: 'Username and password are required.' });
             }
 
-            // Find user from datastore
-            const users = await datastoreClient.getRowsWhere(req, 'UserMaster', { email: email.toLowerCase() }, { maxRows: 1 });
-            let user = users.length > 0 ? users[0] : null;
+            const input = email.toLowerCase().trim();
+            const user = USERS.find(u =>
+                u.username.toLowerCase() === input ||
+                u.id.toLowerCase() === input ||
+                u.role.toLowerCase() === input ||
+                (u.aliases && u.aliases.some(a => a.toLowerCase() === input))
+            );
 
             if (!user) {
-                AuditService.logEvent(req, { email }, 'Failed Login', 'Authentication', '', 'FAILED');
-                return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+                return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
             }
 
-            if (!verifyPassword(password, user.password_hash)) {
-                AuditService.logEvent(req, { id: user.ROWID, email: user.email, name: user.name, role: user.role }, 'Failed Login', 'Authentication', '', 'FAILED');
-                return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+            if (user.password !== password) {
+                return res.status(401).json({ success: false, message: 'Invalid credentials. Wrong password.' });
             }
 
-            // Generate JWT session token
-            const tokenPayload = { id: user.ROWID, email: user.email, role: user.role, department: user.department, name: user.name };
+            const tokenPayload = {
+                id: user.id,
+                email: user.username,
+                role: user.role,
+                department: user.department,
+                name: user.name
+            };
             const token = signToken(tokenPayload);
-
-            AuditService.logEvent(req, tokenPayload, 'Login', 'Authentication', '', 'SUCCESS');
 
             return res.status(200).json({
                 success: true,
-                message: 'Authenticated successfully in background',
+                message: 'Authenticated successfully',
                 token,
                 user: {
-                    id: user.ROWID,
+                    id: user.id,
                     name: user.name,
-                    email: user.email,
+                    email: user.username,
                     role: user.role,
                     department: user.department,
-                    status: user.status
+                    status: 'ACTIVE'
                 }
             });
         } catch (error) {
@@ -90,123 +90,32 @@ class AuthController {
     }
 
     static async signup(req, res) {
-        try {
-            const { name, email, password, confirmPassword } = req.body || {};
-
-            if (!name || !email || !password) {
-                return res.status(400).json({ success: false, message: 'All fields are required.' });
-            }
-
-            if (password !== confirmPassword) {
-                return res.status(400).json({ success: false, message: 'Passwords do not match.' });
-            }
-
-            if (password.length < 6) {
-                return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
-            }
-
-            const existing = await datastoreClient.getRowsWhere(req, 'UserMaster', { email: email.toLowerCase() }, { maxRows: 1 });
-            if (existing && existing.length > 0) {
-                return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
-            }
-
-            const newUser = {
-                name,
-                email: email.toLowerCase(),
-                password_hash: hashPassword(password),
-                role: 'Viewer', // Default role for open signups
-                department: 'Unassigned',
-                status: 'ACTIVE'
-            };
-
-            const insertedRow = await datastoreClient.insertRow(req, 'UserMaster', newUser);
-
-            const userToReturn = {
-                id: insertedRow.ROWID,
-                name: insertedRow.name,
-                email: insertedRow.email,
-                role: insertedRow.role,
-                department: insertedRow.department,
-                status: insertedRow.status
-            };
-
-            const token = signToken({ id: userToReturn.id, email: userToReturn.email, role: userToReturn.role, department: userToReturn.department, name: userToReturn.name });
-
-            return res.status(201).json({
-                success: true,
-                message: 'Account created successfully',
-                token,
-                user: userToReturn
-            });
-        } catch (error) {
-            console.error('Signup error:', error);
-            return res.status(500).json({ success: false, message: error.message });
-        }
+        return res.status(400).json({ success: false, message: 'Signup is disabled for the hackathon demo.' });
     }
 
     static async googleAuth(req, res) {
-        try {
-            const { email, name, picture } = req.body || {};
-            const googleEmail = email || 'kanishkgins@gmail.com';
-            const googleName = name || 'Kanishk (Google Auth)';
-
-            let users = await datastoreClient.getRowsWhere(req, 'UserMaster', { email: googleEmail.toLowerCase() }, { maxRows: 1 });
-            let user = users.length > 0 ? users[0] : null;
-
-            if (!user) {
-                const newUser = {
-                    name: googleName,
-                    email: googleEmail.toLowerCase(),
-                    password_hash: hashPassword(Date.now().toString()), // random password since they login with google
-                    role: 'Viewer', // default role
-                    department: 'Unassigned',
-                    status: 'ACTIVE'
-                };
-                const inserted = await datastoreClient.insertRow(req, 'UserMaster', newUser);
-                user = inserted;
-            }
-
-            const userToReturn = {
-                id: user.ROWID,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                department: user.department,
-                status: user.status
-            };
-
-            const token = signToken({ id: userToReturn.id, email: userToReturn.email, role: userToReturn.role, department: userToReturn.department, name: userToReturn.name });
-
-            return res.status(200).json({
-                success: true,
-                message: 'Google Popup Authentication successful',
-                token,
-                user: userToReturn
-            });
-        } catch (error) {
-            console.error('Google Auth error:', error);
-            return res.status(500).json({ success: false, message: error.message });
-        }
+        // Auto-login as admin for Google auth during hackathon
+        const user = USERS[0];
+        const token = signToken({ id: user.id, email: user.username, role: user.role, department: user.department, name: user.name });
+        return res.status(200).json({
+            success: true,
+            message: 'Google Authentication successful',
+            token,
+            user: { id: user.id, name: user.name, email: user.username, role: user.role, department: user.department, status: 'ACTIVE' }
+        });
     }
 
     static async forgotPassword(req, res) {
-        try {
-            const { email } = req.body || {};
-            if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
-
-            return res.status(200).json({
-                success: true,
-                message: `Password reset instructions sent to ${email}`
-            });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
-        }
+        return res.status(200).json({
+            success: true,
+            message: 'Hackathon demo credentials: admin/admin123, investigator/investigator123, analyst/analyst123, supervisor/supervisor123'
+        });
     }
 
     static async getSession(req, res) {
         try {
             const authHeader = req.headers.authorization;
-            let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+            const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
             if (!token) {
                 return res.status(401).json({ success: false, message: 'No token provided' });
@@ -216,30 +125,22 @@ class AuthController {
             if (!decoded) {
                 return res.status(401).json({ success: false, message: 'Invalid token' });
             }
-            
-            let user = null;
-            if (decoded.id) {
-                user = await datastoreClient.getRowById(req, 'UserMaster', decoded.id);
-            }
-            
-            if (!user) {
-                const users = await datastoreClient.getRowsWhere(req, 'UserMaster', { email: decoded.email }, { maxRows: 1 });
-                user = users.length > 0 ? users[0] : null;
-            }
 
+            // Look up the user from our predefined list
+            const user = USERS.find(u => u.id === decoded.id || u.username === decoded.email);
             if (!user) {
-                return res.status(404).json({ success: false, message: 'User not found' });
+                return res.status(404).json({ success: false, message: 'Session user not found' });
             }
 
             return res.status(200).json({
                 success: true,
                 user: {
-                    id: user.ROWID,
+                    id: user.id,
                     name: user.name,
-                    email: user.email,
+                    email: user.username,
                     role: user.role,
                     department: user.department,
-                    status: user.status
+                    status: 'ACTIVE'
                 }
             });
         } catch (error) {
@@ -248,33 +149,11 @@ class AuthController {
     }
 
     static async logout(req, res) {
-        if (req.user) {
-            AuditService.logEvent(req, req.user, 'Logout', 'Authentication', '', 'SUCCESS');
-        }
         return res.status(200).json({ success: true, message: 'Logged out successfully.' });
     }
 
     static async updateRole(req, res) {
-        try {
-            const { targetUserId, newRole } = req.body || {};
-            if (!targetUserId || !newRole) {
-                return res.status(400).json({ success: false, message: 'targetUserId and newRole are required' });
-            }
-
-            const targetUser = await datastoreClient.getRowById(req, 'UserMaster', targetUserId);
-            if (!targetUser) {
-                return res.status(404).json({ success: false, message: 'User not found' });
-            }
-
-            await datastoreClient.updateRow(req, 'UserMaster', { ROWID: targetUserId, role: newRole });
-            
-            AuditService.logEvent(req, req.user, 'Role Change', `UserMaster:${targetUserId} changed to ${newRole}`, '', 'SUCCESS');
-
-            return res.status(200).json({ success: true, message: 'Role updated successfully' });
-        } catch (error) {
-            console.error('Update Role error:', error);
-            return res.status(500).json({ success: false, message: error.message });
-        }
+        return res.status(400).json({ success: false, message: 'Role updates are disabled.' });
     }
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -18,18 +18,12 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import InvestigationWorkspace from './pages/InvestigationWorkspace';
 import RelationshipExplorer from './pages/RelationshipExplorer';
-import EvidenceLedger from './pages/EvidenceLedger';
 import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-
-import Intelligence from './pages/Intelligence';
-import Timeline from './pages/Timeline';
-import InvestigatorDecisionSupport from './pages/InvestigatorDecisionSupport';
 import AuditLogs from './pages/AuditLogs';
-import AITraceability from './pages/AITraceability';
 import DataExplorer from './pages/DataExplorer';
 import FIRNarrativeUnderstanding from './pages/FIRNarrativeUnderstanding';
 import EvidenceIntelligence from './pages/EvidenceIntelligence';
+import InvestigatorDecisionSupport from './pages/InvestigatorDecisionSupport';
 
 const DashboardLayout = ({ children }) => (
   <div style={{ display: 'flex', minHeight: '100vh', width: '100vw' }}>
@@ -43,11 +37,9 @@ const DashboardLayout = ({ children }) => (
 );
 
 function App() {
-  const ALL_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Viewer'];
-  const INVESTIGATOR_ROLES = ['Administrator', 'Investigator', 'Supervisor'];
-  const ANALYST_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'];
-  const RELATIONSHIP_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor'];
-  const ADMIN_ROLES = ['Administrator'];
+  const ALL_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Viewer', 'Officer'];
+  const INVESTIGATOR_ROLES = ['Administrator', 'Investigator', 'Supervisor', 'Officer'];
+  const RELATIONSHIP_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'];
   const AUDIT_ROLES = ['Administrator', 'Supervisor'];
 
   return (
@@ -55,7 +47,7 @@ function App() {
       <AppProvider>
         <LanguageProvider>
           <AutoTranslator />
-          <Router basename="/app">
+          <Router>
             <Routes>
               {/* Public Auth Routes */}
               <Route path="/auth/login" element={<Login />} />
@@ -85,64 +77,10 @@ function App() {
               />
               
               <Route
-                path="/investigate/:caseId"
-                element={
-                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                    <DashboardLayout><InvestigationWorkspace /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/intelligence"
-                element={
-                  <ProtectedRoute allowedRoles={ALL_ROLES}>
-                    <DashboardLayout><Intelligence /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
                 path="/relationships"
                 element={
                   <ProtectedRoute allowedRoles={RELATIONSHIP_ROLES}>
                     <DashboardLayout><RelationshipExplorer /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/timeline"
-                element={
-                  <ProtectedRoute allowedRoles={ANALYST_ROLES}>
-                    <DashboardLayout><Timeline /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/timeline/:caseId"
-                element={
-                  <ProtectedRoute allowedRoles={ANALYST_ROLES}>
-                    <DashboardLayout><Timeline /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/decision-support"
-                element={
-                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                    <DashboardLayout><InvestigatorDecisionSupport /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/evidence"
-                element={
-                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                    <DashboardLayout><EvidenceLedger /></DashboardLayout>
                   </ProtectedRoute>
                 }
               />
@@ -157,28 +95,10 @@ function App() {
               />
               
               <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute allowedRoles={ADMIN_ROLES}>
-                    <DashboardLayout><Settings /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
                 path="/audit-logs"
                 element={
                   <ProtectedRoute allowedRoles={AUDIT_ROLES}>
                     <DashboardLayout><AuditLogs /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/ai-logs"
-                element={
-                  <ProtectedRoute allowedRoles={AUDIT_ROLES}>
-                    <DashboardLayout><AITraceability /></DashboardLayout>
                   </ProtectedRoute>
                 }
               />
@@ -206,6 +126,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={ALL_ROLES}>
                     <DashboardLayout><EvidenceIntelligence /></DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/decision-support"
+                element={
+                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
+                    <DashboardLayout><InvestigatorDecisionSupport /></DashboardLayout>
                   </ProtectedRoute>
                 }
               />

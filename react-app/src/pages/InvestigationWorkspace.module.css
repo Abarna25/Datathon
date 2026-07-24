@@ -2,10 +2,12 @@
     display: flex;
     height: 100%;
     width: 100%;
-    background: #F8FAFC;
-    color: #111827;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     overflow: hidden;
     position: relative;
+    gap: 16px;
+    padding: 0;
 }
 
 .center {
@@ -14,8 +16,11 @@
     flex-direction: column;
     height: 100%;
     min-width: 0;
-    background: #F8FAFC;
+    background: var(--bg-primary);
     position: relative;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .messages {
@@ -24,6 +29,8 @@
     display: flex;
     flex-direction: column;
     scroll-behavior: smooth;
+    gap: 16px;
+    padding-right: 4px;
 }
 
 .errorBanner {
@@ -31,8 +38,8 @@
     border: 1px solid rgba(239, 68, 68, 0.2);
     color: #EF4444;
     padding: 10px 16px;
-    margin: 0 20px 8px 20px;
-    border-radius: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
     font-size: 13px;
     text-align: center;
     font-weight: 500;
@@ -43,8 +50,8 @@
     border: 1px solid rgba(37, 99, 235, 0.3);
     color: #2563EB;
     padding: 10px 16px;
-    margin: 0 20px 8px 20px;
-    border-radius: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
     font-size: 13px;
     text-align: center;
     font-weight: 500;

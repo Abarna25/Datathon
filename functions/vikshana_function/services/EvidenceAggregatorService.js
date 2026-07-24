@@ -1,60 +1,96 @@
 const datastoreClient = require('../queries/datastoreClient');
 const AuditService = require('./AuditService');
 
+/**
+ * EvidenceAggregatorService — Uses ONLY real Catalyst dataset tables.
+ *
+ * ✅ Accused            → AccusedMasterID, CaseMasterID, AccusedName
+ * ✅ ArrestSurrender    → ArrestSurrenderID, CaseMasterID, AccusedMasterID, ArrestSurrenderDate
+ * ✅ ChargesheetDetails → CSID, CaseMasterID, csdate, cstype
+ * ✅ ActSectionAssociation → CaseMasterID, ActID, SectionID
+ * ✅ Victim             → VictimMasterID, CaseMasterID, VictimName
+ *
+ * ❌ Removed: Evidence, CCTVFootage, PhoneRecord, FinancialTransaction, Weapon, Vehicle, ForensicReport
+ *    — none of these tables exist in the dataset
+ */
+
 class EvidenceAggregatorService {
-    
+
     async getAggregatedEvidence(req, caseId) {
-        // Fetch evidence records from Catalyst
         const [
-            evidence,
-            cctv,
-            phone,
-            financial,
-            weapons,
-            vehicles,
-            reports
+            accused,
+            arrests,
+            chargesheet,
+            actSections,
+            victims
         ] = await Promise.all([
-            datastoreClient.getRowsWhere(req, 'Evidence', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'CCTVFootage', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'PhoneRecord', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'FinancialTransaction', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'Weapon', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'Vehicle', { case_id: caseId }, { maxRows: 100 }).catch(() => []),
-            datastoreClient.getRowsWhere(req, 'ForensicReport', { evidence_id: { $ne: null } }, { maxRows: 100 }).catch(() => []) // Naive join approximation
+            datastoreClient.getRowsWhere(req, 'Accused', { CaseMasterID: caseId }, { maxRows: 100 }).catch(() => []),
+            datastoreClient.getRowsWhere(req, 'ArrestSurrender', { CaseMasterID: caseId }, { maxRows: 100 }).catch(() => []),
+            datastoreClient.getRowsWhere(req, 'ChargesheetDetails', { CaseMasterID: caseId }, { maxRows: 100 }).catch(() => []),
+            datastoreClient.getRowsWhere(req, 'ActSectionAssociation', { CaseMasterID: caseId }, { maxRows: 100 }).catch(() => []),
+            datastoreClient.getRowsWhere(req, 'Victim', { CaseMasterID: caseId }, { maxRows: 100 }).catch(() => [])
         ]);
 
-        // Unify them into a common schema
+        // Unify into a common schema that the frontend Evidence Intelligence page can render
         const unified = [
-            ...evidence.map(e => ({ id: e.ROWID, source: 'Evidence', type: e.type, title: e.title, description: e.description, date: e.collection_date })),
-            ...cctv.map(e => ({ id: e.ROWID, source: 'CCTVFootage', type: 'CCTV', title: 'CCTV ' + e.location, description: e.description, date: e.captured_at })),
-            ...phone.map(e => ({ id: e.ROWID, source: 'PhoneRecord', type: 'Mobile', title: 'Call ' + e.caller + ' to ' + e.receiver, description: e.call_type, date: e.call_time })),
-            ...financial.map(e => ({ id: e.ROWID, source: 'FinancialTransaction', type: 'Financial', title: 'Txn ' + e.amount, description: e.txn_type, date: e.txn_time })),
-            ...weapons.map(e => ({ id: e.ROWID, source: 'Weapon', type: 'Weapon', title: e.type + ' ' + e.make, description: 'SN: ' + e.serial_number, date: null })),
-            ...vehicles.map(e => ({ id: e.ROWID, source: 'Vehicle', type: 'Vehicle', title: e.make + ' ' + e.model, description: 'Plate: ' + e.license_plate, date: null }))
+            ...accused.map(r => ({
+                id: r.AccusedMasterID || r.ROWID,
+                source: 'Accused',
+                type: 'Person',
+                title: `Accused: ${r.AccusedName || 'Unknown'}`,
+                description: `Age: ${r.AgeYear || 'N/A'} | PersonID: ${r.PersonID || 'N/A'}`,
+                date: null,
+                caseId: r.CaseMasterID
+            })),
+            ...arrests.map(r => ({
+                id: r.ArrestSurrenderID || r.ROWID,
+                source: 'ArrestSurrender',
+                type: r.ArrestSurrenderTypeID === 1 ? 'Arrest' : 'Surrender',
+                title: `${r.ArrestSurrenderTypeID === 1 ? 'Arrest' : 'Surrender'} Record`,
+                description: `Accused ID ${r.AccusedMasterID} at Station ${r.PoliceStationID}`,
+                date: r.ArrestSurrenderDate,
+                caseId: r.CaseMasterID
+            })),
+            ...chargesheet.map(r => ({
+                id: r.CSID || r.ROWID,
+                source: 'ChargesheetDetails',
+                type: 'Chargesheet',
+                title: `Chargesheet #${r.CSID}`,
+                description: `Type: ${r.cstype || 'N/A'} | Filed: ${r.csdate || 'N/A'}`,
+                date: r.csdate,
+                caseId: r.CaseMasterID
+            })),
+            ...actSections.map(r => ({
+                id: r.ROWID,
+                source: 'ActSectionAssociation',
+                type: 'Legal',
+                title: `Act ${r.ActID} — Section ${r.SectionID}`,
+                description: `Applicable law sections for case ${r.CaseMasterID}`,
+                date: null,
+                caseId: r.CaseMasterID
+            })),
+            ...victims.map(r => ({
+                id: r.VictimMasterID || r.ROWID,
+                source: 'Victim',
+                type: 'Victim',
+                title: `Victim: ${r.VictimName || 'Unknown'}`,
+                description: `Age: ${r.AgeYear || 'N/A'}`,
+                date: null,
+                caseId: r.CaseMasterID
+            }))
         ];
 
-        // Masking logic based on Role (RBAC)
-        const role = req.user?.role?.toUpperCase();
-        if (role === 'ANALYST') {
-            unified.forEach(u => {
-                if (u.type === 'Mobile' || u.type === 'Financial') {
-                    u.title = '*** MASKED ***';
-                    u.description = 'Masked for Analysis';
-                }
-            });
-        } else if (role === 'POLICYMAKER') {
-            // Return only aggregated counts
+        // RBAC masking
+        const role = (req.user?.role || '').toUpperCase();
+        if (role === 'POLICYMAKER') {
             const counts = {};
-            unified.forEach(u => {
-                counts[u.type] = (counts[u.type] || 0) + 1;
-            });
+            unified.forEach(u => { counts[u.type] = (counts[u.type] || 0) + 1; });
             return { isAggregated: true, counts };
         }
 
-        // Calculate summary metrics
         const totalCount = unified.length;
         const typesCount = new Set(unified.map(u => u.type)).size;
-        const completeness = Math.min(100, Math.round((typesCount / 8) * 100)); // Assuming 8 main types is a "complete" case
+        const completeness = Math.min(100, Math.round((typesCount / 5) * 100));
 
         await AuditService.logEvent(req, req.user, 'Accessed Evidence Workspace', 'EvidenceIntelligence', caseId, 'SUCCESS');
 
@@ -64,7 +100,7 @@ class EvidenceAggregatorService {
                 totalCount,
                 typesCount,
                 completeness,
-                quality: completeness > 75 ? 'High' : (completeness > 40 ? 'Medium' : 'Low')
+                quality: completeness > 75 ? 'High' : completeness > 40 ? 'Medium' : 'Low'
             },
             evidence: unified
         };

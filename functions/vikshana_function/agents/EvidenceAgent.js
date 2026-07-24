@@ -18,12 +18,37 @@ class EvidenceAgent {
             }
 
             // Handle GLM Reasoning Models that output <think> or raw text before JSON
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                content = jsonMatch[0];
+            // Extract array first (as the prompt asks for an array) then object
+            const arrayMatch = content.match(/\[[\s\S]*\]/);
+            const objectMatch = content.match(/\{[\s\S]*\}/);
+            
+            if (arrayMatch) {
+                content = arrayMatch[0];
+            } else if (objectMatch) {
+                content = objectMatch[0];
             }
 
-            const claims = JSON.parse(content);
+            let claims = JSON.parse(content);
+            
+            // Normalize response to always return a list of claims
+            if (!Array.isArray(claims)) {
+                if (claims && Array.isArray(claims.claims)) {
+                    claims = claims.claims;
+                } else if (claims && Array.isArray(claims.evidences)) {
+                    claims = claims.evidences;
+                } else if (claims && typeof claims === 'object') {
+                    claims = [claims];
+                } else {
+                    claims = [];
+                }
+            }
+            
+            // Make sure each claim has supporting and counter arrays
+            claims.forEach(c => {
+                if (!Array.isArray(c.supporting)) c.supporting = c.supporting ? [c.supporting] : [];
+                if (!Array.isArray(c.counter)) c.counter = c.counter ? [c.counter] : [];
+            });
+
             return claims;
         } catch (error) {
             console.error("[EvidenceAgent] Error correlating evidence:", error);

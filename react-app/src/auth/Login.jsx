@@ -54,6 +54,25 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = async (demo) => {
+    setError('');
+    setLoading(true);
+    let pwd = 'password123';
+    if (demo.email === 'admin@vikshana.ai') pwd = 'admin123';
+    else if (demo.email === 'investigator@vikshana.ai') pwd = 'investigator123';
+    else if (demo.email === 'analyst@vikshana.ai') pwd = 'analyst123';
+    else if (demo.email === 'supervisor@vikshana.ai') pwd = 'supervisor123';
+    else if (demo.email === 'policymaker@vikshana.ai') pwd = 'policy123';
+
+    try {
+      await login(demo.email, pwd, true);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Demo login failed.');
+      setLoading(false);
+    }
+  };
+
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setSignupError('');
@@ -117,16 +136,16 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Email Address</label>
+            <label style={styles.label}>Username / Email</label>
             <div style={styles.inputWrapper}>
               <Mail style={styles.inputIcon} size={20} />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={styles.input}
-                placeholder="officer@vikshana.gov"
+                placeholder="e.g. admin@vikshana.ai"
               />
             </div>
           </div>
@@ -194,10 +213,7 @@ const Login = () => {
             <button
               key={demo.email}
               type="button"
-              onClick={() => {
-                setEmail(demo.email);
-                setPassword('password123');
-              }}
+              onClick={() => handleDemoLogin(demo)}
               style={styles.demoAccountButton}
             >
               <div style={styles.demoAccountLabel}>{demo.label}</div>

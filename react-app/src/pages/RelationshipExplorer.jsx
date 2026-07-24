@@ -4,26 +4,9 @@ import { Network, RefreshCw } from 'lucide-react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
 
-const DEFAULT_NODES = [
-  { id: '1', label: 'Vikram Sharma (Suspect)', type: 'person', status: 'Prime Accused', risk: 'High' },
-  { id: '2', label: 'Rajesh Verma (Victim)', type: 'person', status: 'Complainant', risk: 'Low' },
-  { id: '3', label: 'Sector 18 Exchange (Scene)', type: 'case', status: 'Crime Location', risk: 'Critical' },
-  { id: '4', label: 'SUV MH-04-AB-1234', type: 'vehicle', status: 'Getaway Vehicle', risk: 'High' },
-  { id: '5', label: '+91 98765 43210 (Phone)', type: 'phone', status: 'Intercepted Calls', risk: 'Medium' },
-  { id: '6', label: 'Rahul Varma (Associate)', type: 'person', status: 'Accomplice', risk: 'Medium' }
-];
-
-const DEFAULT_EDGES = [
-  { source: '1', target: '3', label: 'Spotted at Scene (21:45)' },
-  { source: '2', target: '3', label: 'Reported Incident' },
-  { source: '1', target: '4', label: 'Registered Owner' },
-  { source: '1', target: '5', label: 'Primary Cell Line' },
-  { source: '1', target: '6', label: 'Frequent Calls (14 logs)' }
-];
-
 const RelationshipExplorer = () => {
   const [loading, setLoading] = useState(false);
-  const [graphData, setGraphData] = useState({ nodes: DEFAULT_NODES, edges: DEFAULT_EDGES });
+  const [graphData, setGraphData] = useState({ nodes: [], edges: [] });
   const { activeCaseId } = useAppContext();
 
   const fetchNetwork = useCallback(async () => {
@@ -33,11 +16,21 @@ const RelationshipExplorer = () => {
       if (response.data && response.data.success && response.data.data && response.data.data.nodes?.length > 0) {
         setGraphData(response.data.data);
       } else {
-        setGraphData({ nodes: DEFAULT_NODES, edges: DEFAULT_EDGES });
+        setGraphData({
+          nodes: [
+            { id: 'case', label: `Case Master ID: ${activeCaseId || 'Active Case'}`, type: 'case', status: 'Active investigation', risk: 'Low' }
+          ],
+          edges: []
+        });
       }
     } catch (error) {
-      console.error("Failed to fetch relationships, using network topology fallback", error);
-      setGraphData({ nodes: DEFAULT_NODES, edges: DEFAULT_EDGES });
+      console.error("Failed to fetch relationships", error);
+      setGraphData({
+        nodes: [
+          { id: 'case', label: `Case Master ID: ${activeCaseId || 'Active Case'}`, type: 'case', status: 'Active investigation', risk: 'Low' }
+        ],
+        edges: []
+      });
     } finally {
       setLoading(false);
     }

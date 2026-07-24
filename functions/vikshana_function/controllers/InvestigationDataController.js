@@ -1,14 +1,14 @@
 const ContextBuilderService = require('../services/ContextBuilderService');
 const datastoreClient = require('../queries/datastoreClient');
 
-/** Simple evidence-density/flag-count heuristic for the UI's risk & confidence indicators — not an AI claim, never shown as a cited fact in chat. */
+/** Simple evidence-density heuristic for the UI's risk & confidence indicators. Uses real dataset tables. */
 function computeRiskAndConfidence(context) {
-    const flaggedTxns = (context.financialTransactions || []).filter((t) => t.is_flagged).length;
-    const suspiciousCalls = (context.phoneRecords || []).filter((p) => p.is_suspicious).length;
-    const highRiskSuspects = (context.suspects || []).filter((s) => s.risk_level === 'high').length;
+    // No PhoneRecord/FinancialTransaction in dataset — use suspect (Accused) and timeline (Inv_OccuranceTime) counts
+    const suspectCount = (context.suspects || []).length;
+    const timelineCount = (context.timeline || []).length;
 
-    const riskScore = flaggedTxns + suspiciousCalls + highRiskSuspects;
-    const riskLevel = riskScore >= 3 ? 'high' : riskScore >= 1 ? 'medium' : 'low';
+    const riskScore = suspectCount + Math.floor(timelineCount / 2);
+    const riskLevel = riskScore >= 4 ? 'high' : riskScore >= 2 ? 'medium' : 'low';
 
     const totalEvidence = Object.values(context.evidenceCounts || {}).reduce((sum, n) => sum + (n || 0), 0);
     const confidence = Math.min(95, 30 + totalEvidence * 6);
@@ -21,7 +21,7 @@ class InvestigationDataController {
         try {
             const { caseId } = req.params;
             const context = await ContextBuilderService.buildCaseContext(req, caseId);
-            const attachments = await datastoreClient.getRowsByCase(req, 'Attachment', caseId, { maxRows: 10, orderBy: 'CREATEDTIME' });
+            const attachments = [];
             const { riskLevel, confidence } = computeRiskAndConfidence(context);
 
             res.status(200).json({
@@ -58,11 +58,12 @@ class InvestigationDataController {
     }
 }
 
-InvestigationDataController.getWitnesses = InvestigationDataController.makeListHandler('Witness');
-InvestigationDataController.getSuspects = InvestigationDataController.makeListHandler('Suspect');
-InvestigationDataController.getCctv = InvestigationDataController.makeListHandler('CCTVFootage');
-InvestigationDataController.getPhoneRecords = InvestigationDataController.makeListHandler('PhoneRecord');
-InvestigationDataController.getFinancialTransactions = InvestigationDataController.makeListHandler('FinancialTransaction');
-InvestigationDataController.getTimeline = InvestigationDataController.makeListHandler('TimelineEvent');
+// Map API handler names to the real Catalyst dataset tables
+InvestigationDataController.getWitnesses = InvestigationDataController.makeListHandler('ComplainantDetails'); // was 'Witness'
+InvestigationDataController.getSuspects = InvestigationDataController.makeListHandler('Accused');             // was 'Suspect'
+InvestigationDataController.getCctv = async (req, res) => res.json({ success: true, data: [] });             // CCTVFootage not in dataset
+InvestigationDataController.getPhoneRecords = async (req, res) => res.json({ success: true, data: [] });     // PhoneRecord not in dataset
+InvestigationDataController.getFinancialTransactions = async (req, res) => res.json({ success: true, data: [] }); // FinancialTransaction not in dataset
+InvestigationDataController.getTimeline = InvestigationDataController.makeListHandler('Inv_OccuranceTime');  // was 'TimelineEvent'
 
 module.exports = InvestigationDataController;

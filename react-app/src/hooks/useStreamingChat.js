@@ -43,7 +43,10 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
         try {
             const response = await fetch(`${API_BASE_URL}/conversations/${resolvedId}/messages`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('vikshana_auth_token') || ''}`
+                },
                 body: JSON.stringify({ content, officerId, caseId }),
                 signal: controller.signal
             });

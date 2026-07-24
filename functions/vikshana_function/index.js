@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config({ path: __dirname + '/.env' });
 const cors = require('cors');
+const datastoreClient = require('./queries/datastoreClient');
 const { authenticateToken, authorizeRole } = require('./middleware/authorize.middleware');
 const { fieldFilter } = require('./middleware/fieldFilter.middleware');
 
@@ -18,16 +19,59 @@ const signalRoutes = require('./routes/signal.routes');
 const jobRoutes = require('./routes/job.routes');
 const mlRoutes = require('./routes/ml.routes');
 const convokraftRoutes = require('./routes/convokraft.routes');
-const sociologicalRoutes = require('./routes/sociological.routes');
 const offenderRoutes = require('./routes/offender.routes');
 const decisionRoutes = require('./routes/decision.routes');
-const forecastingRoutes = require('./routes/forecasting.routes');
 const auditRoutes = require('./routes/audit.routes');
 const textToSqlRoutes = require('./routes/textToSql.routes');
 const firIntelligenceRoutes = require('./routes/firIntelligence.routes');
 const evidenceIntelligenceRoutes = require('./routes/evidenceIntelligence.routes');
+const forecastingRoutes = require('./routes/forecasting.routes');
 
 const app = express();
+
+const requiredTables = [
+    'CaseMaster', 'Victim', 'Accused', 'ComplainantDetails', 'ArrestSurrender',
+    'Employee', 'ChargesheetDetails', 'ActSectionAssociation', 'Court', 'Unit'
+];
+let startupChecked = false;
+let startupDiagnostic = null;
+
+// Catalyst URL path prefix normalizer
+app.use((req, res, next) => {
+    const prefix = '/server/vikshana_function';
+    if (req.url && req.url.startsWith(prefix)) {
+        req.url = req.url.slice(prefix.length);
+    }
+    // Clean up empty url to root slash
+    if (!req.url || req.url === '') {
+        req.url = '/';
+    }
+    next();
+});
+
+// Startup Validation Middleware
+app.use(async (req, res, next) => {
+    if (!startupChecked) {
+        startupChecked = true;
+        console.log('[Startup Validation] Verifying 10 core tables in Catalyst Data Store...');
+        const missing = [];
+        for (const table of requiredTables) {
+            try {
+                await datastoreClient.getRows(req, table, { maxRows: 1 });
+            } catch (err) {
+                missing.push(`${table} (${err.message})`);
+            }
+        }
+        if (missing.length > 0) {
+            startupDiagnostic = `[STARTUP DIAGNOSTIC] Core tables missing in Catalyst:\n` + missing.map(m => `- ${m}`).join('\n');
+            console.error(startupDiagnostic);
+            app.set('startupDiagnostic', startupDiagnostic);
+        } else {
+            console.log('[Startup Validation] All 10 core tables verified successfully! 🚀');
+        }
+    }
+    next();
+});
 
 // Global Middleware
 app.use(cors());
@@ -50,8 +94,6 @@ app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor'
 app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor'), evidenceRoutes);
 
 app.use('/relationships', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor'), relationshipRoutes);
-app.use('/sociological', authorizeRole('Administrator', 'Analyst', 'Supervisor', 'Policymaker'), sociologicalRoutes);
-app.use('/forecasting', authorizeRole('Administrator', 'Analyst', 'Supervisor', 'Policymaker'), forecastingRoutes);
 app.use('/ml', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor'), mlRoutes);
 
 app.use('/reports', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), reportRoutes);
@@ -61,6 +103,7 @@ app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Superviso
 app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), textToSqlRoutes);
 app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), firIntelligenceRoutes);
 app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), evidenceIntelligenceRoutes);
+app.use('/forecasting', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), forecastingRoutes);
 
 
 

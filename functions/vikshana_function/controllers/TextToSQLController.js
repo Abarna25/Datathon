@@ -4,14 +4,14 @@ const AuditService = require('../services/AuditService');
 class TextToSQLController {
     async processQuery(req, res) {
         try {
-            const { query } = req.body;
+            const { query, caseId } = req.body;
             
             if (!query) {
                 return res.status(400).json({ error: 'Query is required.' });
             }
 
-            // Step 1: Generate SQL from Natural Language
-            const sql = await textToSQLService.generateSQL(query);
+            // Step 1: Generate SQL from Natural Language, passing the scoped case ID
+            const sql = await textToSQLService.generateSQL(query, caseId);
 
             // Step 2: Validate SQL
             textToSQLService.validateSQL(sql);
@@ -28,7 +28,7 @@ class TextToSQLController {
                 req.user,
                 'Generated AI SQL Query',
                 `Text-to-SQL Engine`,
-                '', // No specific case id bound for global search
+                caseId || '', // Bind specific active case id
                 'SUCCESS'
             );
 

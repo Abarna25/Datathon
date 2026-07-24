@@ -9,7 +9,7 @@ export function exportConversationToPDF({
   messages = [],
   officerName = 'Officer Kanishk',
   officerRole = 'Senior Investigator',
-  caseId = 'CASE-2026-8841',
+  caseId = '',
   language = 'en'
 }) {
   return new Promise((resolve, reject) => {

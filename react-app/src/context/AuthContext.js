@@ -25,7 +25,12 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           console.warn('[AuthContext] Session restore notice:', error.message);
-          // Keep savedUser fallback so officer is never locked out
+          // If token is invalid or expired, clear the local credentials to prevent loop errors
+          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            localStorage.removeItem('vikshana_auth_token');
+            localStorage.removeItem('vikshana_user');
+            setUser(null);
+          }
         }
       }
       setLoading(false);

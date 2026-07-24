@@ -23,22 +23,14 @@ const ChatHeader = ({
         setCasesLoading(true);
         conversationService.listCases()
             .then((res) => {
-                if (Array.isArray(res) && res.length > 0) {
+                if (Array.isArray(res)) {
                     setCases(res);
                 } else {
-                    setCases([
-                        { id: '1', title: 'Case #1 — Primary Investigation' },
-                        { id: '2', title: 'Case #2 — Sector 18 Homicide' },
-                        { id: '3', title: 'Case #3 — Financial Fraud Syndicate' }
-                    ]);
+                    setCases([]);
                 }
             })
             .catch(() => {
-                setCases([
-                    { id: '1', title: 'Case #1 — Primary Investigation' },
-                    { id: '2', title: 'Case #2 — Sector 18 Homicide' },
-                    { id: '3', title: 'Case #3 — Financial Fraud Syndicate' }
-                ]);
+                setCases([]);
             })
             .finally(() => setCasesLoading(false));
     }, []);
@@ -46,7 +38,7 @@ const ChatHeader = ({
     if (!conversation) return null;
 
     const currentTitle = conversation.title || 'New Investigation';
-    const currentCaseId = String(conversation.caseId || '1');
+    const currentCaseId = String(conversation.caseId || '');
 
     const handleCaseChange = (e) => {
         const selectedId = e.target.value;

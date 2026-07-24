@@ -11,4 +11,18 @@ const api = axios.create({
     timeout: 60000 // 60 second timeout — AI responses can take 20–30s
 });
 
+// Automatically attach JWT token to all outgoing API requests
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('vikshana_auth_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export default api;

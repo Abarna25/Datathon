@@ -10,20 +10,54 @@ class TextToSQLService {
 
     getSchemaContext() {
         if (!this.schemaContext) {
-            const schemaPath = path.join(__dirname, '..', 'DATASTORE_SCHEMA.md');
-            try {
-                this.schemaContext = fs.readFileSync(schemaPath, 'utf8');
-            } catch (err) {
-                console.error('[TextToSQLService] Failed to load schema:', err.message);
-                this.schemaContext = 'Schema not available. Assume typical tables like CaseMaster, Victim, Witness, ArrestSurrender.';
-            }
+            // Use the REAL Catalyst dataset schema — these are the only tables that exist
+            this.schemaContext = `
+Real Catalyst Data Store Tables (ONLY these exist):
+
+CaseMaster (CaseMasterID, CrimeNo, CaseNo, CrimeRegisteredDate, PolicePersonID, PoliceStationID, CaseCategoryID, GravityOffenceID, CrimeMajorHeadID, CrimeMinorHeadID, CaseStatusID, CourtID, IncidentFromDate, IncidentToDate, InfoReceivedPSDate, latitude, longitude, BriefFacts)
+
+Victim (VictimMasterID, CaseMasterID, VictimName, AgeYear, GenderID, VictimPolice)
+
+Accused (AccusedMasterID, CaseMasterID, AccusedName, AgeYear, GenderID, PersonID)
+
+ComplainantDetails (ComplainantID, CaseMasterID, ComplainantName, AgeYear, OccupationID, ReligionID, CasteID, GenderID)
+
+ArrestSurrender (ArrestSurrenderID, CaseMasterID, ArrestSurrenderTypeID, ArrestSurrenderDate, ArrestSurrenderStateId, ArrestSurrenderDistrictId, PoliceStationID, IOID, CourtID, AccusedMasterID, IsAccused, IsComplainantAccused)
+
+ChargesheetDetails (CSID, CaseMasterID, csdate, cstype, PolicePersonID)
+
+ActSectionAssociation (CaseMasterID, ActID, SectionID, ActOrderID, SectionOrderID)
+
+Inv_OccuranceTime (CaseMasterID, OccuranceFromDate, OccuranceToDate, latitude, longitude)
+
+Employee (EmployeeID, DistrictID, UnitID, RankID, DesignationID, KGID, FirstName, EmployeeDOB, GenderID)
+
+CaseCategory (CaseCategoryID, LookupValue)
+
+CaseStatusMaster (CaseStatusID, CaseStatusName)
+
+Unit (UnitID, UnitName, TypeID, ParentUnit, StateID, DistrictID)
+
+District (DistrictID, DistrictName, StateID)
+
+Court (CourtID, CourtName, DistrictID, StateID)
+
+NOTE: Tables like Suspect, Witness, Evidence, PhoneRecord, FinancialTransaction,
+CCTVFootage, FIRMaster, TimelineEvent do NOT exist. Use Accused instead of Suspect,
+ComplainantDetails instead of Witness, ArrestSurrender for arrest records.
+`;
         }
         return this.schemaContext;
     }
 
-    async generateSQL(naturalLanguageQuery) {
+    async generateSQL(naturalLanguageQuery, caseId) {
         const schema = this.getSchemaContext();
         
+        let promptAddition = '';
+        if (caseId) {
+            promptAddition = `\n7. The user is focusing on Case ID/ROWID: '${caseId}'. You MUST append a WHERE filter constraint to restrict findings to this case where appropriate (e.g. matching 'CaseMasterID = \\'${caseId}\\'').`;
+        }
+
         const systemPrompt = `You are a database query generator for the VIKSHANA platform.
 Your task is to convert the user's natural language request into a valid Zoho Catalyst ZCQL (Zoho Catalyst Query Language) query.
 
@@ -35,11 +69,12 @@ ZCQL Rules:
 2. Do not add any explanation or preamble.
 3. Use only SELECT statements. Never UPDATE, DELETE, or INSERT.
 4. Always SELECT specific columns or * from the tables.
-5. If joining, note that ZCQL may have limited support for complex joins. Try to use simple joins or basic conditions. E.g. SELECT * FROM CaseMaster WHERE category = 'Burglary'.
+5. If joining, note that ZCQL may have limited support for complex joins. Try to use simple joins or basic conditions.
 6. Do NOT append semicolons (;) at the end of the query.
+7. Use exact column names from the schema above — e.g. CaseMasterID (not case_id), AccusedName (not name), VictimName (not victim_name).${promptAddition}
 
-Example User Query: Show all burglary cases in Mysore
-Example Output: SELECT * FROM CaseMaster WHERE category = 'Burglary' AND location = 'Mysore'
+Example User Query: Show all cases registered in 2021
+Example Output: SELECT CaseMasterID, CrimeNo, BriefFacts, CrimeRegisteredDate FROM CaseMaster WHERE CrimeRegisteredDate LIKE '2021%'
 `;
 
         const messages = [

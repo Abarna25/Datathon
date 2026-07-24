@@ -5,6 +5,7 @@ const InvestigationDataController = require('../controllers/InvestigationDataCon
 const router = express.Router();
 
 router.get('/', CaseController.listCases);
+router.get('/search', CaseController.searchEverything);
 router.get('/:caseId/full-bundle', CaseController.getFullBundle);
 router.get('/:caseId/summary', InvestigationDataController.getCaseSummary);
 router.get('/:caseId/witnesses', InvestigationDataController.getWitnesses);
