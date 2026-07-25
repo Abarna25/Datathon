@@ -1,26 +1,52 @@
+const datastoreClient = require('../queries/datastoreClient');
+
 /**
  * AuditService
- * Gracefully logs events to console when database logging is disabled or unavailable.
+ * Logs all forensic investigation details including AI reasoning.
  */
 class AuditService {
     /**
-     * Gracefully log user action events to console (stdout/stderr) since AuditLog is a non-existent database table.
+     * Logs forensic event with AI rationale and evidence sources.
      */
-    static async logEvent(req, user, action, resource = '', caseId = '', status = 'SUCCESS') {
+    static async logEvent(req, user, action, resource = '', caseId = '', status = 'SUCCESS', aiReasoning = '', confidence = '', evidenceSources = []) {
         const timestamp = new Date().toISOString();
         const user_name = user?.name || user?.email || 'System';
         const role = user?.role || 'Officer';
         
-        console.warn(`[AUDIT WARNING] ${timestamp} | User: ${user_name} (${role}) | Action: ${action} | Resource: ${resource} | CaseMasterID: ${caseId} | Status: ${status}`);
-        return null;
+        const logEntry = {
+            timestamp,
+            user_name,
+            role,
+            action,
+            resource,
+            caseId,
+            status,
+            aiReasoning,
+            confidence,
+            evidenceSources: JSON.stringify(evidenceSources)
+        };
+        
+        try {
+            await datastoreClient.insertRow(req, 'AuditLog', logEntry);
+            console.log(`[FORENSIC AUDIT] ${timestamp} | User: ${user_name} | Action: ${action}`);
+        } catch (error) {
+            console.error('[FORENSIC AUDIT ERROR] Failed to save to datastore, falling back to console:', error);
+            console.warn(`[AUDIT FALLBACK]`, logEntry);
+        }
+        
+        return logEntry;
     }
 
     /**
-     * Returns an empty list since database audit log persistence is disabled.
+     * Retrieves audit logs (Admin Only)
      */
     static async getLogs(req, filters = {}) {
-        console.warn('[AuditService] getLogs called but database audit logging is disabled.');
-        return [];
+        try {
+            return await datastoreClient.getRows(req, 'AuditLog', { maxRows: 100 });
+        } catch (error) {
+            console.error('[AuditService] getLogs error:', error);
+            return [];
+        }
     }
 }
 

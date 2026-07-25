@@ -2,6 +2,8 @@ const glmClient = require('../services/glmClient');
 const ContextBuilderService = require('../services/ContextBuilderService');
 const AILogService = require('../services/AILogService');
 const datastoreClient = require('../queries/datastoreClient');
+const EntityExtractionService = require('./entity_extraction.service');
+const NetworkAnalysisService = require('./network_analysis.service');
 
 class DecisionSupportController {
     static async getContextAndGenerate(req, caseId) {
@@ -302,14 +304,33 @@ class DecisionSupportController {
  
             const context = await ContextBuilderService.buildCaseContext(req, caseId);
  
+            // Agentic Workflow Step 1: Extract Entities from the user's prompt
+            const extractedEntities = await EntityExtractionService.extractEntities(prompt);
+            let networkIntelligence = "";
+
+            // Agentic Workflow Step 2: Use Graph Intelligence if entities are found
+            if (extractedEntities.suspects && extractedEntities.suspects.length > 0) {
+                const suspectName = extractedEntities.suspects[0].name;
+                // Try to find gang connections
+                try {
+                    const gangData = await NetworkAnalysisService.detectGangs();
+                    networkIntelligence += `\nGraph Intelligence: Detected heavily connected networks: ${JSON.stringify(gangData)}`;
+                } catch (e) {
+                    console.error("Network Analysis failed", e);
+                }
+            }
+ 
             const promptTemplate = `You are a Senior Investigator AI Assistant.
             Analyze the following active Case Context:
             ${JSON.stringify(context)}
+            
+            Additional Agentic Graph Intelligence:
+            ${networkIntelligence}
  
             Answer the investigator's question: "${prompt}"
             Return a STRICT JSON response matching this schema:
             {
-              "answer": "Detailed answer addressing question based on evidence context...",
+              "answer": "Detailed answer addressing question based on evidence context and graph intelligence...",
               "confidence": "HIGH | MEDIUM | LOW",
               "evidenceReferences": ["Reference RowIDs/Evidence IDs used"],
               "dataSources": ["Source names"]
@@ -324,7 +345,7 @@ class DecisionSupportController {
             const cleaned = resGLM.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
             const responseData = JSON.parse(cleaned);
  
-            await AILogService.logInteraction(req, req.user, caseId, prompt, 'crm-di-glm47b', responseData.confidence, responseData.evidenceReferences);
+            await AILogService.logInteraction(req, req.user, caseId, prompt, 'crm-di-agentic', responseData.confidence, responseData.evidenceReferences);
  
             res.status(200).json({
                 success: true,

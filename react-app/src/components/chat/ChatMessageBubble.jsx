@@ -3,11 +3,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { motion } from 'framer-motion';
-import { Copy, ThumbsUp, ThumbsDown, RotateCcw, Check, Sparkles, Shield, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
+import { Copy, ThumbsUp, ThumbsDown, RotateCcw, Check, Shield, AlertTriangle, Volume2, VolumeX, MoreHorizontal } from 'lucide-react';
 import MermaidBlock from './MermaidBlock';
 import EvidenceCard from './EvidenceCard';
 import FollowUpChips from './FollowUpChips';
-import ReasoningProgressTimeline from './ReasoningProgressTimeline';
 import StructuredResponseCard from './StructuredResponseCard';
 import 'highlight.js/styles/github.css';
 import styles from './ChatMessageBubble.module.css';
@@ -47,18 +46,10 @@ function parseMessageContent(content, streaming) {
     if (thinkEnd !== -1) {
         const thinking = text.slice(thinkStart + 7, thinkEnd).trim();
         const body = text.slice(thinkEnd + 8).trim();
-        return {
-            thinking,
-            body: injectEvidenceLinks(body),
-            isThinkingComplete: true
-        };
+        return { thinking, body: injectEvidenceLinks(body), isThinkingComplete: true };
     } else {
         const thinking = text.slice(thinkStart + 7).trim();
-        return {
-            thinking,
-            body: '',
-            isThinkingComplete: false
-        };
+        return { thinking, body: '', isThinkingComplete: false };
     }
 }
 
@@ -66,9 +57,10 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
     const [copied, setCopied] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [showMore, setShowMore] = useState(false);
     const isUser = message.role === 'user';
 
-    const { thinking, body, isThinkingComplete } = useMemo(() => {
+    const { thinking, body } = useMemo(() => {
         return parseMessageContent(message.content, streaming);
     }, [message.content, streaming]);
 
@@ -131,7 +123,6 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
             return;
         }
 
-        // Clean & format text for natural, conversational speech
         let speechText = (body || message.content || '')
             .replace(/\[(Case|Victim|Suspect|Witness|CCTV|PhoneRecord|FinancialTransaction|TimelineEvent|Attachment)\s*#[\w-]+\]/g, '')
             .replace(/```[\s\S]*?```/g, '')
@@ -144,33 +135,21 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
         if (!speechText) return;
 
         const utterance = new SpeechSynthesisUtterance(speechText);
-        
-        // Find best natural female voice
         const voices = window.speechSynthesis.getVoices();
         const femaleVoice = voices.find((v) => {
             const name = (v.name || '').toLowerCase();
             return (
-                name.includes('female') ||
-                name.includes('zira') ||
-                name.includes('samantha') ||
-                name.includes('victoria') ||
-                name.includes('google uk english female') ||
-                name.includes('google us english') ||
-                name.includes('karen') ||
-                name.includes('fiona')
+                name.includes('female') || name.includes('zira') || name.includes('samantha') ||
+                name.includes('victoria') || name.includes('google uk english female') ||
+                name.includes('google us english') || name.includes('karen') || name.includes('fiona')
             );
         }) || voices.find((v) => v.lang && v.lang.startsWith('en'));
 
-        if (femaleVoice) {
-            utterance.voice = femaleVoice;
-        }
-
-        utterance.rate = 0.96;  // Paced, conversational speech
-        utterance.pitch = 1.15; // Clear, expressive female tone
-
+        if (femaleVoice) utterance.voice = femaleVoice;
+        utterance.rate = 0.96;
+        utterance.pitch = 1.15;
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
-
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
         setIsSpeaking(true);
@@ -178,55 +157,40 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className={`${styles.row} ${isUser ? styles.rowUser : styles.rowAssistant}`}
         >
-            {!isUser && (
-                <div className={styles.avatarAssistant}>
-                    <Shield size={16} color="#FFFFFF" />
-                </div>
-            )}
-
-            <div className={`${styles.bubbleContainer} ${isUser ? styles.userContainer : styles.assistantContainer}`}>
-                {/* User Message: Right-aligned light blue bubble */}
+            <div className={styles.bubbleContainer}>
+                {/* User Message */}
                 {isUser ? (
                     <div className={styles.bubbleUser}>
                         <div className={styles.userText}>{message.content}</div>
                     </div>
                 ) : (
-                    /* Assistant Message: Left-aligned white card with soft shadow */
+                    /* Assistant Message: Clean, cardless style */
                     <div className={styles.bubbleAssistant}>
-                        <div className={styles.assistantHeader}>
-                            <div className={styles.botBadge}>
-                                <Sparkles size={14} color="#2563EB" />
-                                <span>Vikshana AI Detective</span>
-                            </div>
-                            <span className={styles.timestamp}>
-                                {message.createdAt
-                                    ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                    : ''}
-                            </span>
+                        {/* Minimal label */}
+                        <div className={styles.assistantLabel}>
+                            <Shield size={13} color="#2563EB" />
+                            <span>Vikshana AI</span>
+                            {message.createdAt && (
+                                <span className={styles.timestamp}>
+                                    {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            )}
                         </div>
 
-                        {/* Subtle Thinking/Investigating Indicator when waiting for stream start */}
+                        {/* Investigating indicator */}
                         {streaming && !body && !thinking && (
                             <div className={styles.investigatingIndicator}>
                                 <div className={styles.pulsingDot} />
-                                <span>Investigating case evidence…</span>
+                                <span>Analyzing case evidence...</span>
                             </div>
                         )}
 
-                        {/* Reasoning Progress Timeline */}
-                        {(thinking || (streaming && body)) && (
-                            <ReasoningProgressTimeline
-                                thinkingContent={thinking}
-                                isComplete={isThinkingComplete && !streaming}
-                            />
-                        )}
-
-                        {/* Markdown / Structured Body */}
+                        {/* Body */}
                         {body && (
                             <div className="vik-markdown">
                                 {isStructuredContent ? (
@@ -243,10 +207,10 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
                             </div>
                         )}
 
-                        {/* Inline Danger Error Banner */}
+                        {/* Inline Error */}
                         {error && (
                             <div className={styles.inlineErrorBanner}>
-                                <AlertTriangle size={15} />
+                                <AlertTriangle size={14} />
                                 <span>{error}</span>
                             </div>
                         )}
@@ -254,7 +218,7 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
                         {/* Evidence Citations */}
                         {!streaming && message.citations && message.citations.length > 0 && (
                             <div className={styles.evidenceRow}>
-                                <div className={styles.evidenceLabel}>Cited Evidence:</div>
+                                <div className={styles.evidenceLabel}>Cited Evidence</div>
                                 <div className={styles.evidenceGrid}>
                                     {message.citations.map((c, i) => (
                                         <EvidenceCard key={i} citation={c} onOpen={onOpenEvidence} compact />
@@ -263,44 +227,55 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
                             </div>
                         )}
 
-                        {/* Hover Action Toolbar */}
+                        {/* Hover Actions */}
                         {!streaming && (
                             <div className={styles.actionsBar}>
-                                <button type="button" className={styles.actionBtn} onClick={handleCopy} title="Copy response">
-                                    {copied ? <Check size={13} color="#10B981" /> : <Copy size={13} />}
-                                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                                <button type="button" className={styles.actionBtn} onClick={handleCopy} title="Copy">
+                                    {copied ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
                                 </button>
                                 <button
                                     type="button"
                                     className={`${styles.actionBtn} ${isSpeaking ? styles.active : ''}`}
                                     onClick={handleReadAloud}
-                                    title={isSpeaking ? 'Stop readout' : 'Read aloud (TTS)'}
+                                    title={isSpeaking ? 'Stop' : 'Read aloud'}
                                 >
-                                    {isSpeaking ? <VolumeX size={13} color="#EF4444" /> : <Volume2 size={13} />}
-                                    <span>{isSpeaking ? 'Stop TTS' : 'Read Aloud'}</span>
+                                    {isSpeaking ? <VolumeX size={12} color="#EF4444" /> : <Volume2 size={12} />}
                                 </button>
-                                <button
-                                    type="button"
-                                    className={`${styles.actionBtn} ${feedback === 'up' ? styles.active : ''}`}
-                                    onClick={() => setFeedback('up')}
-                                    title="Helpful response"
-                                >
-                                    <ThumbsUp size={13} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`${styles.actionBtn} ${feedback === 'down' ? styles.active : ''}`}
-                                    onClick={() => setFeedback('down')}
-                                    title="Unhelpful response"
-                                >
-                                    <ThumbsDown size={13} />
-                                </button>
-                                {isLast && (
-                                    <button type="button" className={styles.actionBtn} onClick={onRegenerate} title="Regenerate analysis">
-                                        <RotateCcw size={13} />
-                                        <span>Regenerate</span>
+
+                                {/* More menu for additional actions */}
+                                <div className={styles.moreWrap}>
+                                    <button
+                                        type="button"
+                                        className={styles.actionBtn}
+                                        onClick={() => setShowMore(!showMore)}
+                                        title="More"
+                                    >
+                                        <MoreHorizontal size={12} />
                                     </button>
-                                )}
+                                    {showMore && (
+                                        <div className={styles.moreMenu} onMouseLeave={() => setShowMore(false)}>
+                                            <button
+                                                type="button"
+                                                className={`${feedback === 'up' ? styles.menuActive : ''}`}
+                                                onClick={() => { setFeedback('up'); setShowMore(false); }}
+                                            >
+                                                <ThumbsUp size={12} /> Helpful
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`${feedback === 'down' ? styles.menuActive : ''}`}
+                                                onClick={() => { setFeedback('down'); setShowMore(false); }}
+                                            >
+                                                <ThumbsDown size={12} /> Not helpful
+                                            </button>
+                                            {isLast && (
+                                                <button type="button" onClick={() => { onRegenerate(); setShowMore(false); }}>
+                                                    <RotateCcw size={12} /> Regenerate
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 

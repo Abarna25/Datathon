@@ -1,11 +1,19 @@
 import React, { useEffect, useRef } from 'react';
-import { BrainCircuit } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import ChatMessageBubble from './ChatMessageBubble';
 import styles from './ChatMessageList.module.css';
 
+const EMPTY_CAPABILITIES = [
+    { icon: '📋', text: 'Analyze FIRs' },
+    { icon: '🕒', text: 'Generate Timelines' },
+    { icon: '🔍', text: 'Cross-check Statements' },
+    { icon: '⚠️', text: 'Find Contradictions' },
+    { icon: '📄', text: 'Search Evidence' },
+    { icon: '📑', text: 'Draft Reports' },
+];
+
 const ChatMessageList = ({ messages, isStreaming, streamedText, onOpenEvidence, onFollowUp, onRegenerate }) => {
     const bottomRef = useRef(null);
-
     const prevMessagesLength = useRef(messages.length);
 
     useEffect(() => {
@@ -37,9 +45,19 @@ const ChatMessageList = ({ messages, isStreaming, streamedText, onOpenEvidence, 
     if (messages.length === 0 && !isStreaming) {
         return (
             <div className={styles.empty}>
-                <BrainCircuit size={40} color="var(--accent-primary)" />
-                <h3>I've analyzed the current case.</h3>
-                <p>Ask about the victim, timeline, evidence, witnesses, or suspects to get started.</p>
+                <div className={styles.emptyIcon}>
+                    <Shield size={32} color="#2563EB" />
+                </div>
+                <h2 className={styles.emptyTitle}>Vikshana Investigation Assistant</h2>
+                <div className={styles.capabilitiesGrid}>
+                    {EMPTY_CAPABILITIES.map((cap) => (
+                        <div key={cap.text} className={styles.capabilityPill}>
+                            <span>{cap.icon}</span>
+                            <span>{cap.text}</span>
+                        </div>
+                    ))}
+                </div>
+                <p className={styles.emptyHint}>Ask anything about this investigation...</p>
             </div>
         );
     }
@@ -69,8 +87,8 @@ const ChatMessageList = ({ messages, isStreaming, streamedText, onOpenEvidence, 
             )}
             {isStreaming && !streamedText && (
                 <div className={styles.thinking}>
-                    <BrainCircuit size={16} />
-                    <span>AI is thinking</span>
+                    <div className={styles.thinkingPulse} />
+                    <span>Analyzing case evidence</span>
                     <span className={styles.dots}>
                         <span>.</span>
                         <span>.</span>

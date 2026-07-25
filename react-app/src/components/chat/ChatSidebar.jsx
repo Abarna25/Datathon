@@ -19,13 +19,9 @@ const groupThreadsByRecency = (threads, query) => {
 
     filtered.forEach((t) => {
         const time = t.updatedAt ? new Date(t.updatedAt).getTime() : Date.now();
-        if (time >= todayStart) {
-            today.push(t);
-        } else if (time >= sevenDaysAgo) {
-            previous7Days.push(t);
-        } else {
-            older.push(t);
-        }
+        if (time >= todayStart) today.push(t);
+        else if (time >= sevenDaysAgo) previous7Days.push(t);
+        else older.push(t);
     });
 
     return { today, previous7Days, older };
@@ -67,7 +63,7 @@ const ChatSidebar = ({
                 onClick={() => onSelect(c.id)}
             >
                 {isActive && <div className={styles.activeAccentBar} />}
-                <MessageSquare size={15} className={isActive ? styles.iconActive : styles.iconMuted} />
+                <MessageSquare size={14} className={isActive ? styles.iconActive : styles.iconMuted} />
                 
                 {isEditing ? (
                     <input
@@ -84,22 +80,11 @@ const ChatSidebar = ({
                 )}
 
                 <div className={styles.itemActions} onClick={(e) => e.stopPropagation()}>
-                    <button
-                        type="button"
-                        title="Rename investigation"
-                        onClick={() => {
-                            setEditingId(c.id);
-                            setEditTitle(c.title || 'New Investigation');
-                        }}
-                    >
-                        <Pencil size={12} />
+                    <button type="button" title="Rename" onClick={() => { setEditingId(c.id); setEditTitle(c.title || 'New Investigation'); }}>
+                        <Pencil size={11} />
                     </button>
-                    <button
-                        type="button"
-                        title="Delete investigation"
-                        onClick={() => onDelete(c.id)}
-                    >
-                        <Trash2 size={12} />
+                    <button type="button" title="Delete" onClick={() => onDelete(c.id)}>
+                        <Trash2 size={11} />
                     </button>
                 </div>
             </div>
@@ -109,41 +94,37 @@ const ChatSidebar = ({
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 64 : 280 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            animate={{ width: collapsed ? 52 : 240 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''}`}
         >
-            {/* Collapse Toggle Button */}
             <button
                 type="button"
                 className={styles.collapseToggleBtn}
                 onClick={onToggleCollapse}
                 title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-                {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
 
-            {/* Top New Investigation Button */}
             <div className={styles.topSection}>
                 <button type="button" className={styles.newBtn} onClick={onNew} title="New Investigation">
-                    <Plus size={18} />
+                    <Plus size={16} />
                     {!collapsed && <span>New Investigation</span>}
                 </button>
             </div>
 
             {!collapsed && (
                 <>
-                    {/* Search Bar */}
                     <div className={styles.searchBox}>
-                        <Search size={14} className={styles.searchIcon} />
+                        <Search size={13} className={styles.searchIcon} />
                         <input
-                            placeholder="Search investigations..."
+                            placeholder="Search..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
                     </div>
 
-                    {/* Scrollable Conversation List grouped by recency */}
                     <div className={styles.listContainer}>
                         {grouped.today.length > 0 && (
                             <div className={styles.group}>
@@ -151,33 +132,29 @@ const ChatSidebar = ({
                                 {grouped.today.map(renderThreadItem)}
                             </div>
                         )}
-
                         {grouped.previous7Days.length > 0 && (
                             <div className={styles.group}>
                                 <div className={styles.groupTitle}>Previous 7 Days</div>
                                 {grouped.previous7Days.map(renderThreadItem)}
                             </div>
                         )}
-
                         {grouped.older.length > 0 && (
                             <div className={styles.group}>
                                 <div className={styles.groupTitle}>Older</div>
                                 {grouped.older.map(renderThreadItem)}
                             </div>
                         )}
-
                         {conversations.length === 0 && (
                             <div className={styles.emptyHint}>No past investigations yet.</div>
                         )}
                     </div>
 
-                    {/* Bottom User/Account Profile Section */}
                     <div className={styles.userProfileSection}>
                         <div className={styles.userAvatar}>
-                            <User size={16} color="#2563EB" />
+                            <User size={14} color="#2563EB" />
                         </div>
                         <div className={styles.userInfo}>
-                            <div className={styles.userName}>{officer?.name || 'Officer Ajai Kumar'}</div>
+                            <div className={styles.userName}>{officer?.name || 'Officer'}</div>
                             <div className={styles.userRole}>Lead Investigator</div>
                         </div>
                     </div>

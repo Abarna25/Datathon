@@ -39,7 +39,9 @@ const DashboardLayout = ({ children }) => (
 function App() {
   const ALL_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Viewer', 'Officer'];
   const INVESTIGATOR_ROLES = ['Administrator', 'Investigator', 'Supervisor', 'Officer'];
+  const ANALYST_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'];
   const RELATIONSHIP_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'];
+  const ADMIN_ROLES = ['Administrator'];
   const AUDIT_ROLES = ['Administrator', 'Supervisor'];
 
   return (

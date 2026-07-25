@@ -56,6 +56,11 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         if (!activeCaseId) return;
         
+        if (activeCaseId === 'all') {
+            setCurrentCase({ category: 'Global Search', caseId: 'all' });
+            return;
+        }
+        
         const fetchBundle = async () => {
             try {
                 const res = await api.get(`/cases/${activeCaseId}/full-bundle`);

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ConversationProvider, useConversationContext } from '../context/ConversationContext';
-import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatHeader from '../components/chat/ChatHeader';
 import ChatMessageList from '../components/chat/ChatMessageList';
 import ChatInput from '../components/chat/ChatInput';
@@ -9,7 +8,6 @@ import EvidenceModal from '../components/chat/EvidenceModal';
 import { resolveSlashCommand, SLASH_COMMANDS } from '../utils/slashCommands';
 import * as conversationService from '../services/conversationService';
 import { exportAsMarkdown } from '../utils/exportConversation';
-import FIRSummaryPanel from '../components/investigation/FIRSummaryPanel';
 import { useAppContext } from '../context/AppContext';
 import styles from './InvestigationWorkspace.module.css';
 import { Loader2 } from 'lucide-react';
@@ -38,20 +36,18 @@ const InvestigationChat = ({ caseId }) => {
         error
     } = useConversationContext();
 
-    // Default Case Context panel to collapsed/hidden state
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [contextCollapsed, setContextCollapsed] = useState(true);
     const [contextRefreshKey, setContextRefreshKey] = useState(0);
     const [evidenceModal, setEvidenceModal] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    // Auto-restore the most recent conversation for this case on load.
     useEffect(() => {
         if (!activeConversationId && conversations.length > 0) {
             selectConversation(conversations[0].id);
         }
     }, [conversations, activeConversationId, selectConversation]);
 
-    // Evidence counts / investigator memory can change after every turn — keep the context panel fresh.
     useEffect(() => {
         setContextRefreshKey((k) => k + 1);
     }, [messages.length]);
@@ -150,37 +146,25 @@ const InvestigationChat = ({ caseId }) => {
 
     return (
         <div className={styles.page}>
-            {/* Left Sidebar: Hidden if history is empty */}
-            {conversations && conversations.length > 0 && (
+            {/* Center Area: AI Investigation Copilot */}
+            <div className={styles.center} data-vik-print-area>
+                {/* Compact Sticky Investigation Header */}
                 <div data-vik-no-print>
-                    <ChatSidebar
+                    <ChatHeader
+                        conversation={conversations.find((c) => c.id === activeConversationId)}
                         conversations={conversations}
                         activeConversationId={activeConversationId}
                         onSelect={selectConversation}
                         onNew={startNewConversation}
-                        onRename={renameConversation}
-                        onToggleBookmark={toggleBookmark}
-                        onArchive={archiveConversation}
-                        onDelete={removeConversation}
-                    />
-                </div>
-            )}
-
-            {/* Center Area: AI Investigation Copilot */}
-            <div className={styles.center} data-vik-print-area>
-                <div data-vik-no-print>
-                    <ChatHeader
-                        conversation={conversations.find((c) => c.id === activeConversationId)}
                         messages={messages}
                         onRename={renameConversation}
                         onDelete={removeConversation}
                         onToggleBookmark={toggleBookmark}
+                        bundle={currentCase}
                     />
                 </div>
-                <div style={{ padding: '8px 0 0 0' }} data-vik-no-print>
-                    <FIRSummaryPanel bundle={currentCase} />
-                </div>
 
+                {/* Message List */}
                 <div className={styles.messages}>
                     <ChatMessageList
                         messages={messages}
@@ -195,8 +179,8 @@ const InvestigationChat = ({ caseId }) => {
                 {error && <div className={styles.errorBanner} data-vik-no-print>{error}</div>}
                 {uploading && <div className={styles.uploadBanner} data-vik-no-print>Uploading &amp; analyzing files...</div>}
 
-                {/* Input & Suggestions */}
-                <div data-vik-no-print style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+                {/* Input Area */}
+                <div data-vik-no-print>
                     <ChatInput
                         onSend={handleRawSend}
                         onRunQuickAction={runQuickAction}
@@ -209,7 +193,7 @@ const InvestigationChat = ({ caseId }) => {
             </div>
 
             {/* Right Sidebar: Case Context Accordion Panel */}
-            <div data-vik-no-print style={{ width: contextCollapsed ? '40px' : '300px', transition: 'width 0.2s', flexShrink: 0 }}>
+            <div data-vik-no-print className={contextCollapsed ? styles.contextCollapsed : styles.contextExpanded}>
                 <ContextPanel
                     caseId={caseId}
                     collapsed={contextCollapsed}
@@ -228,24 +212,18 @@ const InvestigationWorkspace = () => {
 
     if (loadingCases) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '16px', color: 'var(--text-secondary)' }}>
-                <Loader2 size={40} className="spin" color="var(--accent-primary)" />
+            <div className={styles.loadingState}>
+                <Loader2 size={36} className="spin" color="var(--accent-primary)" />
                 <p>Loading active case bundle...</p>
             </div>
         );
     }
 
-    if (!activeCaseId) {
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-secondary)' }}>
-                No active investigation case available. Please ensure cases exist in Catalyst.
-            </div>
-        );
-    }
+    const effectiveCaseId = activeCaseId || 'global';
 
     return (
-        <ConversationProvider caseId={activeCaseId}>
-            <InvestigationChat caseId={activeCaseId} />
+        <ConversationProvider caseId={effectiveCaseId}>
+            <InvestigationChat caseId={effectiveCaseId} />
         </ConversationProvider>
     );
 };

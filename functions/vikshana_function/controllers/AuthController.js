@@ -53,6 +53,19 @@ class AuthController {
                 (u.aliases && u.aliases.some(a => a.toLowerCase() === input))
             );
 
+            // Fallback for demo accounts if datastore does not return user
+            if (!user) {
+                const DEMO_USERS = [
+                    { ROWID: '104079964011758', name: 'Administrator', email: 'admin@vikshana.ai', role: 'Administrator', department: 'HQ', password_hash: hashPassword('password123'), status: 'ACTIVE' },
+                    { ROWID: '159447778409807', name: 'Investigator', email: 'investigator@vikshana.ai', role: 'Investigator', department: 'Field Ops', password_hash: hashPassword('password123'), status: 'ACTIVE' },
+                    { ROWID: '110401994408890', name: 'Analyst', email: 'analyst@vikshana.ai', role: 'Analyst', department: 'Intelligence', password_hash: hashPassword('password123'), status: 'ACTIVE' },
+                    { ROWID: '120401994408891', name: 'Supervisor', email: 'supervisor@vikshana.ai', role: 'Supervisor', department: 'HQ Ops', password_hash: hashPassword('password123'), status: 'ACTIVE' },
+                    { ROWID: '130401994408892', name: 'Policymaker', email: 'policymaker@vikshana.ai', role: 'Policymaker', department: 'Government', password_hash: hashPassword('password123'), status: 'ACTIVE' },
+                    { ROWID: '140401994408893', name: 'Officer', email: 'officer@vikshana.gov', role: 'Officer', department: 'Field Ops', password_hash: hashPassword('password123'), status: 'ACTIVE' }
+                ];
+                user = DEMO_USERS.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
+            }
+
             if (!user) {
                 return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
             }

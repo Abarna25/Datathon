@@ -1,37 +1,31 @@
 import React from 'react';
+import { FileText, Paperclip, Clock, FileBarChart } from 'lucide-react';
 import styles from './QuickActions.module.css';
 
 const PRIMARY_ACTIONS = [
-    { label: 'Summarize', command: '/summary' },
-    { label: 'Evidence', command: '/evidence' },
-    { label: 'Timeline', command: '/timeline' },
-    { label: 'Generate Report', command: '/report' }
+    { label: 'Summary', command: '/summary', icon: FileText },
+    { label: 'Evidence', command: '/evidence', icon: Paperclip },
+    { label: 'Timeline', command: '/timeline', icon: Clock },
+    { label: 'Report', command: '/report', icon: FileBarChart },
 ];
 
 const QuickActions = ({ onRun }) => {
     return (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-            {PRIMARY_ACTIONS.map((qa) => (
-                <button 
-                    key={qa.label} 
-                    type="button" 
-                    className={styles.chip} 
-                    onClick={() => onRun(qa)}
-                    style={{
-                        padding: '6px 14px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--glass-border)',
-                        background: 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    {qa.label}
-                </button>
-            ))}
+        <div className={styles.row}>
+            {PRIMARY_ACTIONS.map((qa) => {
+                const Icon = qa.icon;
+                return (
+                    <button
+                        key={qa.label}
+                        type="button"
+                        className={styles.pill}
+                        onClick={() => onRun(qa)}
+                    >
+                        <Icon size={12} />
+                        <span>{qa.label}</span>
+                    </button>
+                );
+            })}
         </div>
     );
 };

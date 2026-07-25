@@ -17,7 +17,6 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
 
     const slashMatches = value.startsWith('/') && !value.includes(' ') ? matchSlashCommands(value) : [];
 
-    // Shortcuts listener (Ctrl+K focus, Ctrl+/ slash menu)
     useEffect(() => {
         const handleGlobalKeyDown = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -125,11 +124,8 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
             <QuickActions onRun={onRunQuickAction} />
 
             <div
-                className={`${styles.composer} ${isDragging ? styles.dragging : ''}`}
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                }}
+                className={`${styles.composer} ${isDragging ? styles.dragging : ''} ${isStreaming ? styles.streaming : ''}`}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
             >
@@ -140,19 +136,17 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
                     />
                 )}
 
-                {/* Staged Attachments Preview */}
                 <AttachmentPreviewBar files={stagedFiles} onRemove={handleRemoveStagedFile} />
 
                 <div className={styles.inputRow}>
-                    {/* Attach/Upload Icon Buttons */}
                     <div className={styles.leftTools}>
                         <button
                             type="button"
-                            className={styles.attachBtn}
+                            className={styles.toolBtn}
                             onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                            title="Attach File / Evidence"
+                            title="Attach file"
                         >
-                            <Paperclip size={18} />
+                            <Paperclip size={17} />
                         </button>
                         <input
                             ref={fileInputRef}
@@ -162,51 +156,45 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
                             accept=".pdf,.docx,.txt,.csv,image/*,video/*,audio/*,.zip"
                             onChange={handleFileChange}
                         />
-
                         <button
                             type="button"
-                            className={styles.attachBtn}
+                            className={styles.toolBtn}
                             onClick={() => {
                                 if (fileInputRef.current) {
                                     fileInputRef.current.accept = 'image/*';
                                     fileInputRef.current.click();
                                 }
                             }}
-                            title="Attach Image"
+                            title="Attach image"
                         >
-                            <ImageIcon size={18} />
+                            <ImageIcon size={17} />
                         </button>
                     </div>
 
-                    {/* Auto-expanding Textarea */}
                     <textarea
                         ref={textareaRef}
                         className={styles.textarea}
                         rows={1}
                         value={value}
                         placeholder="Ask Vikshana to investigate this case..."
-                        onChange={(e) => {
-                            setValue(e.target.value);
-                            adjustHeight();
-                        }}
+                        onChange={(e) => { setValue(e.target.value); adjustHeight(); }}
                         onKeyDown={handleKeyDown}
                         disabled={disabled}
                     />
 
-                    {/* Right Tools (Mic & Send/Stop Button) */}
                     <div className={styles.rightTools}>
                         <button
                             type="button"
-                            className={`${styles.micBtn} ${isRecording ? styles.recording : ''}`}
+                            className={`${styles.toolBtn} ${isRecording ? styles.recording : ''}`}
                             onClick={toggleMic}
                             title="Voice input"
                         >
-                            <Mic size={18} />
+                            <Mic size={17} />
                         </button>
 
                         {isStreaming ? (
-                            <button type="button" className={styles.stopBtn} onClick={onStop} title="Stop generation">
-                                <Square size={13} fill="currentColor" /> Stop
+                            <button type="button" className={styles.stopBtn} onClick={onStop} title="Stop">
+                                <Square size={11} fill="currentColor" />
                             </button>
                         ) : (
                             <button
@@ -214,7 +202,7 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
                                 className={styles.sendBtn}
                                 onClick={submit}
                                 disabled={isSendDisabled}
-                                title="Send message (Enter)"
+                                title="Send (Enter)"
                             >
                                 {disabled ? <Loader2 size={16} className={styles.spin} /> : <Send size={16} />}
                             </button>
@@ -222,9 +210,9 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
                     </div>
                 </div>
             </div>
-            
+
             <div className={styles.hintText}>
-                Enter to send • Shift+Enter for new line • Ctrl+K focus
+                Enter to send · Shift+Enter for new line · Ctrl+K to focus
             </div>
         </div>
     );

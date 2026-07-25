@@ -1,51 +1,56 @@
 .wrap {
-    padding: 12px 24px 16px 24px;
-    background: linear-gradient(to top, #F8FAFC 85%, rgba(248, 250, 252, 0));
+    padding: 8px 20px 12px 20px;
+    background: linear-gradient(to top, var(--bg-primary) 80%, rgba(248, 250, 252, 0));
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     max-width: 900px;
     margin: 0 auto;
     width: 100%;
+    flex-shrink: 0;
 }
 
 .composer {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 24px;
-    padding: 10px 14px;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     position: relative;
 }
 
 .composer:focus-within {
     border-color: #2563EB;
-    box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 2px 16px rgba(37, 99, 235, 0.1);
+}
+
+.streaming {
+    border-color: rgba(37, 99, 235, 0.3);
 }
 
 .dragging {
     border-color: #2563EB;
-    background: #DBEAFE;
+    background: rgba(37, 99, 235, 0.04);
 }
 
 .inputRow {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
+    gap: 6px;
 }
 
 .leftTools {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     padding-bottom: 2px;
 }
 
 .rightTools {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     padding-bottom: 2px;
 }
 
@@ -54,8 +59,8 @@
     background: transparent;
     border: none;
     outline: none;
-    color: #111827;
-    font-size: 14.5px;
+    color: var(--text-primary);
+    font-size: 14px;
     font-family: inherit;
     line-height: 1.5;
     resize: none;
@@ -64,15 +69,15 @@
 }
 
 .textarea::placeholder {
-    color: #6B7280;
+    color: var(--text-muted);
 }
 
-.attachBtn {
+.toolBtn {
     background: transparent;
     border: none;
-    color: #6B7280;
-    width: 34px;
-    height: 34px;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -82,40 +87,20 @@
     flex-shrink: 0;
 }
 
-.attachBtn:hover {
-    background: #DBEAFE;
-    color: #2563EB;
-}
-
-.micBtn {
-    background: transparent;
-    border: none;
-    color: #6B7280;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-}
-
-.micBtn:hover {
-    background: #DBEAFE;
-    color: #2563EB;
+.toolBtn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .recording {
     color: #EF4444 !important;
-    background: rgba(239, 68, 68, 0.12) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
     animation: pulse 1.2s infinite;
 }
 
 .sendBtn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     background: #2563EB;
     color: #FFFFFF;
     border: none;
@@ -125,7 +110,7 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
     flex-shrink: 0;
 }
 
@@ -135,36 +120,37 @@
 }
 
 .sendBtn:disabled {
-    background: #E5E7EB;
-    color: #9CA3AF;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
     cursor: not-allowed;
     box-shadow: none;
 }
 
 .stopBtn {
+    width: 34px;
     height: 34px;
     background: #EF4444;
     color: #FFFFFF;
     border: none;
-    border-radius: 18px;
-    padding: 0 14px;
-    font-size: 12.5px;
-    font-weight: 600;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .stopBtn:hover {
     background: #DC2626;
+    transform: scale(1.05);
 }
 
 .hintText {
-    font-size: 11px;
-    color: #6B7280;
+    font-size: 10.5px;
+    color: var(--text-muted);
     text-align: center;
+    padding-top: 2px;
 }
 
 .spin {

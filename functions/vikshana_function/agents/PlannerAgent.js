@@ -2,42 +2,49 @@ const glmClient = require('../services/glmClient');
 const { plannerSystemPrompt } = require('../prompts/plannerPrompt');
 
 class PlannerAgent {
-    static async planInvestigation(userQuery) {
+    /**
+     * Converts a natural language query and conversation history into a JSON investigation plan.
+     * @param {string} officerQuery - The latest query from the officer.
+     * @param {Array} history - The chat history for context.
+     * @returns {Promise<Object>} The JSON investigation plan.
+     */
+    async generatePlan(officerQuery, history = []) {
         const messages = [
-            { role: "system", content: plannerSystemPrompt },
-            { role: "user", content: `Officer Query: ${userQuery}` }
+            { role: 'system', content: plannerSystemPrompt }
         ];
 
-        try {
-            console.log(`[PlannerAgent] Sending query to GLM...`);
-            const responseMessage = await glmClient.generate(messages, { maxTokens: 1024 });
-            let content = responseMessage.content.trim();
-            
-            // Strip markdown JSON block if the LLM adds it despite instructions
-            if (content.startsWith("```json")) {
-                content = content.replace(/^```json\n/, "").replace(/\n```$/, "");
-            }
-            
-            // Handle GLM Reasoning Models that output <think> or raw text before JSON
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                content = jsonMatch[0];
-            }
+        // Add history (limit to last 6 messages for context)
+        const recentHistory = history.slice(-6);
+        for (const msg of recentHistory) {
+            messages.push({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content });
+        }
 
-            const plan = JSON.parse(content);
-            return plan;
+        // Add current query
+        messages.push({ role: 'user', content: officerQuery });
+
+        try {
+            console.log(`[PlannerAgent] Generating plan for query: "${officerQuery}"`);
+            const response = await glmClient.generate(messages, {
+                temperature: 0.1, // Very low for strict JSON compliance
+                maxTokens: 500
+            });
+
+            const content = response.content.trim();
+            // In case the model still outputs markdown ticks despite instructions
+            const cleanedContent = content.replace(/^```json\n?/, '').replace(/```$/, '').trim();
+            
+            return JSON.parse(cleanedContent);
         } catch (error) {
-            console.error("[PlannerAgent] Error parsing plan:", error);
-            // Fallback plan if GLM fails
+            console.error('[PlannerAgent] Failed to generate plan:', error);
+            // Return a safe fallback plan
             return {
-                intent: "Fallback investigation plan due to AI error.",
-                entities: { people: [], vehicles: [], locations: [], keywords: userQuery.split(" ") },
+                intent: "fallback_search",
+                entities: { case_ids: [], people: [], vehicles: [], locations: [], keywords: [officerQuery] },
                 tools: ["search_cases"],
-                confidence: 50,
-                error: error.message
+                confidence: 50
             };
         }
     }
 }
 
-module.exports = PlannerAgent;
+module.exports = new PlannerAgent();

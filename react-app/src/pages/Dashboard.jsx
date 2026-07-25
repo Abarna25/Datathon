@@ -77,15 +77,16 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
-  if (loading) return <div style={{ color: 'var(--text-secondary)' }}>{t('common.loading', 'Loading Intelligence Data...')}</div>;
-  if (!data) return <div style={{ color: 'var(--accent-danger)' }}>{t('common.error', 'Error')} connecting to VIKSHANA core systems.</div>;
+  if (loading) return <div style={{ color: 'var(--text-secondary)' }}>{t ? t('common.loading') : 'Loading Intelligence Data...'}</div>;
+  if (!data) return <div style={{ color: 'var(--accent-danger)' }}>{t ? t('common.error') : 'Error'} connecting to VIKSHANA core systems.</div>;
 
   const role = user?.role || 'Viewer';
 
   const renderDashboard = () => {
     switch (role) {
       case 'Administrator': return <AdminDashboard data={data} />;
-      case 'Investigator': return <InvestigatorDashboard data={data} />;
+      case 'Investigator': 
+      case 'Officer': return <InvestigatorDashboard data={data} />;
       case 'Analyst': return <AnalystDashboard data={data} />;
       case 'Supervisor': return <SupervisorDashboard data={data} />;
       case 'Policymaker': return <PolicymakerDashboard data={data} />;
@@ -97,8 +98,8 @@ const Dashboard = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--text-primary)' }}>{t('dashboard.title', 'Command Center')}</h1>
-          <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)' }}>{t('dashboard.subtitle', 'Real-time intelligence tailored for ') + role}.</p>
+          <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--text-primary)' }}>{t ? t('dashboard.title', 'Command Center') : 'Command Center'}</h1>
+          <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)' }}>{t ? t('dashboard.subtitle', 'Real-time intelligence tailored for ') : 'Real-time intelligence tailored for '}{role}.</p>
         </div>
       </div>
       {renderDashboard()}

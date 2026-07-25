@@ -9,6 +9,7 @@ import TranslationStatus from '../services/TranslationStatus';
 import api from '../services/api';
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { t, isEnglish } = useLanguage();
   const { officer, cases, activeCaseId, setActiveCaseId, loadingCases } = useAppContext();
@@ -52,22 +53,25 @@ const Navbar = () => {
 
   const displayName = user?.name || officer?.name || 'Unknown User';
   const displayRole = user?.role || officer?.role || 'Viewer';
-
-  const handleCaseSelect = (e) => {
-    const selectedId = e.target.value;
-    if (selectedId) {
-      setActiveCaseId(selectedId);
-    }
-  };
-
   const getRoleColor = (role) => {
     switch(role) {
       case 'Administrator': return '#ef4444'; // Red
       case 'Investigator': return '#3b82f6'; // Blue
+      case 'Officer': return '#3b82f6';
       case 'Analyst': return '#a855f7'; // Purple
       case 'Supervisor': return '#f97316'; // Orange
       case 'Policymaker': return '#10b981'; // Green
       default: return '#64748b'; // Gray
+    }
+  };
+
+  const handleCaseSelect = (e) => {
+    const selectedId = e.target.value;
+    if (setActiveCaseId) {
+      setActiveCaseId(selectedId === 'all' ? null : selectedId);
+    }
+    if (selectedId !== 'all') {
+      navigate(`/investigate/${selectedId}`);
     }
   };
 
@@ -155,43 +159,60 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Global Case Selector Option */}
+        {/* Global Case Selector Option - Premium Redesign */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(37, 99, 235, 0.08)',
-          padding: '6px 14px',
-          borderRadius: '8px',
-          border: '1px solid rgba(37, 99, 235, 0.25)'
+          gap: '10px',
+          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))',
+          padding: '6px 12px 6px 16px',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+          transition: 'all 0.3s ease',
+          backdropFilter: 'blur(10px)'
         }}>
-          <FolderSearch size={16} color="#2563EB" />
-          <span style={{ fontSize: '12px', fontWeight: '700', color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t ? t('nav.activeCase') : 'Active Case'}:
-          </span>
-          {loadingCases ? (
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Loading cases...</span>
-          ) : (
-            <select
-              value={activeCaseId || ''}
-              onChange={handleCaseSelect}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-primary)',
-                fontWeight: '600',
-                fontSize: '13px',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              {cases.map((c) => (
-                <option key={c.id} value={String(c.id)} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                  {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 50 ? c.briefFacts.substring(0, 47) + '...' : c.briefFacts) : 'No Brief Facts'}
+          <div style={{
+            width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <FolderSearch size={13} color="#60A5FA" />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontSize: '9px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              {t ? t('nav.activeCase') : 'Global Workspace'}
+            </span>
+            {loadingCases ? (
+              <span style={{ fontSize: '13px', color: '#F1F5F9', fontWeight: '500' }}>Loading cases...</span>
+            ) : (
+              <select
+                value={activeCaseId || 'all'}
+                onChange={handleCaseSelect}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#F8FAFC',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '220px',
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                <option value="all" style={{ background: '#0F172A', color: '#F8FAFC' }}>
+                  🌐 All Cases (Global View)
                 </option>
-              ))}
-            </select>
-          )}
+                {cases.map((c) => (
+                  <option key={c.id} value={String(c.id)} style={{ background: '#1E293B', color: '#F8FAFC' }}>
+                    {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 40 ? c.briefFacts.substring(0, 37) + '...' : c.briefFacts) : 'No Brief Facts'}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       </div>
 

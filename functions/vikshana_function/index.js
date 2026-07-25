@@ -85,25 +85,25 @@ app.use('/dev', devRoutes);
 app.use('/audit', authorizeRole('Administrator', 'Supervisor'), auditRoutes);
 
 // Role Protected API Routes
-app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), dashboardRoutes);
-app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor'), investigateRoutes);
-app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor'), conversationRoutes);
-app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor'), caseRoutes);
-app.use('/decision', authorizeRole('Administrator', 'Investigator', 'Supervisor'), decisionRoutes);
-app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor'), offenderRoutes);
-app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor'), evidenceRoutes);
+app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), dashboardRoutes);
+app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), investigateRoutes);
+app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), conversationRoutes);
+app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), caseRoutes);
+app.use('/decision', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), decisionRoutes);
+app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), offenderRoutes);
+app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), evidenceRoutes);
 
-app.use('/relationships', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor'), relationshipRoutes);
-app.use('/ml', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor'), mlRoutes);
+app.use('/relationships', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'), relationshipRoutes);
+app.use('/forecasting', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), forecastingRoutes);
+app.use('/ml', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'), mlRoutes);
 
-app.use('/reports', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), reportRoutes);
-app.use('/signals', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), signalRoutes);
-app.use('/jobs', authorizeRole('Administrator', 'Investigator', 'Supervisor'), jobRoutes);
-app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Supervisor'), convokraftRoutes);
-app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), textToSqlRoutes);
-app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), firIntelligenceRoutes);
-app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker'), evidenceIntelligenceRoutes);
-app.use('/forecasting', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker'), forecastingRoutes);
+app.use('/reports', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), reportRoutes);
+app.use('/signals', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), signalRoutes);
+app.use('/jobs', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), jobRoutes);
+app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), convokraftRoutes);
+app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), textToSqlRoutes);
+app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), firIntelligenceRoutes);
+app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), evidenceIntelligenceRoutes);
 
 
 

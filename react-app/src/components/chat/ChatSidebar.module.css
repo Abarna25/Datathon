@@ -1,7 +1,7 @@
 .sidebar {
     height: 100%;
-    background: #F8FAFC;
-    border-right: 1px solid #E5E7EB;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -16,21 +16,21 @@
 
 .collapseToggleBtn {
     position: absolute;
-    top: 14px;
-    right: -12px;
-    width: 24px;
-    height: 24px;
+    top: 12px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    color: #111827;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 20;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: transform 0.15s ease, background 0.15s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.15s ease;
 }
 
 .collapseToggleBtn:hover {
@@ -40,39 +40,33 @@
 }
 
 .topSection {
-    padding: 14px;
+    padding: 10px;
 }
 
 .newBtn {
     width: 100%;
-    height: 42px;
+    height: 36px;
     background: #2563EB;
     color: #FFFFFF;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    transition: all 0.15s ease;
 }
 
 .newBtn:hover {
     background: #1D4ED8;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
-}
-
-.newBtn:active {
-    transform: translateY(1px);
 }
 
 .searchBox {
-    margin: 0 14px 10px 14px;
+    margin: 0 10px 8px 10px;
     position: relative;
     display: flex;
     align-items: center;
@@ -80,19 +74,19 @@
 
 .searchIcon {
     position: absolute;
-    left: 10px;
-    color: #6B7280;
+    left: 8px;
+    color: var(--text-muted);
 }
 
 .searchBox input {
     width: 100%;
-    height: 36px;
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 8px;
-    padding: 0 10px 0 32px;
-    color: #111827;
-    font-size: 13px;
+    height: 32px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    padding: 0 8px 0 28px;
+    color: var(--text-primary);
+    font-size: 12px;
     outline: none;
     transition: border-color 0.15s ease;
 }
@@ -104,49 +98,47 @@
 .listContainer {
     flex: 1;
     overflow-y: auto;
-    padding: 0 10px;
+    padding: 0 8px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
 }
 
 .groupTitle {
-    font-size: 11.5px;
+    font-size: 10.5px;
     font-weight: 600;
-    color: #6B7280;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 4px 8px;
+    padding: 2px 6px;
 }
 
 .emptyHint {
-    font-size: 12.5px;
-    color: #6B7280;
-    padding: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 8px;
     font-style: italic;
 }
 
 .item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 8px;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 7px;
     cursor: pointer;
-    color: #111827;
-    font-size: 13.5px;
-    transition: all 0.15s ease;
+    color: var(--text-primary);
+    font-size: 12.5px;
+    transition: all 0.12s ease;
     position: relative;
 }
 
 .item:hover {
-    background: #DBEAFE;
-    color: #111827;
+    background: var(--bg-tertiary);
 }
 
 .itemActive {
-    background: #DBEAFE !important;
-    color: #111827 !important;
+    background: rgba(37, 99, 235, 0.08) !important;
     font-weight: 600;
 }
 
@@ -155,7 +147,7 @@
     left: 0;
     top: 4px;
     bottom: 4px;
-    width: 3px;
+    width: 2.5px;
     background: #2563EB;
     border-radius: 0 3px 3px 0;
 }
@@ -166,7 +158,7 @@
 }
 
 .iconMuted {
-    color: #6B7280;
+    color: var(--text-muted);
     flex-shrink: 0;
 }
 
@@ -180,7 +172,7 @@
 .itemActions {
     display: none;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .item:hover .itemActions {
@@ -190,9 +182,9 @@
 .itemActions button {
     background: transparent;
     border: none;
-    color: #6B7280;
-    padding: 3px;
-    border-radius: 4px;
+    color: var(--text-muted);
+    padding: 2px;
+    border-radius: 3px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -201,35 +193,33 @@
 
 .itemActions button:hover {
     background: rgba(0, 0, 0, 0.06);
-    color: #111827;
+    color: var(--text-primary);
 }
 
 .renameInput {
     flex: 1;
-    background: #FFFFFF;
+    background: var(--bg-primary);
     border: 1px solid #2563EB;
     border-radius: 4px;
-    color: #111827;
-    font-size: 13px;
-    padding: 2px 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+    padding: 2px 5px;
     outline: none;
 }
 
 .userProfileSection {
-    padding: 12px 14px;
-    border-top: 1px solid #E5E7EB;
+    padding: 10px;
+    border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #F8FAFC;
+    gap: 8px;
 }
 
 .userAvatar {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: #DBEAFE;
-    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: rgba(37, 99, 235, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -242,18 +232,16 @@
 }
 
 .userName {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    color: #111827;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .userRole {
-    font-size: 11px;
-    color: #6B7280;
+    font-size: 10px;
+    color: var(--text-muted);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

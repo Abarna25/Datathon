@@ -57,6 +57,15 @@ class GLMStreamClient {
         return fullText;
     }
 
+    async streamText(res, fullText) {
+        for (const chunk of chunkText(fullText, 3)) {
+            if (res.writableEnded || res.destroyed) break;
+            writeSSE(res, 'delta', { text: chunk });
+            await new Promise((resolve) => setTimeout(resolve, 18));
+        }
+        return fullText;
+    }
+
     sendEvent(res, event, data) {
         writeSSE(res, event, data);
     }

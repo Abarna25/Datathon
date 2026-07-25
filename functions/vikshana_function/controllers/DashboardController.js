@@ -7,7 +7,7 @@ class DashboardController {
             res.status(200).json({ success: true, data });
         } catch (error) {
             console.error("Error in DashboardController:", error);
-            res.status(500).json({ success: false, error: "Internal Server Error" });
+            res.status(500).json({ success: false, error: "Internal Server Error", details: error.message, stack: error.stack });
         }
     }
 }

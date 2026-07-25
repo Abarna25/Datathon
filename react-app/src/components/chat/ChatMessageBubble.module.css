@@ -1,8 +1,7 @@
 .row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
     width: 100%;
+    padding: 0 20px;
 }
 
 .rowUser {
@@ -13,131 +12,97 @@
     justify-content: flex-start;
 }
 
-.avatarAssistant {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #2563EB;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-}
-
 .bubbleContainer {
-    max-width: 82%;
+    max-width: 88%;
     display: flex;
     flex-direction: column;
-}
-
-.userContainer {
-    align-items: flex-end;
-}
-
-.assistantContainer {
-    align-items: flex-start;
     width: 100%;
 }
 
-/* User Message: light blue tint background #DBEAFE, dark text #111827, rounded-2xl */
+/* User Message */
 .bubbleUser {
-    background: #DBEAFE;
-    color: #111827;
-    padding: 12px 18px;
-    border-radius: 20px 20px 4px 20px;
-    border: 1px solid rgba(37, 99, 235, 0.15);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    background: #2563EB;
+    color: #FFFFFF;
+    padding: 10px 16px;
+    border-radius: 18px 18px 4px 18px;
     word-break: break-word;
+    max-width: 65%;
+    margin-left: auto;
 }
 
 .userText {
-    font-size: 14.5px;
+    font-size: 14px;
     line-height: 1.55;
-    color: #111827;
     font-weight: 450;
 }
 
-/* Assistant Response: white card background #FFFFFF, soft shadow, rounded-2xl */
+/* Assistant Message - Clean, no card */
 .bubbleAssistant {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 20px;
-    padding: 18px 20px;
     width: 100%;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-    color: #111827;
+    color: var(--text-primary);
+    padding: 2px 0;
 }
 
-.assistantHeader {
-    display: flex;
+.assistantLabel {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #E5E7EB;
-}
-
-.botBadge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
+    gap: 5px;
+    font-size: 12px;
     font-weight: 600;
-    color: #111827;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
 }
 
 .timestamp {
-    font-size: 11px;
-    color: #6B7280;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 4px;
 }
 
 .investigatingIndicator {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     color: #2563EB;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
-    padding: 8px 12px;
-    background: #DBEAFE;
+    padding: 6px 12px;
+    background: rgba(37, 99, 235, 0.06);
     border-radius: 8px;
-    margin-bottom: 10px;
+    margin-top: 4px;
 }
 
 .pulsingDot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #2563EB;
-    animation: pulse 1.2s infinite ease-in-out;
+    animation: pulseDot 1.2s infinite ease-in-out;
 }
 
 .inlineErrorBanner {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    gap: 7px;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.15);
     color: #EF4444;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    margin-top: 8px;
 }
 
 .evidenceRow {
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid #E5E7EB;
+    margin-top: 12px;
 }
 
 .evidenceLabel {
-    font-size: 11.5px;
+    font-size: 10.5px;
     font-weight: 600;
-    color: #6B7280;
-    margin-bottom: 8px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -145,17 +110,16 @@
 .evidenceGrid {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 }
 
+/* Action Bar - Appears below message, visible on hover */
 .actionsBar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 14px;
-    padding-top: 10px;
-    border-top: 1px solid #E5E7EB;
-    opacity: 0.85;
+    gap: 2px;
+    margin-top: 8px;
+    opacity: 0;
     transition: opacity 0.15s ease;
 }
 
@@ -164,33 +128,79 @@
 }
 
 .actionBtn {
-    background: #F1F5F9;
-    border: 1px solid #E5E7EB;
-    color: #6B7280;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 11px;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.12s ease;
 }
 
 .actionBtn:hover {
-    background: #DBEAFE;
-    color: #2563EB;
-    border-color: rgba(37, 99, 235, 0.3);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .active {
-    background: #DBEAFE !important;
     color: #2563EB !important;
-    border-color: #2563EB !important;
 }
 
-@keyframes pulse {
+/* More menu */
+.moreWrap {
+    position: relative;
+}
+
+.moreMenu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 4px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 3px;
+    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+    min-width: 140px;
+    animation: fadeIn 0.12s ease;
+}
+
+.moreMenu button {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.12s ease;
+}
+
+.moreMenu button:hover {
+    background: var(--bg-tertiary);
+}
+
+.menuActive {
+    color: #2563EB !important;
+}
+
+@keyframes pulseDot {
     0%, 100% { transform: scale(0.8); opacity: 0.5; }
     50% { transform: scale(1.2); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
 }
