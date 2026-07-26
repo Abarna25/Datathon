@@ -122,15 +122,6 @@ VIKSHANA/
 
 ---
 
-## 🛠️ Installation
-
-```bash
-git clone https://github.com/your-org/Vikshana.git
-cd Vikshana/react-app && npm install
-catalyst serve
-```
-
----
 
 ## 🔮 Future Roadmap
 
