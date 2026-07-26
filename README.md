@@ -141,9 +141,4 @@ catalyst serve
 - Secure inter-department case sharing.
 - Blockchain Chain-of-Custody audits.
 
----
 
-
-## 📄 License
-
-MIT License.
