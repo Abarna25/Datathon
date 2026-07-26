@@ -4,10 +4,16 @@
 
   <p><b>AI-Powered Investigation Intelligence Platform for Modern Law Enforcement</b></p>
 
-
+  <!-- Technology Badges -->
+  <img src="https://img.shields.io/badge/Datathon_Hackathon-FF4B4B?style=for-the-badge" alt="Datathon" />
+  <img src="https://img.shields.io/badge/Zoho_Catalyst-4353FF?style=for-the-badge&logo=zoho&logoColor=white" alt="Zoho Catalyst" />
+  <img src="https://img.shields.io/badge/AI_Powered-000000?style=for-the-badge&logo=google&logoColor=white" alt="AI Powered" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  
   <br /><br />
 
-  > **[🌍 Live Application URL](https://vikshana-60077000408.development.catalystserverless.in/app/index.html)**
+  > **[🎥 Watch the Live Demo Video](https://youtube.com/your-demo-link)** &nbsp;&nbsp;|&nbsp;&nbsp; **[🌍 Live Application URL](https://vikshana-60077000408.development.catalystserverless.in/app/index.html)**
 
   <br/>
 
