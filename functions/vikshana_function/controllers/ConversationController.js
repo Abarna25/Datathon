@@ -7,6 +7,54 @@ const ContextBuilderService = require('../services/ContextBuilderService');
 const SuggestionService = require('../services/SuggestionService');
 const LLMService = require('../services/LLMService');
 const crypto = require('crypto');
+const datastoreClient = require('../queries/datastoreClient');
+
+async function detectCaseIdFromQuery(req, queryText, defaultCaseId) {
+    const text = String(queryText || '').toLowerCase();
+    
+    // 1. Check if the text matches a specific case number directly (e.g. 100110486202100001)
+    const caseNoMatch = text.match(/\b\d{10,20}\b/);
+    if (caseNoMatch) {
+        const targetNum = caseNoMatch[0];
+        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 200 }).catch(() => []);
+        const found = allCases.find(c => String(c.CrimeNo || c.CaseNo || '').includes(targetNum));
+        if (found) {
+            return found.CaseMasterID || found.ROWID;
+        }
+    }
+
+    // 2. Check for keyword matches in CrimeType / BriefFacts / Jurisdiction
+    const keywords = ['stalking', 'theft', 'counterfeiting', 'rape', 'identity theft', 'kidnapping', 'fraud', 'accident', 'murder', 'harassment', 'cheating', 'assault', 'burglary'];
+    const locations = ['ballari', 'davanagere', 'mandya', 'mysuru', 'yadgir', 'bengaluru', 'belagavi', 'dakshina kannada', 'mangaluru', 'tumakuru', 'shivamogga', 'vijayanagara', 'kalyana karnataka'];
+    
+    const matchedKeyword = keywords.find(kw => text.includes(kw));
+    const matchedLoc = locations.find(loc => text.includes(loc));
+
+    if (matchedKeyword || matchedLoc) {
+        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 200 }).catch(() => []);
+        let bestCase = null;
+        let maxScore = 0;
+        
+        for (const c of allCases) {
+            let score = 0;
+            const facts = String(c.BriefFacts || '').toLowerCase();
+            
+            if (matchedKeyword && facts.includes(matchedKeyword)) score += 3;
+            if (matchedLoc && facts.includes(matchedLoc)) score += 2;
+            
+            if (score > maxScore) {
+                maxScore = score;
+                bestCase = c;
+            }
+        }
+        
+        if (bestCase && maxScore >= 2) {
+            return bestCase.CaseMasterID || bestCase.ROWID;
+        }
+    }
+
+    return defaultCaseId;
+}
 
 class ConversationController {
     static async list(req, res) {
@@ -124,8 +172,9 @@ class ConversationController {
             }
 
             // HACKATHON STABILIZATION: Bypass dynamic planning and just fetch 100% of case context
-            if (streaming) LLMService.sendEvent(res, 'progress', { step: 'correlating', status: 'Fetching full case context...' });
-            const contextData = await ContextBuilderService.buildCaseContext(req, conversation.caseId);
+            if (streaming) LLMService.sendEvent(res, 'progress', { step: 'correlating', status: 'Detecting target case and building context...' });
+            const detectedCaseId = await detectCaseIdFromQuery(req, content, conversation.caseId);
+            const contextData = await ContextBuilderService.buildCaseContext(req, detectedCaseId);
             
             // Format context into a structured ledger so it aligns with existing pipelines, but it's indestructible
             const ledger = [{
@@ -143,7 +192,7 @@ class ConversationController {
             const assistantText = await ReportAgent.generateReport(ledger, history, res, streaming);
 
             // Generate suggestions
-            const suggestions = await SuggestionService.generateFollowUps(assistantText, `Case #${conversation.caseId}`);
+            const suggestions = await SuggestionService.generateFollowUps(assistantText, `Case #${detectedCaseId}`);
 
             // Save assistant message with ledger as citations
             const assistantMessage = await ConversationService.appendMessage(req, conversation.id, {

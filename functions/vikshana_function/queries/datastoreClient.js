@@ -6,19 +6,82 @@ const os = require('os');
 
 const LOCAL_DB_PATH = path.join(os.tmpdir(), 'vikshana_local_datastore.json');
 
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
+function loadFromCSV() {
+    const datasetDir = 'c:/project/VIKS/vikshana/dataset';
+    const db = {};
+    const files = [
+        { name: 'CaseMaster.csv', table: 'CaseMaster' },
+        { name: 'Victim.csv', table: 'Victim' },
+        { name: 'Accused.csv', table: 'Accused' },
+        { name: 'ComplainantDetails.csv', table: 'ComplainantDetails' },
+        { name: 'ArrestSurrender.csv', table: 'ArrestSurrender' },
+        { name: 'ChargesheetDetails.csv', table: 'ChargesheetDetails' },
+        { name: 'ActSectionAssociation.csv', table: 'ActSectionAssociation' },
+        { name: 'Inv_OccuranceTime.csv', table: 'Inv_OccuranceTime' }
+    ];
+
+    for (const file of files) {
+        const filePath = path.join(datasetDir, file.name);
+        if (fs.existsSync(filePath)) {
+            try {
+                const content = fs.readFileSync(filePath, 'utf8');
+                const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+                if (lines.length === 0) continue;
+                const headers = parseCSVLine(lines[0]);
+                const rows = [];
+                // Load first 150 rows for performance
+                for (let i = 1; i < Math.min(lines.length, 150); i++) {
+                    const values = parseCSVLine(lines[i]);
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] !== undefined ? values[index] : '';
+                    });
+                    rows.push(row);
+                }
+                db[file.table] = rows;
+            } catch (e) {
+                console.error(`Failed to load CSV ${file.name}:`, e.message);
+            }
+        }
+    }
+    return db;
+}
+
 function loadLocalDb() {
     try {
         if (fs.existsSync(LOCAL_DB_PATH)) {
             const db = JSON.parse(fs.readFileSync(LOCAL_DB_PATH, 'utf8'));
-            if (db && Object.keys(db).length > 0) return db;
+            if (db && Object.keys(db).length > 0 && db.CaseMaster && db.CaseMaster.length > 5) return db;
         }
-        const projectDbPath = path.join(__dirname, '../local_datastore.json');
-        if (fs.existsSync(projectDbPath)) {
-            const data = JSON.parse(fs.readFileSync(projectDbPath, 'utf8'));
-            try { fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(data, null, 2)); } catch (e) {}
-            return data;
+        
+        console.log('[datastoreClient] Compiling mock database from local CSV datasets...');
+        const db = loadFromCSV();
+        if (db && Object.keys(db).length > 0) {
+            saveLocalDb(db);
+            return db;
         }
-    } catch (e) { }
+    } catch (e) {
+        console.error('[datastoreClient] Failed to load local DB:', e.message);
+    }
     return {};
 }
 
@@ -98,6 +161,11 @@ async function getRows(req, tableName, { maxRows = 50 } = {}) {
         const response = await getTable(req, tableName).getPagedRows({ maxRows });
         return (response.data || []).map(unwrapRow);
     } catch (err) {
+        console.warn(`[datastoreClient] getRows Failed for ${tableName}. Falling back to local mock data.`);
+        const localDb = loadLocalDb();
+        if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
+            return localDb[tableName].slice(0, maxRows);
+        }
         throw wrapError(err, tableName);
     }
 }
@@ -107,8 +175,21 @@ async function getRowById(req, tableName, id) {
     try {
         validateTable(tableName);
         const row = await getTable(req, tableName).getRow(id);
-        return unwrapRow(row);
+        const unwrapped = unwrapRow(row);
+        if ((!unwrapped || Object.keys(unwrapped).length === 0 || !unwrapped.ROWID) && process.env.NODE_ENV !== 'production') {
+            throw new Error("Row not found in live datastore");
+        }
+        return unwrapped;
     } catch (err) {
+        console.warn(`[datastoreClient] getRowById Failed for ${tableName} ID ${id}. Falling back to local mock data.`);
+        const localDb = loadLocalDb();
+        if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
+            const found = localDb[tableName].find(row => {
+                const rowId = row.ROWID || row.CaseMasterID || row.VictimMasterID || row.AccusedMasterID || row.ComplainantID || row.id;
+                return String(rowId || '') === String(id);
+            });
+            if (found) return found;
+        }
         throw wrapError(err, tableName);
     }
 }
@@ -122,6 +203,9 @@ async function query(req, sql) {
         validateZCQL(sql);
         const app = catalyst.initialize(req);
         const rows = await app.zcql().executeZCQLQuery(sql);
+        if ((!rows || rows.length === 0) && process.env.NODE_ENV !== 'production') {
+            throw new Error("No rows returned from live datastore");
+        }
         return rows || [];
     } catch (err) {
         const tableMatch = /FROM\s+([A-Za-z0-9_]+)/i.exec(sql);
@@ -130,8 +214,30 @@ async function query(req, sql) {
         console.warn(`[datastoreClient] ZCQL Query Failed. Falling back to local mock data for ${tableName}`);
         const localDb = loadLocalDb();
         if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
-            // Apply a very basic limit to mock data
-            return localDb[tableName].slice(0, 50).map(r => ({ [tableName]: r }));
+            let data = localDb[tableName];
+            
+            // In-memory ZCQL WHERE filtering fallback
+            const whereMatch = /WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/i.exec(sql);
+            if (whereMatch) {
+                const whereClause = whereMatch[1];
+                const conditions = whereClause.split(/\s+AND\s+/i);
+                for (const condition of conditions) {
+                    const condMatch = /([A-Za-z0-9_]+)\s*=\s*'?(.*?)'?$/i.exec(condition.trim());
+                    if (condMatch) {
+                        const col = condMatch[1].trim();
+                        const val = condMatch[2].trim();
+                        data = data.filter(row => {
+                            const rowVal = Object.entries(row).find(([k]) => k.toLowerCase() === col.toLowerCase())?.[1];
+                            return String(rowVal || '').toLowerCase() === String(val || '').toLowerCase();
+                        });
+                    }
+                }
+            }
+            
+            const limitMatch = /LIMIT\s+(\d+)/i.exec(sql);
+            const limit = limitMatch ? parseInt(limitMatch[1], 10) : 50;
+            
+            return data.slice(0, limit).map(r => ({ [tableName]: r }));
         }
 
         // If no mock data, return a generic mock row so the UI doesn't crash empty

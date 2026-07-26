@@ -87,6 +87,12 @@ const tables = {
     ],
     Investigation_Message: [
         'id', 'conversationId', 'role', 'content', 'citations', 'createdAt'
+    ],
+    AuditLog: [
+        'log_id', 'timestamp', 'user_name', 'role', 'action', 'resource', 'case_id', 'status', 'ip_address', 'browser', 'aiReasoning', 'confidence', 'evidenceSources'
+    ],
+    Inv_OccuranceTime: [
+        'CaseMasterID', 'IncidentFromDate', 'IncidentToDate', 'InfoReceivedPSDate'
     ]
 };
 

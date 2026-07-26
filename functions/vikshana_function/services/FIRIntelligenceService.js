@@ -73,13 +73,13 @@ DO NOT wrap the output in markdown blocks. Return raw JSON.`;
             const parsedData = JSON.parse(rawJson);
 
             // Log Audit
-            await AuditService.logEvent(req, req.user, 'Analyzed FIR Narrative', 'FIRIntelligence', caseId, 'SUCCESS');
+            await AuditService.logEvent(req, req.user, 'Analyzed FIR Narrative', 'FIRIntelligence', caseId, 'SUCCESS').catch(() => {});
 
             return parsedData;
 
         } catch (error) {
             console.error('[FIRIntelligenceService] API Failed, using DEMO fallback:', error.message);
-            await AuditService.logEvent(req, req.user, 'Failed FIR Analysis - Using Demo Mock', 'FIRIntelligence', caseId, 'WARNING');
+            await AuditService.logEvent(req, req.user, 'Failed FIR Analysis - Using Demo Mock', 'FIRIntelligence', caseId, 'WARNING').catch(() => {});
             
             // DEMO FALLBACK TO SAVE THE HACKATHON PRESENTATION
             return {

@@ -64,15 +64,7 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
         return parseMessageContent(message.content, streaming);
     }, [message.content, streaming]);
 
-    const isStructuredContent = useMemo(() => {
-        if (isUser || !body) return false;
-        return (
-            body.includes('Investigation Summary') ||
-            body.includes('Key Findings') ||
-            body.includes('Suspects') ||
-            body.includes('Recommended Next Actions')
-        );
-    }, [isUser, body]);
+    const isStructuredContent = false;
 
     function LinkRenderer({ href, children }) {
         if (href === 'cursor://') {

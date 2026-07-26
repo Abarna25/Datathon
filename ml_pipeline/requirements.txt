@@ -1,0 +1,11 @@
+zcatalyst-sdk
+pandas
+numpy
+scikit-learn
+xgboost
+lightgbm
+catboost
+flask
+shap
+joblib
+python-dotenv

@@ -49,7 +49,7 @@ class GLMClient {
             timeoutMs = 60000
         } = options;
 
-        let currentApiKey = this.apiKey;
+        let currentApiKey = process.env.GLM_API_KEY || process.env.CATALYST_TOKEN;
         try {
             const envContent = fs.readFileSync(path.join(__dirname, '../.env'), 'utf-8');
             const tokenMatch = envContent.match(/CATALYST_TOKEN=(.*)/);
@@ -61,10 +61,8 @@ class GLMClient {
         }
 
         if (!this.endpoint || !this.model || !currentApiKey) {
-            console.warn('[GLMClient] Missing GLM_ENDPOINT, GLM_MODEL, or GLM_API_KEY/CATALYST_TOKEN in .env. Returning offline message.');
-            return {
-                content: "The AI Copilot is currently offline due to missing configuration."
-            };
+            console.warn('[GLMClient] Missing GLM_ENDPOINT, GLM_MODEL, or GLM_API_KEY/CATALYST_TOKEN in .env.');
+            throw new Error('[GLMClient] AI Copilot offline: missing GLM configuration in .env.');
         }
 
         let attempt = 0;
@@ -156,25 +154,26 @@ class GLMClient {
                         console.error('[GLMClient] Gemini fallback also failed:', geminiError.message);
                     }
                     
-                    // INDESTRUCTIBLE MOCK FALLBACK (so the UI never crashes)
-                    console.log('[GLMClient] ALL AI ENGINES OFFLINE. Returning offline error message.');
-                    return {
-                        content: "The AI Copilot is currently offline due to authentication failures. Please verify your API keys.",
-                        tool_calls: null,
-                        finish_reason: 'stop'
-                    };
+                    console.log('[GLMClient] Catalyst Auth Failed. Returning clean analysis fallback.');
+                    throw new Error('[GLMClient] AI service offline. Using structured datastore analysis.');
                 }
 
                 attempt++;
                 lastError = error;
                 console.warn(`[GLMClient] Attempt ${attempt} failed:`, error.response?.data || error.message);
+
+                if (error.response?.status === 401) {
+                    console.error('[GLMClient] Authentication failed (HTTP 401 Invalid OAuth Token). Please update CATALYST_TOKEN or GLM_API_KEY in .env.');
+                    throw new Error('[GLMClient] AI Copilot offline: invalid or expired CATALYST_TOKEN (HTTP 401).');
+                }
+
                 if (attempt < retries) {
                     await new Promise(res => setTimeout(res, 1000 * attempt));
                 }
             }
         }
 
-        throw new Error(`[GLMClient] API Call Failed after ${retries} attempts. ${lastError?.message}`);
+        throw new Error(`[GLMClient] AI Copilot offline: API call failed after ${retries} attempts (${lastError?.message}).`);
     }
 }
 

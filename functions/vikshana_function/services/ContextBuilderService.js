@@ -177,14 +177,36 @@ async function getCaseSections(req, caseId) {
 class ContextBuilderService {
     /** Assembles the hidden, evidence-grounded context injected into every chat turn. Never shown to the user. */
     static async buildCaseContext(req, caseId) {
-        const [caseRow, victims, suspects, witnesses, timeline, chargesheet, sections] = await Promise.all([
-            datastoreClient.getRowById(req, 'CaseMaster', caseId).catch(() => null),
-            getCaseVictims(req, caseId).catch(() => []),
-            getCaseSuspects(req, caseId).catch(() => []),
-            getCaseWitnesses(req, caseId).catch(() => []),
-            getCaseTimeline(req, caseId).catch(() => []),
-            getCaseChargesheet(req, caseId).catch(() => []),
-            getCaseSections(req, caseId).catch(() => [])
+        let dbCaseId = caseId;
+        let caseRow = null;
+
+        if (caseId) {
+            caseRow = await datastoreClient.getRowById(req, 'CaseMaster', caseId).catch(() => null);
+        }
+
+        if (!caseRow && caseId) {
+            const matchedRows = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CrimeNo: caseId }, { maxRows: 1 }).catch(() => []);
+            if (matchedRows.length > 0) {
+                caseRow = matchedRows[0];
+            } else {
+                const matchedRows2 = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseNo: caseId }, { maxRows: 1 }).catch(() => []);
+                if (matchedRows2.length > 0) {
+                    caseRow = matchedRows2[0];
+                }
+            }
+        }
+
+        if (caseRow) {
+            dbCaseId = caseRow.CaseMasterID || caseRow.ROWID;
+        }
+
+        const [victims, suspects, witnesses, timeline, chargesheet, sections] = await Promise.all([
+            getCaseVictims(req, dbCaseId).catch(() => []),
+            getCaseSuspects(req, dbCaseId).catch(() => []),
+            getCaseWitnesses(req, dbCaseId).catch(() => []),
+            getCaseTimeline(req, dbCaseId).catch(() => []),
+            getCaseChargesheet(req, dbCaseId).catch(() => []),
+            getCaseSections(req, dbCaseId).catch(() => [])
         ]);
 
         let normalizedCase = normalizeCase(caseRow);

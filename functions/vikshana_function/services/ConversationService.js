@@ -66,10 +66,27 @@ class ConversationService {
 
         try {
             convData = await datastoreClient.getRowsWhere(req, 'Investigation_Conversation', { id }, { maxRows: 1 });
-            msgsData = await datastoreClient.getRowsWhere(req, 'Investigation_Message', { conversationId: id }, { maxRows: 500 });
+            if (!convData || convData.length === 0) {
+                convData = await datastoreClient.getRowsWhere(req, 'Investigation_Conversation', { ROWID: id }, { maxRows: 1 }).catch(() => []);
+            }
+
+            if (!convData || convData.length === 0) return null;
+
+            const targetId = convData[0].id || id;
+            const targetRowId = convData[0].ROWID ? String(convData[0].ROWID) : id;
+
+            const msgs1 = await datastoreClient.getRowsWhere(req, 'Investigation_Message', { conversationId: targetId }, { maxRows: 500 }).catch(() => []);
+            const msgs2 = (targetRowId && targetRowId !== targetId) 
+                ? await datastoreClient.getRowsWhere(req, 'Investigation_Message', { conversationId: targetRowId }, { maxRows: 500 }).catch(() => []) 
+                : [];
+
+            const msgMap = new Map();
+            [...msgs1, ...msgs2].forEach(m => { if (m && (m.id || m.ROWID)) msgMap.set(m.id || m.ROWID, m); });
+            msgsData = Array.from(msgMap.values());
+
         } catch (e) {
             console.error('Error getting conversation (falling back to local cache):', e.message);
-            convData = (localDb.Investigation_Conversation || []).filter(c => String(c.id) === String(id));
+            convData = (localDb.Investigation_Conversation || []).filter(c => String(c.id) === String(id) || String(c.ROWID) === String(id));
             msgsData = (localDb.Investigation_Message || []).filter(m => String(m.conversationId) === String(id));
         }
 
