@@ -21,6 +21,23 @@ const DataExplorer = () => {
     setIsLoading(true);
     setError(null);
 
+    // Mock delay for demo video
+    setTimeout(() => {
+      setIsLoading(false);
+      setQueryState({
+        query: query,
+        sql: "SELECT * FROM Evidence WHERE CaseID = '4' ORDER BY timestamp DESC;",
+        explanation: "This ZCQL query filters the Evidence table by the active case ID and returns all matching records sorted by their chronological timestamp.",
+        results: [
+          { EvidenceID: "EV-992", Type: "Physical", Description: "Muddy footprints near window", Status: "Collected" },
+          { EvidenceID: "EV-993", Type: "Digital", Description: "CCTV Footage from neighboring house", Status: "Under Review" },
+          { EvidenceID: "EV-994", Type: "Biological", Description: "Fingerprints on broken glass", Status: "Sent to Lab" },
+          { EvidenceID: "EV-995", Type: "Vehicle", Description: "Silver Maruti Swift (KA-01-MJ-4592)", Status: "Flagged" }
+        ]
+      });
+    }, 1500);
+
+    /* Original code disabled for demo video
     try {
       const response = await api.post('/text-to-sql/query', { query, caseId: activeCaseId });
       
@@ -40,6 +57,7 @@ const DataExplorer = () => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   return (

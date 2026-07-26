@@ -19,6 +19,41 @@ const FIRNarrativeUnderstanding = () => {
 
   // Load existing FIR text for the active case on mount or active case change
   useEffect(() => {
+    // Demo Mock Data
+    setFirText("On the night of October 15, 2023, around 11:30 PM, a burglary was reported at the residence of Mr. Rajesh Kumar in Indiranagar, Bangalore. The suspects, described as two males in their late 20s wearing dark hoodies, allegedly broke in through the back window and stole jewelry worth Rs. 5 Lakhs along with a laptop. A neighbor, Mrs. Sharma, reported seeing a suspicious silver Maruti Swift parked nearby with the license plate KA-01-MJ-4592. The suspects fled the scene before the police arrived. Evidence collected at the scene includes fingerprints on the broken glass and muddy footprints leading to the alleyway.");
+    
+    setAnalysisData({
+      summary: {
+        summary_text: "A burglary occurred at the residence of Rajesh Kumar in Indiranagar, Bangalore on October 15, 2023. Two suspects broke in, stealing jewelry and a laptop. A suspicious silver Maruti Swift (KA-01-MJ-4592) was seen nearby.",
+        primary_offense: "Burglary / Theft",
+        location: "Indiranagar, Bangalore",
+        date_of_incident: "2023-10-15"
+      },
+      entities: [
+        { entity_type: "Person", entity_value: "Rajesh Kumar", confidence: 0.98, reasoning: "Identified as the resident whose house was burglarized." },
+        { entity_type: "Person", entity_value: "Mrs. Sharma", confidence: 0.95, reasoning: "Neighbor who reported seeing the suspicious vehicle." },
+        { entity_type: "Vehicle", entity_value: "Maruti Swift", confidence: 0.99, reasoning: "Suspicious vehicle seen parked nearby during the incident." },
+        { entity_type: "Evidence ID", entity_value: "Fingerprints", confidence: 0.9, reasoning: "Physical evidence left at the point of entry." }
+      ],
+      relationships: [
+        { source_entity: "Rajesh Kumar", target_entity: "Mrs. Sharma", relationship_type: "Neighbor" },
+        { source_entity: "Mrs. Sharma", target_entity: "Maruti Swift", relationship_type: "Observed" },
+        { source_entity: "Fingerprints", target_entity: "Rajesh Kumar", relationship_type: "Found at Residence" }
+      ],
+      aliases: [],
+      timeline: [
+        { event_time: "2023-10-15 23:30", title: "Burglary Reported", description: "Burglary reported at Rajesh Kumar's residence" },
+        { event_time: "2023-10-15 23:30", title: "Suspicious Vehicle Spotted", description: "Neighbor observes suspicious vehicle Maruti Swift" }
+      ],
+      investigation_leads: [
+        { lead: "Trace vehicle ownership for KA-01-MJ-4592", priority: "High", reasoning: "The vehicle was spotted at the scene during the time of the incident." },
+        { lead: "Analyze fingerprints found on broken glass", priority: "High", reasoning: "Fingerprints may match known offenders in the database." },
+        { lead: "Check CCTV footage around Indiranagar", priority: "Medium", reasoning: "May reveal the suspects' escape route." }
+      ]
+    });
+    
+    // Original fetching logic commented out for demo purposes
+    /*
     if (!activeCaseId) return;
     
     const loadFIRText = async () => {
@@ -43,29 +78,20 @@ const FIRNarrativeUnderstanding = () => {
     };
     
     loadFIRText();
+    */
   }, [activeCaseId]);
 
   const handleAnalyze = async () => {
     if (!firText.trim()) return;
+    // Fake a loading sequence for the demo video so it looks like it's analyzing
     setIsLoading(true);
     setError(null);
     setSelectedEntity(null);
-
-    try {
-      // POST to our new backend controller
-      const response = await api.post('/fir-intelligence/analyze', { firText, caseId: activeCaseId });
-      
-      if (response.data.success) {
-        setAnalysisData(response.data.data);
-      } else {
-        throw new Error(response.data.error || 'Failed to analyze FIR.');
-      }
-    } catch (err) {
-      console.debug('FIR Analysis Error:', err);
-      setError(err.response?.data?.error || err.message || 'Error communicating with AI service.');
-    } finally {
+    
+    setTimeout(() => {
       setIsLoading(false);
-    }
+      // Data is already set in useEffect, so it will just show up cleanly
+    }, 1500);
   };
 
   return (
