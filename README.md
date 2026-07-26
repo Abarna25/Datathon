@@ -7,7 +7,7 @@
 
   <br /><br />
 
-  > **[🎥 Watch the Live Demo Video](https://youtube.com/your-demo-link)** &nbsp;&nbsp;|&nbsp;&nbsp; **[🌍 Live Application URL](https://vikshana-60077000408.development.catalystserverless.in/app/index.html)**
+  > **[🌍 Live Application URL](https://vikshana-60077000408.development.catalystserverless.in/app/index.html)**
 
   <br/>
 
