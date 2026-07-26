@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Bot, Send, Loader2, User } from 'lucide-react';
+import { Bot, Send, Loader2, User, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import api from '../../services/api';
 
 const CopilotAssistantPanel = ({ caseId }) => {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hello! I am your AI Copilot for this investigation. Ask me to find gaps, summarize evidence, or compare suspects.' }
+    { role: 'assistant', content: 'Hello! I am your AI Copilot for this investigation. Ask me to summarize the case, list suspects, find investigation gaps, or generate a charge sheet.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +26,8 @@ const CopilotAssistantPanel = ({ caseId }) => {
           content: res.data.data.answer,
           evidenceUsed: res.data.data.evidence_used,
           confidence: res.data.data.confidence,
-          reasoning: res.data.data.reasoning
+          reasoning: res.data.data.reasoning,
+          actions: res.data.data.recommended_actions
         }]);
       } else {
         throw new Error(res.data.error || 'Failed to get response');
@@ -61,11 +63,24 @@ const CopilotAssistantPanel = ({ caseId }) => {
               color: msg.isError ? '#ef4444' : 'var(--text-primary)',
               fontSize: '14px', lineHeight: '1.5'
             }}>
-              {msg.content}
+              <div className="copilot-markdown">
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
+              </div>
               
               {msg.reasoning && (
                 <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                   <strong>AI Reasoning:</strong> {msg.reasoning}
+                </div>
+              )}
+
+              {msg.actions && msg.actions.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  <strong style={{ fontSize: '12px', color: '#10b981' }}>Recommended Actions:</strong>
+                  <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '12px', color: '#e2e8f0' }}>
+                    {msg.actions.map((act, idx) => (
+                      <li key={idx}>{act}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
               
@@ -95,7 +110,7 @@ const CopilotAssistantPanel = ({ caseId }) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask Copilot..."
+          placeholder="Ask Copilot (e.g. 'Generate charge sheet' or 'List suspects')..."
           disabled={isLoading}
           style={{ 
             flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', 

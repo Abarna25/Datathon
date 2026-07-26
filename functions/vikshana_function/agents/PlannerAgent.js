@@ -1,4 +1,4 @@
-const glmClient = require('../services/glmClient');
+const LLMService = require('../services/LLMService');
 const { plannerSystemPrompt } = require('../prompts/plannerPrompt');
 
 class PlannerAgent {
@@ -24,7 +24,7 @@ class PlannerAgent {
 
         try {
             console.log(`[PlannerAgent] Generating plan for query: "${officerQuery}"`);
-            const response = await glmClient.generate(messages, {
+            const response = await LLMService.generate(messages, {
                 temperature: 0.1, // Very low for strict JSON compliance
                 maxTokens: 500
             });

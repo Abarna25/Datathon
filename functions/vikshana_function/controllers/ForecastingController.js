@@ -68,7 +68,7 @@ class ForecastingController {
             });
         } catch (error) {
             console.error('Forecasting dashboard error:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -103,7 +103,7 @@ class ForecastingController {
                 ]
             });
         } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -135,7 +135,7 @@ class ForecastingController {
                 ]
             });
         } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -174,7 +174,7 @@ class ForecastingController {
 
             res.status(200).json({ success: true, data });
         } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 }

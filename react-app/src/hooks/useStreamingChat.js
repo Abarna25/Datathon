@@ -45,7 +45,7 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('vikshana_auth_token') || ''}`
+                    'X-Vikshana-Auth': `Bearer ${localStorage.getItem('vikshana_auth_token') || ''}`
                 },
                 body: JSON.stringify({ content, officerId, caseId }),
                 signal: controller.signal
@@ -118,7 +118,7 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                console.error('[useStreamingChat] send failed:', err);
+                console.debug('[useStreamingChat] send failed:', err);
                 setError(err.message);
                 if (onAssistantMessage && accumulatedText) {
                     // Partial answer survives a mid-stream failure instead of vanishing.

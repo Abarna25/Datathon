@@ -127,7 +127,7 @@ class AuthController {
 
     static async getSession(req, res) {
         try {
-            const authHeader = req.headers.authorization;
+            const authHeader = req.headers['x-vikshana-auth'] || req.headers.authorization;
             const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
             if (!token) {

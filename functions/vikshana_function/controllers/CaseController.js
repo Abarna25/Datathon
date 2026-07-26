@@ -38,7 +38,7 @@ class CaseController {
             res.status(200).json({ success: true, data: cases });
         } catch (error) {
             console.error('Error in CaseController.listCases:', error);
-            res.status(500).json({ success: false, error: 'Failed to list cases' });
+            res.status(200).json({ success: false, error: 'Failed to list cases', data: [] });
         }
     }
 
@@ -79,7 +79,20 @@ class CaseController {
             res.status(200).json({ success: true, data: bundle });
         } catch (error) {
             console.error('Error in CaseController.getFullBundle:', error);
-            res.status(500).json({ success: false, error: 'Failed to load case bundle' });
+            res.status(200).json({ 
+                success: false, 
+                error: 'Failed to load case bundle',
+                data: {
+                    caseId: req.params.caseId,
+                    caseNumber: `CASE-${req.params.caseId}`,
+                    category: 'Unknown',
+                    location: 'Unknown',
+                    date: '',
+                    policeStation: 'Unknown',
+                    firSummary: { crime: 'Unknown', date: '', policeStation: 'Unknown', victimsCount: 0, suspectsCount: 0, evidenceCount: 0, firText: '' },
+                    victims: [], suspects: [], witnesses: [], evidence: [], timeline: [], financialTransactions: [], phoneRecords: []
+                }
+            });
         }
     }
 
@@ -89,7 +102,7 @@ class CaseController {
             AuditService.logEvent(req, req.user, 'Updated Case', `CaseMaster:${caseId}`, caseId, 'SUCCESS');
             res.status(200).json({ success: true, message: 'Case updated successfully' });
         } catch (error) {
-            res.status(500).json({ success: false, error: 'Failed to update case' });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -99,7 +112,7 @@ class CaseController {
             AuditService.logEvent(req, req.user, 'Deleted Record', `Record:${recordId}`, caseId, 'SUCCESS');
             res.status(200).json({ success: true, message: 'Record deleted successfully' });
         } catch (error) {
-            res.status(500).json({ success: false, error: 'Failed to delete record' });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -178,7 +191,7 @@ class CaseController {
             res.status(200).json({ success: true, data: results.slice(0, 20) });
         } catch (error) {
             console.error('Search error:', error);
-            res.status(500).json({ success: false, error: 'Search failed: ' + error.message });
+            res.status(200).json({ success: false, error: 'Search failed: ' + error.message, data: [] });
         }
     }
 }

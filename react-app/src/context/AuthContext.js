@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
         try {
           setUser(JSON.parse(savedUser));
           const res = await api.get('/auth/session', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 'X-Vikshana-Auth': `Bearer ${token}` }
           });
           if (res.data?.success && res.data.user) {
             setUser(res.data.user);

@@ -1,0 +1,10 @@
+[
+  {
+    "path": "/server/vikshana_function/**",
+    "target": {
+      "type": "advanced_io",
+      "name": "vikshana_function"
+    },
+    "authentication": "None"
+  }
+]

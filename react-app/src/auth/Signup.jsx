@@ -34,7 +34,7 @@ const Signup = () => {
         navigate('/auth/login');
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Failed to create an account.');
+      setError('Registration unable to complete at this time.');
     } finally {
       setLoading(false);
     }

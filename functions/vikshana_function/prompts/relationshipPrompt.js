@@ -7,7 +7,7 @@ Respond strictly in JSON format matching this schema exactly:
 {
   "nodes": [
     { "id": "case_123", "label": "FIR #123", "type": "case" },
-    { "id": "victim_456", "label": "John Doe", "type": "person" }
+    { "id": "victim_456", "label": "Rahul Sharma", "type": "person" }
   ],
   "edges": [
     { "source": "victim_456", "target": "case_123", "label": "Victim In" }

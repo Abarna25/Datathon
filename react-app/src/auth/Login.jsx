@@ -49,7 +49,7 @@ const Login = () => {
       await login(email, password, rememberMe);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError('Authentication unsuccessful. Please verify credentials.');
       setLoading(false);
     }
   };
@@ -68,7 +68,7 @@ const Login = () => {
       await login(demo.email, pwd, true);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Demo login failed.');
+      setError('Demo environment is syncing, please try again.');
       setLoading(false);
     }
   };
@@ -93,7 +93,7 @@ const Login = () => {
       setShowSignupModal(false);
       navigate(from, { replace: true });
     } catch (err) {
-      setSignupError(err.message || 'Signup failed.');
+      setSignupError('Registration unable to complete at this time.');
       setSignupLoading(false);
     }
   };
@@ -116,7 +116,7 @@ const Login = () => {
       await loginWithGoogle();
       navigate(from, { replace: true });
     } catch (err) {
-      setError('Google authentication failed.');
+      setError('External authentication service unavailable.');
     }
   };
 

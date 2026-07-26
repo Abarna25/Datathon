@@ -496,7 +496,7 @@ const SociologicalAssistant = () => {
             });
             showToast(t('assistant.exportSuccess', 'PDF Exported Successfully!'));
         } catch (err) {
-            console.error('[SociologicalAssistant] PDF export error:', err);
+            console.debug('[SociologicalAssistant] PDF export error:', err);
             setError(t('assistant.exportError', 'Failed to export PDF. Please try again.'));
         } finally {
             setIsExportingPdf(false);
@@ -537,7 +537,7 @@ const SociologicalAssistant = () => {
             }
         } catch (err) {
             if (err.name === 'CanceledError' || err.name === 'AbortError') return;
-            console.error('[SociologicalAssistant]', err);
+            console.debug('[SociologicalAssistant]', err);
             setError(err.response?.data?.error || err.message || 'Failed to get AI response. Please try again.');
         } finally {
             setIsLoading(false);
@@ -716,14 +716,7 @@ const SociologicalAssistant = () => {
                 )}
 
                 {/* Error */}
-                {error && (
-                    <div
-                        role="alert"
-                        style={{
-                            padding: '12px 16px', borderRadius: '10px',
-                            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
-                            display: 'flex', alignItems: 'center', gap: '10px'
-                        }}
+                }
                     >
                         <AlertCircle size={16} color="var(--accent-danger)" aria-hidden="true" />
                         <span style={{ fontSize: '13px', color: 'var(--text-primary)', flex: 1 }}>{error}</span>

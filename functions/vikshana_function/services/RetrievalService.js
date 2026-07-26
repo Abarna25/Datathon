@@ -57,6 +57,8 @@ class RetrievalService {
             phoneRecords: topK(context.phoneRecords, tokens),
             financialTransactions: topK(context.financialTransactions, tokens),
             timeline: topK(context.timeline, tokens, 8),
+            chargesheet: context.chargesheet || [],
+            sections: context.sections || [],
             attachments: topK(readyAttachments, tokens, 3)
         };
     }

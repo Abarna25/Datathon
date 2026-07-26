@@ -44,7 +44,7 @@ export const AppProvider = ({ children }) => {
                     localStorage.setItem('vikshana_active_case_id', initialId);
                 }
             } catch (err) {
-                console.error('[AppContext] Failed to load cases:', err);
+                console.debug('[AppContext] Failed to load cases:', err);
             } finally {
                 setLoadingCases(false);
             }
@@ -68,7 +68,7 @@ export const AppProvider = ({ children }) => {
                     setCurrentCase(res.data.data);
                 }
             } catch (err) {
-                console.error('[AppContext] Failed to load case bundle:', err);
+                console.debug('[AppContext] Failed to load case bundle:', err);
                 // Fallback to simple matching case from list
                 const matchingCase = cases.find(c => String(c.id) === String(activeCaseId));
                 if (matchingCase) {

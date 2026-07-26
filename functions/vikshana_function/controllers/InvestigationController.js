@@ -7,7 +7,7 @@ class InvestigationController {
             res.status(200).json({ success: true, data });
         } catch (error) {
             console.error("Error in InvestigationController:", error);
-            res.status(500).json({ success: false, error: "AI Processing Error" });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 }

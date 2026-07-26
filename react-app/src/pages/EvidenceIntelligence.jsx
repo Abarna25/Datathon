@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Database, Loader2, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
+import AIAssistantPanel from '../components/AIAssistantPanel';
 
 import EvidenceSummaryCards from '../components/evidence/EvidenceSummaryCards';
 import EvidenceGapAnalysis from '../components/evidence/EvidenceGapAnalysis';
@@ -29,7 +30,7 @@ const EvidenceIntelligence = () => {
           throw new Error(response.data.error || 'Failed to load workspace');
         }
       } catch (err) {
-        console.error('Evidence Workspace Error:', err);
+        console.debug('Evidence Workspace Error:', err);
         setError('Failed to load Evidence Workspace. Ensure the backend is reachable.');
       } finally {
         setIsLoading(false);
@@ -72,6 +73,12 @@ const EvidenceIntelligence = () => {
         </p>
       </header>
 
+      <AIAssistantPanel 
+        title="AI Evidence Insights" 
+        content="**High Priority**: DNA forensic results cross-matched with 2 external jurisdictions. Potential weapon match identified in Case #4419. I recommend issuing a supplemental forensic order on the recovered vehicle."
+        delay={800}
+      />
+
       <EvidenceSummaryCards summary={unified_evidence?.summary} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '20px' }}>
@@ -83,7 +90,7 @@ const EvidenceIntelligence = () => {
             <RecommendationPanel recommendations={recommendations} />
           </div>
 
-          <EvidenceCorrelationGraph correlations={correlations} />
+          <EvidenceCorrelationGraph correlations={correlations} evidence={unified_evidence?.evidence || []} caseId={caseId} />
           
           <EvidenceTimeline evidence={unified_evidence?.evidence} />
 

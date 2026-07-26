@@ -36,23 +36,23 @@
 
 /* Dark Theme overrides — applied via .dark-theme on the app root (see AppContext.js) */
 .dark-theme {
-  --bg-primary: #0b0f19;
-  --bg-secondary: #131a2a;
-  --bg-tertiary: #1c263b;
+  --bg-primary: #09090b; /* Deep slate, almost black */
+  --bg-secondary: #0f172a; /* Slate 900 for cards */
+  --bg-tertiary: #1e293b; /* Slate 800 for hovers */
 
-  --accent-primary: #3b82f6; /* Police Blue */
-  --accent-secondary: #60a5fa;
-  --accent-danger: #ef4444; /* Alerts */
-  --accent-warning: #f59e0b; /* Investigations */
-  --accent-success: #10b981; /* Solved/Resolved */
+  --accent-primary: #3b82f6; /* Single Accent: Electric Blue */
+  --accent-secondary: #3b82f6;
+  --accent-danger: #ef4444; 
+  --accent-warning: #f59e0b; 
+  --accent-success: #10b981; 
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #f8fafc; /* Crisp white */
+  --text-secondary: #94a3b8; /* Slate 400 */
+  --text-muted: #475569; /* Slate 600 */
 
-  --border-color: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(19, 26, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.05); /* Very subtle borders */
+  --glass-bg: #0f172a; /* Flat color instead of heavy glass */
+  --glass-border: rgba(255, 255, 255, 0.03); /* Barely visible */
 }
 
 body {
@@ -62,16 +62,42 @@ body {
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  line-height: 1.5;
 }
 
-/* Glassmorphism Utilities */
+/* Typography Hierarchy Enhancements */
+h1, .page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+h2, .section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+h3, .card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px 0;
+}
+
+/* Glassmorphism Utilities -> Replaced with Flat Enterprise Cards */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Reduced blur significantly, mostly flat */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   border-radius: 16px;
+  padding: 24px; /* Standardized 24px padding */
 }
 
 /* Scrollbar - Slim & Minimal */

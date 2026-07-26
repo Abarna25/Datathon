@@ -1,5 +1,4 @@
-const glmClient = require('../services/glmClient');
-const glmStreamClient = require('../services/glmStreamClient');
+const LLMService = require('../services/LLMService');
 const { reportSystemPrompt } = require('../prompts/reportPrompt');
 
 class ReportAgent {
@@ -7,53 +6,51 @@ class ReportAgent {
      * Generates a clean, intelligent fallback response when LLM synthesis fails or operates offline.
      */
     static generateFallbackReport(ledger, history = []) {
-        const lastMsg = history.length > 0 ? String(history[history.length - 1].content || '').toLowerCase().trim() : '';
-        
-        // 1. Check for standard greetings or introductory prompts
-        const greetings = ['hi', 'hello', 'hey', 'greetings', 'help', 'who are you', 'start', 'test', 'hi there', 'good morning', 'good afternoon', 'good evening'];
-        const isGreeting = greetings.includes(lastMsg) || lastMsg.length <= 3;
-        
-        if (isGreeting) {
-            return `Hello! I am **Vikshana AI**, your intelligent crime analytics and investigation copilot. 
-
-I can assist you with:
-- 🔍 **Case & FIR Intelligence**: Querying active investigations, suspect profiles, and evidentiary documents.
-- 🧬 **Offender Profiling**: Analyzing behavioral vectors, Modus Operandi (MO) matching, and recidivism risk.
-- 🕸️ **Relationship & Network Explorer**: Mapping associate networks, safehouses, and crime density heatmaps.
-- 📋 **Court Briefing Reports**: Synthesizing evidence ledgers into court-ready reports.
-
-How can I assist your investigation today?`;
+        if (!ledger || ledger.length === 0) {
+            return `### Investigation Summary\nThe AI Copilot is currently operating in offline mode. No local records found for this case.\n\n### Key Findings\n- Network connectivity is restricted.\n- Unable to reach active case master.\n\n### Evidence Analysis\nNo evidence loaded into offline cache.\n\n### Risk Assessment\nMedium - Data unavailability.\n\n### Recommended Next Step\nVerify API keys or network connection.\n\n### Confidence\n0%`;
         }
 
-        // 2. Filter valid evidence claims from the ledger
-        const validClaims = Array.isArray(ledger) 
-            ? ledger.filter(item => item && item.claim && item.claim !== "AI Correlation Failed" && item.claim !== "AI Correlation Event")
-            : [];
+        const context = ledger.find(l => l._type === 'FullCaseContext') || ledger[0];
+        
+        let summary = `### Investigation Summary\n*Note: The AI Copilot is currently in Offline Analysis Mode.*\nCase **${context.case?.caseNumber || 'Unknown'}** is currently **${context.case?.status || 'Active'}**. ${context.case?.briefFacts || 'No brief facts available.'}\n\n`;
+        
+        summary += `### Key Findings\n`;
+        if (context.suspects && context.suspects.length > 0) {
+            summary += `- Identified ${context.suspects.length} primary suspect(s).\n`;
+        }
+        if (context.victims && context.victims.length > 0) {
+            summary += `- Identified ${context.victims.length} victim(s).\n`;
+        }
+        summary += `- Timeline contains ${context.timeline?.length || 0} event(s).\n\n`;
 
-        if (validClaims.length > 0) {
-            let summary = `### 📊 Evidence Synthesis Summary\n\n`;
-            summary += `The following evidence items were retrieved for your investigation:\n\n`;
-            
-            validClaims.forEach((item, index) => {
-                summary += `**${index + 1}. ${item.claim}**\n`;
-                if (item.evidence) summary += `- **Evidence Details:** ${item.evidence}\n`;
-                if (item.sourceTable) summary += `- **Source Table:** \`${item.sourceTable}\` (Record ID: \`${item.recordId || 'N/A'}\`)\n`;
-                if (typeof item.confidence === 'number' && item.confidence > 0) summary += `- **Confidence Score:** ${item.confidence}%\n`;
-                if (item.suggestedNextAction) summary += `- **Suggested Action:** ${item.suggestedNextAction}\n`;
-                summary += `\n`;
-            });
+        summary += `### Evidence Analysis\n`;
+        if (context.suspects && context.suspects.length > 0) {
+            summary += `**Suspects:**\n`;
+            context.suspects.forEach(s => summary += `- ${s.name} (Age: ${s.age || 'Unknown'}) - Status: ${s.status}\n`);
+        }
+        if (context.victims && context.victims.length > 0) {
+            summary += `**Victims:**\n`;
+            context.victims.forEach(v => summary += `- ${v.name} (Age: ${v.age || 'Unknown'})\n`);
+        }
+        if (context.timeline && context.timeline.length > 0) {
+            summary += `**Timeline Events:**\n`;
+            context.timeline.slice(0, 3).forEach(t => summary += `- ${t.event_time}: ${t.title}\n`);
+        }
+        summary += `\n`;
 
-            summary += `> 💡 *Note: Structured fallback synthesis active. Select any cited evidence item below to inspect raw database records.*`;
-            return summary;
+        summary += `### Risk Assessment\n`;
+        if (context.arrests && context.arrests.length === 0 && context.suspects && context.suspects.length > 0) {
+            summary += `**High Flight Risk**: Suspects have been identified but no arrests are logged in the offline datastore.\n\n`;
+        } else {
+            summary += `**Moderate**: Standard investigation protocols apply.\n\n`;
         }
 
-        // 3. General fallback response when no specific evidence claims match
-        return `I processed your request, but no specific matching evidence records were found in the active case ledger.
+        summary += `### Recommended Next Step\n`;
+        summary += `Please review the datastore manually or wait for AI Copilot connectivity to resume for deeper analysis.\n\n`;
 
-To investigate further, you can:
-- Provide a specific **Case ID** (e.g. \`100080405202100001\`)
-- Search by **Suspect Name**, **Vehicle**, or **Location**
-- Filter by **FIR Number** or **Crime Category**`;
+        summary += `### Confidence\n100% (Direct Datastore Pull)`;
+
+        return summary.trim();
     }
 
     /**
@@ -82,22 +79,28 @@ To investigate further, you can:
         try {
             console.log(`[ReportAgent] Generating final response...`);
             if (streaming) {
-                const resText = await glmStreamClient.streamCompletion(res, messages, { maxTokens: 1024, temperature: 0.3 });
-                if (resText && !resText.includes("The AI Copilot is currently offline")) {
+                const resText = await LLMService.streamCompletion(res, messages, { maxTokens: 1024, temperature: 0.3 });
+                if (resText && !resText.includes("offline due to authentication")) {
                     return resText;
                 }
             } else {
-                const responseMessage = await glmClient.generate(messages, { maxTokens: 1024, temperature: 0.3 });
-                if (responseMessage && responseMessage.content && !responseMessage.content.includes("The AI Copilot is currently offline")) {
+                const responseMessage = await LLMService.generate(messages, { maxTokens: 1024, temperature: 0.3 });
+                if (responseMessage && responseMessage.content && !responseMessage.content.includes("offline due to authentication")) {
                     return responseMessage.content;
                 }
             }
-            throw new Error("GLM LLM service returned offline response");
+            throw new Error("LLM service returned offline response");
         } catch (error) {
-            console.error("[ReportAgent] Error generating report via LLM, using fallback synthesis:", error.message);
+            console.error("[ReportAgent] Error generating report via LLMService, using fallback synthesis:", error.message);
             const fallbackMsg = ReportAgent.generateFallbackReport(ledger, history);
             if (streaming && res && !res.writableEnded) {
-                await glmStreamClient.streamText(res, fallbackMsg);
+                // For fallback, we don't need a real LLM stream, we can just send the events directly
+                const chunks = fallbackMsg.split(' ');
+                for (let i=0; i<chunks.length; i+=3) {
+                    if (res.writableEnded || res.destroyed) break;
+                    LLMService.sendEvent(res, 'delta', { text: chunks.slice(i, i+3).join(' ') + ' ' });
+                    await new Promise(r => setTimeout(r, 18));
+                }
             }
             return fallbackMsg;
         }

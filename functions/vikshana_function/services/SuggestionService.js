@@ -1,6 +1,6 @@
-const glmClient = require('./glmClient');
+const LLMService = require('./LLMService');
 
-const SUGGESTION_SYSTEM_PROMPT = `You generate short follow-up questions an investigator might ask next, based on the assistant's last answer in a criminal investigation chat. Reply with ONLY a raw JSON array of 3 to 4 short strings (max ~8 words each). No markdown, no explanation, no code fences. Example: ["Who were the witnesses?","Any CCTV footage nearby?","Check suspect's phone records"]`;
+const SUGGESTION_SYSTEM_PROMPT = `You generate short follow-up questions an investigator might ask next, based on the assistant's last answer in a criminal investigation chat. Reply with ONLY a raw JSON array of 3 to 4 short strings (max ~8 words each). No markdown, no explanation, no code fences. Example: ["Who is the primary suspect?", "Show strongest evidence", "Generate officer briefing", "Show missing evidence", "Predict next investigation step"]`;
 
 class SuggestionService {
     static async generateFollowUps(assistantText, contextSummary) {
@@ -12,7 +12,7 @@ class SuggestionService {
                     content: `Case context: ${contextSummary}\n\nAssistant's last answer:\n${assistantText}\n\nSuggest 3-4 short follow-up questions.`
                 }
             ];
-            const response = await glmClient.generate(messages, { maxTokens: 200, temperature: 0.5 });
+            const response = await LLMService.generate(messages, { maxTokens: 200, temperature: 0.5 });
             let content = (response.content || '').trim();
 
             // Strip markdown code fences if present

@@ -1,4 +1,4 @@
-const glmClient = require('../services/glmClient');
+const LLMService = require('../services/LLMService');
 const { evidenceSystemPrompt } = require('../prompts/evidencePrompt');
 
 class EvidenceAgent {
@@ -9,8 +9,8 @@ class EvidenceAgent {
         ];
 
         try {
-            console.log(`[EvidenceAgent] Correlating evidence via GLM...`);
-            const responseMessage = await glmClient.generate(messages, { maxTokens: 1536 });
+            console.log(`[EvidenceAgent] Correlating evidence via LLMService...`);
+            const responseMessage = await LLMService.generate(messages, { maxTokens: 1536 });
             let content = responseMessage.content.trim();
             
             if (content.startsWith("```json")) {
@@ -45,16 +45,23 @@ class EvidenceAgent {
             }));
         } catch (error) {
             console.error("[EvidenceAgent] Error correlating evidence:", error);
-            return [{
-                claim: "AI Correlation Failed",
-                evidence: "Raw data exists but could not be processed by AI",
-                sourceTable: "System",
-                recordId: "Error",
-                confidence: 0,
-                reason: "System encountered an error during LLM parsing.",
-                counterEvidence: error.message,
-                suggestedNextAction: "Retry the query or check logs."
-            }];
+            
+            // If LLM fails, return the raw data so the fallback synthesizer can render actual database records!
+            let fallbackLedger = [];
+            if (Array.isArray(rawData)) {
+                fallbackLedger = rawData;
+            } else if (rawData && typeof rawData === 'object') {
+                // If it's a map of tool results, flatten it
+                for (const key in rawData) {
+                    if (Array.isArray(rawData[key])) {
+                        fallbackLedger = fallbackLedger.concat(rawData[key]);
+                    } else if (rawData[key]) {
+                        fallbackLedger.push(rawData[key]);
+                    }
+                }
+            }
+            
+            return fallbackLedger;
         }
     }
 }

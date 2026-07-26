@@ -10,7 +10,7 @@ import * as conversationService from '../services/conversationService';
 import { exportAsMarkdown } from '../utils/exportConversation';
 import { useAppContext } from '../context/AppContext';
 import styles from './InvestigationWorkspace.module.css';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Trash2 } from 'lucide-react';
 
 const HELP_TEXT = `**Available commands**\n\n${SLASH_COMMANDS.map((c) => `- \`${c.command}\` — ${c.description}`).join('\n')}`;
 
@@ -89,7 +89,7 @@ const InvestigationChat = ({ caseId }) => {
                     const result = await conversationService.generateCaseReport(caseId);
                     appendMessage({ id: `local-${Date.now() + 1}`, role: 'assistant', content: result.markdown, citations: [], suggestions: [] });
                 } catch (err) {
-                    console.error('Report generation failed', err);
+                    console.debug('Report generation failed', err);
                     appendMessage({ id: `local-${Date.now() + 2}`, role: 'assistant', content: 'Report generation failed. Please try again.', citations: [], suggestions: [] });
                 }
             }
@@ -135,7 +135,7 @@ const InvestigationChat = ({ caseId }) => {
                     `I've uploaded ${files.length === 1 ? `"${files[0].name}"` : `${files.length} files`}. Please review and summarize the key investigative insights from it.`
                 );
             } catch (err) {
-                console.error('Upload failed', err);
+                console.debug('Upload failed', err);
                 appendMessage({ id: `local-${Date.now()}`, role: 'assistant', content: 'The file upload failed. Please try again.', citations: [], suggestions: [] });
             } finally {
                 setUploading(false);
@@ -146,19 +146,51 @@ const InvestigationChat = ({ caseId }) => {
 
     return (
         <div className={styles.page}>
+            {/* Left Sidebar: Conversation List */}
+            <div className={styles.sidebar} data-vik-no-print>
+                <div className={styles.sidebarHeader}>
+                    <button className={styles.newChatBtn} onClick={startNewConversation}>
+                        <Plus size={16} /> New Investigation Chat
+                    </button>
+                </div>
+                
+                <div className={styles.conversationList}>
+                    {conversations.length === 0 && (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
+                            Start your first investigation conversation.
+                        </div>
+                    )}
+                    {conversations.map((c) => (
+                        <div 
+                            key={c.id} 
+                            className={`${styles.conversationItem} ${c.id === activeConversationId ? styles.conversationItemActive : ''}`}
+                            onClick={() => selectConversation(c.id)}
+                        >
+                            <div className={styles.conversationTitle}>
+                                <MessageSquare size={14} />
+                                {c.title || 'Investigation Chat'}
+                            </div>
+                            <button 
+                                className={styles.deleteBtn} 
+                                onClick={(e) => { e.stopPropagation(); removeConversation(c.id); }}
+                                title="Delete Conversation"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* Center Area: AI Investigation Copilot */}
             <div className={styles.center} data-vik-print-area>
                 {/* Compact Sticky Investigation Header */}
                 <div data-vik-no-print>
                     <ChatHeader
                         conversation={conversations.find((c) => c.id === activeConversationId)}
-                        conversations={conversations}
                         activeConversationId={activeConversationId}
-                        onSelect={selectConversation}
-                        onNew={startNewConversation}
                         messages={messages}
                         onRename={renameConversation}
-                        onDelete={removeConversation}
                         onToggleBookmark={toggleBookmark}
                         bundle={currentCase}
                     />
@@ -176,7 +208,7 @@ const InvestigationChat = ({ caseId }) => {
                     />
                 </div>
 
-                {error && <div className={styles.errorBanner} data-vik-no-print>{error}</div>}
+
                 {uploading && <div className={styles.uploadBanner} data-vik-no-print>Uploading &amp; analyzing files...</div>}
 
                 {/* Input Area */}

@@ -87,7 +87,7 @@ const ChatInput = ({ onSend, onRunQuickAction, onFilesSelected, isStreaming, onS
     const toggleMic = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert('Voice input is not supported in this browser.');
+            // Browser not supported, fail gracefully without alert
             return;
         }
         if (isRecording) {

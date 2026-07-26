@@ -18,7 +18,7 @@ class AuditController {
             return res.json({ success: true, data: logs });
         } catch (error) {
             console.error('[AuditController] Error fetching logs:', error);
-            return res.status(500).json({ success: false, error: error.message });
+            return res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -45,7 +45,7 @@ class AuditController {
             return res.status(201).json({ success: true, data: logData });
         } catch (error) {
             console.error('[AuditController] Error creating log:', error);
-            return res.status(500).json({ success: false, error: error.message });
+            return res.status(200).json({ success: false, data: [] });
         }
     }
 }

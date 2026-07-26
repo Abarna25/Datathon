@@ -126,38 +126,7 @@ const ChatHeader = ({
                 </div>
 
                 <div className={styles.rightGroup}>
-                    {/* Chat History Dropdown */}
-                    {conversations && (
-                        <div style={{ marginRight: '12px', display: 'flex', alignItems: 'center' }}>
-                            <select
-                                value={activeConversationId || ''}
-                                onChange={(e) => {
-                                    if (e.target.value === 'new') {
-                                        if (onNew) onNew();
-                                    } else {
-                                        if (onSelect) onSelect(e.target.value);
-                                    }
-                                }}
-                                style={{
-                                    padding: '4px 8px',
-                                    borderRadius: '6px',
-                                    border: '1px solid #e2e8f0',
-                                    fontSize: '13px',
-                                    color: '#334155',
-                                    backgroundColor: '#f8fafc',
-                                    outline: 'none',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {conversations.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.title || 'New Investigation Chat'}
-                                    </option>
-                                ))}
-                                <option value="new">+ Start New Chat</option>
-                            </select>
-                        </div>
-                    )}
+
 
                     {/* Title (editable) */}
                     {isEditingTitle ? (

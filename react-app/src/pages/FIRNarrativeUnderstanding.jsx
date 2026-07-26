@@ -35,7 +35,7 @@ const FIRNarrativeUnderstanding = () => {
           setFirText('');
         }
       } catch (err) {
-        console.error('[FIRNarrative] Failed to retrieve case bundle:', err);
+        console.debug('[FIRNarrative] Failed to retrieve case bundle:', err);
         setFirText('');
       } finally {
         setIsLoading(false);
@@ -61,7 +61,7 @@ const FIRNarrativeUnderstanding = () => {
         throw new Error(response.data.error || 'Failed to analyze FIR.');
       }
     } catch (err) {
-      console.error('FIR Analysis Error:', err);
+      console.debug('FIR Analysis Error:', err);
       setError(err.response?.data?.error || err.message || 'Error communicating with AI service.');
     } finally {
       setIsLoading(false);
@@ -84,6 +84,13 @@ const FIRNarrativeUnderstanding = () => {
         {/* Main Content Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
+          {error && (
+            <div className="error-banner" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', fontWeight: '500' }}>
+              <AlertTriangle size={18} />
+              {error}
+            </div>
+          )}
+
           <div className="glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Input Narrative (Active Case)</h3>
@@ -116,12 +123,7 @@ const FIRNarrativeUnderstanding = () => {
             />
           </div>
 
-          {error && (
-            <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <AlertTriangle size={20} />
-              <span>{error}</span>
-            </div>
-          )}
+          
 
           {analysisData && (
             <>

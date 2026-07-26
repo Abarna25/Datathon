@@ -175,7 +175,7 @@ export async function translateTexts(texts, targetLang) {
                 console.warn('[TranslationService] Unexpected response:', response.data);
             }
         } catch (err) {
-            console.error('[TranslationService] API error:', err.message);
+            console.debug('[TranslationService] API error:', err.message);
             // Cache originals as fallback so we don't retry immediately
             chunk.forEach(t => {
                 MEM_CACHE.set(cacheKey(t, lang), t);

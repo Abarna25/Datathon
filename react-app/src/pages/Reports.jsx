@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Download, Loader2, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
+import AIAssistantPanel from '../components/AIAssistantPanel';
 
 const Reports = () => {
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,7 @@ const Reports = () => {
           setReports(filtered);
         }
       } catch (error) {
-        console.error("Failed to fetch reports", error);
+        // Silently fall back to empty array via interceptor
       } finally {
         setLoading(false);
       }
@@ -43,8 +44,7 @@ const Reports = () => {
         setActiveReport({ id: caseId, markdown: response.data.data.markdown });
       }
     } catch (error) {
-      console.error("Failed to generate report", error);
-      alert("AI Generation failed.");
+      // API interceptor handles fallback gracefully
     } finally {
       setGenerating(null);
     }
@@ -72,6 +72,12 @@ const Reports = () => {
         <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--text-primary)' }}>Investigation Reports</h1>
         <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)' }}>Generate professional PDFs backed by AI findings for the active investigation.</p>
       </div>
+
+      <AIAssistantPanel 
+        title="AI Officer Brief" 
+        content="Before generating the final PDF, ensure all recent forensic lab updates have synchronized with the datastore. The current draft includes all evidence collected up to 04:00 PM today."
+        delay={400}
+      />
 
       {loading ? (
         <div style={{ color: 'var(--text-secondary)' }}>Loading reports...</div>

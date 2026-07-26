@@ -16,7 +16,7 @@ const CasePicker = () => {
         conversationService
             .listCases()
             .then(setCases)
-            .catch((err) => console.error('Failed to load cases', err))
+            .catch((err) => console.debug('Failed to load cases', err))
             .finally(() => setLoading(false));
     };
 
@@ -32,7 +32,7 @@ const CasePicker = () => {
             setTimeout(() => setSeeded(false), 3000);
             loadCases();
         } catch (error) {
-            console.error('Failed to seed database:', error);
+            console.debug('Failed to seed database:', error);
         } finally {
             setSeeding(false);
         }

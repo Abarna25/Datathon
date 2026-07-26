@@ -40,7 +40,7 @@ const MigrationUrbanizationAnalytics = () => {
             setLoading(false);
         })
         .catch(err => {
-            console.error('[MigrationUrbanizationAnalytics] Error:', err);
+            console.debug('[MigrationUrbanizationAnalytics] Error:', err);
             setLoading(false);
         });
     }, []);
@@ -53,7 +53,7 @@ const MigrationUrbanizationAnalytics = () => {
                 setCorrLoading(false);
             })
             .catch(err => {
-                console.error('[MigrationUrbanizationAnalytics] Correlation error:', err);
+                console.debug('[MigrationUrbanizationAnalytics] Correlation error:', err);
                 setCorrLoading(false);
             });
     }, [indA, indB]);

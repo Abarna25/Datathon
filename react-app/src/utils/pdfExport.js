@@ -327,7 +327,7 @@ export function exportConversationToPDF({
         }, 500);
       };
     } catch (err) {
-      console.error('[pdfExport] Failed to generate PDF:', err);
+      console.debug('[pdfExport] Failed to generate PDF:', err);
       reject(err);
     }
   });
@@ -416,7 +416,7 @@ export function exportOffenderProfilePDF(profile) {
         }, 400);
       };
     } catch (err) {
-      console.error('[pdfExport] Offender PDF error:', err);
+      console.debug('[pdfExport] Offender PDF error:', err);
       reject(err);
     }
   });
@@ -520,7 +520,7 @@ export function exportDecisionSupportCourtPDF(caseData, userRole = 'Investigator
         }, 400);
       };
     } catch (err) {
-      console.error('[pdfExport] Decision Support PDF error:', err);
+      console.debug('[pdfExport] Decision Support PDF error:', err);
       reject(err);
     }
   });
@@ -614,7 +614,7 @@ export function exportAuditLogsPDF(logs) {
         }, 400);
       };
     } catch (err) {
-      console.error('[pdfExport] Audit Logs PDF error:', err);
+      console.debug('[pdfExport] Audit Logs PDF error:', err);
       reject(err);
     }
   });
@@ -708,7 +708,7 @@ export function exportAILogsPDF(logs) {
         }, 400);
       };
     } catch (err) {
-      console.error('[pdfExport] AI Logs PDF error:', err);
+      console.debug('[pdfExport] AI Logs PDF error:', err);
       reject(err);
     }
   });

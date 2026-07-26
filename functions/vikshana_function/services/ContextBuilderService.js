@@ -153,15 +153,38 @@ async function getCaseTimeline(req, caseId) {
     return [...rows.map(normalizeOccurance), ...arrestEvents].filter(Boolean);
 }
 
+async function getCaseChargesheet(req, caseId) {
+    const rows = await datastoreClient.getRowsWhere(req, 'ChargesheetDetails', { CaseMasterID: caseId }, { maxRows: 10 }).catch(() => []);
+    return rows.map(r => ({
+        ROWID: r.CSID || r.ROWID,
+        csdate: r.csdate,
+        cstype: r.cstype,
+        officerId: r.PolicePersonID
+    }));
+}
+
+async function getCaseSections(req, caseId) {
+    const rows = await datastoreClient.getRowsWhere(req, 'ActSectionAssociation', { CaseMasterID: caseId }, { maxRows: 20 }).catch(() => []);
+    return rows.map(r => ({
+        ROWID: r.ROWID,
+        actId: r.ActID,
+        sectionId: r.SectionID,
+        actOrderId: r.ActOrderID,
+        sectionOrderId: r.SectionOrderID
+    }));
+}
+
 class ContextBuilderService {
     /** Assembles the hidden, evidence-grounded context injected into every chat turn. Never shown to the user. */
     static async buildCaseContext(req, caseId) {
-        const [caseRow, victims, suspects, witnesses, timeline] = await Promise.all([
+        const [caseRow, victims, suspects, witnesses, timeline, chargesheet, sections] = await Promise.all([
             datastoreClient.getRowById(req, 'CaseMaster', caseId).catch(() => null),
             getCaseVictims(req, caseId).catch(() => []),
             getCaseSuspects(req, caseId).catch(() => []),
             getCaseWitnesses(req, caseId).catch(() => []),
-            getCaseTimeline(req, caseId).catch(() => [])
+            getCaseTimeline(req, caseId).catch(() => []),
+            getCaseChargesheet(req, caseId).catch(() => []),
+            getCaseSections(req, caseId).catch(() => [])
         ]);
 
         let normalizedCase = normalizeCase(caseRow);
@@ -194,6 +217,8 @@ class ContextBuilderService {
             suspects,
             witnesses,
             timeline,
+            chargesheet,
+            sections,
             cctv: [],           // No CCTVFootage table in dataset
             phoneRecords: [],   // No PhoneRecord table in dataset
             financialTransactions: [], // No FinancialTransaction table in dataset
@@ -204,7 +229,9 @@ class ContextBuilderService {
                 cctv: 0,
                 phoneRecords: 0,
                 financialTransactions: 0,
-                timelineEvents: timeline.length
+                timelineEvents: timeline.length,
+                chargesheets: chargesheet.length,
+                sections: sections.length
             },
             pinnedFacts: [],
             corrections: [],

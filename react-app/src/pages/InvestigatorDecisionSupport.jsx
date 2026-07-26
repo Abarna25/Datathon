@@ -1,6 +1,8 @@
 import React from 'react';
 import { Compass } from 'lucide-react';
 import DecisionSupportPanel from '../components/investigation/DecisionSupportPanel';
+import AdvancedIntelligenceHub from '../components/advanced-intelligence/AdvancedIntelligenceHub';
+import AIAssistantPanel from '../components/AIAssistantPanel';
 import { useAppContext } from '../context/AppContext';
 
 const InvestigatorDecisionSupport = () => {
@@ -26,8 +28,17 @@ const InvestigatorDecisionSupport = () => {
         </p>
       </header>
 
+      <AIAssistantPanel 
+        title="AI Court Readiness Explanation" 
+        content="This case is currently assessed at **15% Court Readiness**. Key evidentiary gaps remain in digital forensics and witness corroboration. I recommend prioritizing the extraction of device data (Phone #PH-892) before proceeding to formal charges."
+        delay={1000}
+      />
+
       <div>
-        <DecisionSupportPanel caseId={activeCaseId} defaultExpanded={true} />
+        <DecisionSupportPanel caseId={activeCaseId} defaultExpanded={false} />
+        
+        {/* New 10-module Enterprise Intelligence Hub */}
+        <AdvancedIntelligenceHub caseId={activeCaseId} />
       </div>
     </div>
   );

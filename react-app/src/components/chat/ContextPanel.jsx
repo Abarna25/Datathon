@@ -40,7 +40,7 @@ const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
             const data = await conversationService.getCaseSummary(caseId);
             setSummary(data);
         } catch (err) {
-            console.error('Failed to load case summary', err);
+            console.debug('Failed to load case summary', err);
         } finally {
             setLoading(false);
         }
@@ -58,7 +58,7 @@ const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
             setTimeout(() => setSeeded(false), 3000);
             load();
         } catch (error) {
-            console.error('Failed to seed database:', error);
+            console.debug('Failed to seed database:', error);
         } finally {
             setSeeding(false);
         }

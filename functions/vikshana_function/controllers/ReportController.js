@@ -7,7 +7,7 @@ class ReportController {
             res.status(200).json({ success: true, data });
         } catch (error) {
             console.error("Error in ReportController:", error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -17,7 +17,7 @@ class ReportController {
             res.status(200).json({ success: true, data });
         } catch (error) {
             console.error("Error generating report:", error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 }

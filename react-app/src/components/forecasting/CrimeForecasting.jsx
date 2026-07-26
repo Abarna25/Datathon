@@ -37,7 +37,7 @@ const CrimeForecasting = () => {
             setLoading(false);
         })
         .catch(err => {
-            console.error('[CrimeForecasting] Error:', err);
+            console.debug('[CrimeForecasting] Error:', err);
             setLoading(false);
         });
     }, []);
@@ -53,7 +53,7 @@ const CrimeForecasting = () => {
                 setExplaining(false);
             })
             .catch(err => {
-                console.error('[CrimeForecasting] Explain error:', err);
+                console.debug('[CrimeForecasting] Explain error:', err);
                 setExplaining(false);
             });
     }, []);

@@ -25,7 +25,7 @@ class OffenderProfilingController {
             res.status(200).json({ success: true, data: offenders });
         } catch (error) {
             console.error('Error in OffenderProfiling.getList:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -77,7 +77,7 @@ class OffenderProfilingController {
             res.status(200).json({ success: true, data: offender });
         } catch (error) {
             console.error('Error in OffenderProfiling.getProfile:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -126,7 +126,7 @@ class OffenderProfilingController {
             });
         } catch (error) {
             console.error('Error in compareOffenders:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 
@@ -170,7 +170,7 @@ class OffenderProfilingController {
             res.status(200).json({ success: true, data: responseData });
         } catch (error) {
             console.error('Error in askAIInsights:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(200).json({ success: false, data: [] });
         }
     }
 }

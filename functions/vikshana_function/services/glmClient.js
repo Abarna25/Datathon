@@ -1,4 +1,6 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Strips internal reasoning / chain-of-thought from the model's raw output.
@@ -47,7 +49,18 @@ class GLMClient {
             timeoutMs = 60000
         } = options;
 
-        if (!this.endpoint || !this.model || !this.apiKey) {
+        let currentApiKey = this.apiKey;
+        try {
+            const envContent = fs.readFileSync(path.join(__dirname, '../.env'), 'utf-8');
+            const tokenMatch = envContent.match(/CATALYST_TOKEN=(.*)/);
+            if (tokenMatch && tokenMatch[1]) {
+                currentApiKey = tokenMatch[1].trim();
+            }
+        } catch (err) {
+            // ignore
+        }
+
+        if (!this.endpoint || !this.model || !currentApiKey) {
             console.warn('[GLMClient] Missing GLM_ENDPOINT, GLM_MODEL, or GLM_API_KEY/CATALYST_TOKEN in .env. Returning offline message.');
             return {
                 content: "The AI Copilot is currently offline due to missing configuration."
@@ -59,9 +72,14 @@ class GLMClient {
         
         while (attempt < retries) {
             try {
+                const sanitizedMessages = messages.map(m => ({
+                    role: m.role,
+                    content: m.content || " "
+                }));
+
                 const payload = {
                     model: this.model,
-                    messages: messages,
+                    messages: sanitizedMessages,
                     temperature: temperature,
                     max_tokens: maxTokens,
                     chat_template_kwargs: {
@@ -76,7 +94,7 @@ class GLMClient {
 
                 const response = await axios.post(this.endpoint, payload, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${this.apiKey}`,
+                        'Authorization': `Zoho-oauthtoken ${currentApiKey}`,
                         'CATALYST-ORG': this.org || '',
                         'Content-Type': 'application/json'
                     },
@@ -97,6 +115,56 @@ class GLMClient {
                 };
 
             } catch (error) {
+                // FALLBACK TO GEMINI IF ZOHO CATALYST KEY EXPIRED
+                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    try {
+                        let geminiKey = process.env.GEMINI_API_KEY;
+                        try {
+                            const envContent = fs.readFileSync(path.join(__dirname, '../.env'), 'utf-8');
+                            const keyMatch = envContent.match(/GEMINI_API_KEY=(.*)/);
+                            if (keyMatch && keyMatch[1]) geminiKey = keyMatch[1].trim();
+                        } catch (e) {}
+
+                        if (geminiKey) {
+                            console.log('[GLMClient] Catalyst Auth Failed (401). Falling back to direct Gemini API.');
+                            
+                            // Convert messages to Gemini format
+                            const geminiMessages = messages.map(m => ({
+                                role: m.role === 'assistant' ? 'model' : 'user',
+                                parts: [{ text: m.content || " " }]
+                            }));
+                            
+                            let systemInstruction;
+                            if (geminiMessages.length > 0 && messages[0].role === 'system') {
+                                systemInstruction = { parts: [{ text: messages[0].content }] };
+                                geminiMessages.shift();
+                            }
+
+                            const payload = { contents: geminiMessages };
+                            if (systemInstruction) payload.systemInstruction = systemInstruction;
+
+                            const geminiRes = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, payload, { headers: { 'Content-Type': 'application/json' }});
+                            
+                            const text = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                            return {
+                                content: stripReasoning(text),
+                                tool_calls: null,
+                                finish_reason: 'stop'
+                            };
+                        }
+                    } catch (geminiError) {
+                        console.error('[GLMClient] Gemini fallback also failed:', geminiError.message);
+                    }
+                    
+                    // INDESTRUCTIBLE MOCK FALLBACK (so the UI never crashes)
+                    console.log('[GLMClient] ALL AI ENGINES OFFLINE. Returning offline error message.');
+                    return {
+                        content: "The AI Copilot is currently offline due to authentication failures. Please verify your API keys.",
+                        tool_calls: null,
+                        finish_reason: 'stop'
+                    };
+                }
+
                 attempt++;
                 lastError = error;
                 console.warn(`[GLMClient] Attempt ${attempt} failed:`, error.response?.data || error.message);

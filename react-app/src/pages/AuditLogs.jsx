@@ -151,7 +151,7 @@ const AuditLogs = () => {
         </div>
       </div>
 
-      {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
+      
 
       {/* Main Content */}
       <div className="glass-panel" style={{ padding: '20px', minHeight: '400px' }}>

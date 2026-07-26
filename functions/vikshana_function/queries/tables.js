@@ -81,6 +81,12 @@ const tables = {
     ],
     UnitType: [
         'UnitTypeID', 'UnitTypeName', 'CityDistState', 'Hierarchy', 'Active'
+    ],
+    Investigation_Conversation: [
+        'id', 'caseId', 'officerId', 'title', 'isBookmarked', 'isArchived', 'lastMessageAt', 'createdAt'
+    ],
+    Investigation_Message: [
+        'id', 'conversationId', 'role', 'content', 'citations', 'createdAt'
     ]
 };
 

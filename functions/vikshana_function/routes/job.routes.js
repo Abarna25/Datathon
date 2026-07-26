@@ -9,7 +9,7 @@ router.get('/threat-sync', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in GET /jobs/threat-sync:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 
@@ -20,7 +20,7 @@ router.get('/daily-briefing', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in GET /jobs/daily-briefing:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 

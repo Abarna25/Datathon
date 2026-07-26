@@ -13,7 +13,7 @@ router.post('/publish', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in POST /signals/publish:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 
@@ -25,7 +25,7 @@ router.post('/listener', async (req, res) => {
         res.status(200).json({ success: true, acknowledged: true });
     } catch (error) {
         console.error('Error in POST /signals/listener:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 

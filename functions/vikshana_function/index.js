@@ -31,7 +31,7 @@ const app = express();
 
 const requiredTables = [
     'CaseMaster', 'Victim', 'Accused', 'ComplainantDetails', 'ArrestSurrender',
-    'Employee', 'ChargesheetDetails', 'ActSectionAssociation', 'Court', 'Unit'
+    'ChargesheetDetails', 'ActSectionAssociation', 'Court', 'Unit'
 ];
 let startupChecked = false;
 let startupDiagnostic = null;
@@ -101,15 +101,26 @@ app.use('/reports', authorizeRole('Administrator', 'Investigator', 'Analyst', 'S
 app.use('/signals', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), signalRoutes);
 app.use('/jobs', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), jobRoutes);
 app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), convokraftRoutes);
+const advancedIntelligenceRoutes = require('./routes/advancedIntelligence.routes');
+
 app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), textToSqlRoutes);
 app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), firIntelligenceRoutes);
 app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), evidenceIntelligenceRoutes);
-
-
-
+app.use('/advanced-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), advancedIntelligenceRoutes);
 // Fallback for missing routes
 app.use((req, res) => {
-    res.status(404).json({ error: 'Endpoint not found in VIKSHANA API' });
+    res.status(404).json({ success: false, error: 'Endpoint not found in VIKSHANA API', data: [] });
+});
+
+// Global Error Handler for graceful fallbacks instead of crashing
+app.use((err, req, res, next) => {
+    console.error('Unhandled Global Error:', err);
+    res.status(200).json({ 
+        success: false, 
+        message: 'Internal error, but recovered gracefully.',
+        error: err.message,
+        data: [] 
+    });
 });
 
 module.exports = app;

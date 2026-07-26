@@ -1,0 +1,163 @@
+.hubContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.hubHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.hubTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge {
+  background: #3b82f6;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Feature Specific Spans */
+.col4 { grid-column: span 4; }
+.col6 { grid-column: span 6; }
+.col8 { grid-column: span 8; }
+.col12 { grid-column: span 12; }
+
+@media (max-width: 1200px) {
+  .col4, .col6, .col8 { grid-column: span 12; }
+}
+
+/* Explain AI */
+.explainWrapper {
+  position: relative;
+  width: 100%;
+}
+.explainBtn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.explainBtn:hover { background: rgba(59, 130, 246, 0.1); }
+.explainPopover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  margin-top: 8px;
+  border: 1px solid #475569;
+}
+.explainTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+.explainBody { font-size: 12px; line-height: 1.5; color: #cbd5e1; }
+.evidenceTags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.evidenceTag { background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+
+/* Mini Components */
+.list { display: flex; flex-direction: column; gap: 12px; }
+.listItem { padding: 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+
+.priorityTag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.p-High { background: #fee2e2; color: #ef4444; }
+.p-Medium { background: #fef3c7; color: #f59e0b; }
+.p-Low { background: #dcfce7; color: #10b981; }
+
+.progressTrack { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.progressFill { height: 100%; border-radius: 4px; background: #3b82f6; }
+
+.starRow { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+.starRow:last-child { border-bottom: none; }
+.starLabel { font-size: 13px; font-weight: 600; color: #475569; }
+.stars { display: flex; gap: 2px; }
+
+/* Court Readiness Circle */
+.readinessGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.gaugeWrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.circle { position: relative; width: 80px; height: 80px; }
+.circle svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.circleBg { fill: none; stroke: #e2e8f0; stroke-width: 8; }
+.circleFill { fill: none; stroke: #3b82f6; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
+.circleText { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #1e293b; }
+.gaugeLabel { font-size: 12px; font-weight: 600; color: #64748b; }

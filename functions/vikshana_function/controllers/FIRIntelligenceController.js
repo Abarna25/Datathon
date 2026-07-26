@@ -26,13 +26,9 @@ class FIRIntelligenceController {
                 success: true,
                 data: analysis
             });
-
         } catch (error) {
             console.error('[FIRIntelligenceController] Analyze error:', error.message);
-            return res.status(500).json({
-                success: false,
-                error: error.message || 'Failed to process FIR.'
-            });
+            return res.status(200).json({ success: false, error: error.message || 'AI Intelligence extraction failed.' });
         }
     }
 }

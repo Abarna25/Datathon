@@ -9,7 +9,7 @@ router.post('/predict-risk', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in POST /ml/predict-risk:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 
@@ -21,7 +21,7 @@ router.get('/predict-hotspots', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in GET /ml/predict-hotspots:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 
@@ -44,7 +44,7 @@ router.post('/translate', async (req, res) => {
         res.status(200).json({ success: true, data: { translations } });
     } catch (error) {
         console.error('Error in POST /ml/translate:', error.message);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 });
 

@@ -36,7 +36,7 @@ const Navbar = () => {
         setShowSearchResults(true);
       }
     } catch (err) {
-      console.error('[Search] Failed:', err);
+      console.debug('[Search] Failed:', err);
     } finally {
       setSearching(false);
     }

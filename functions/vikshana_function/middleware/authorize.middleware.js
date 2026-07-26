@@ -39,7 +39,7 @@ function logAuditEvent(user, action, details, req, status = 'SUCCESS') {
 }
 
 function authenticateToken(req, res, next) {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers['x-vikshana-auth'] || req.headers.authorization;
     let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : req.query?.token;
 
     if (token) {

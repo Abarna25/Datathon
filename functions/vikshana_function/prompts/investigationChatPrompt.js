@@ -102,6 +102,8 @@ function buildSystemPrompt({ context, retrieved }) {
         formatEntities('Victims', 'Victim', context.victims),
         formatEntities('Suspects', 'Suspect', retrieved.suspects),
         formatEntities('Witnesses', 'Witness', retrieved.witnesses),
+        formatEntities('Chargesheets Filed', 'Chargesheet', retrieved.chargesheet),
+        formatEntities('Legal Acts & Sections', 'Section', retrieved.sections),
         formatEntities('CCTV Footage', 'CCTV', retrieved.cctv),
         formatEntities('Phone Records', 'PhoneRecord', retrieved.phoneRecords),
         formatEntities('Financial Transactions', 'FinancialTransaction', retrieved.financialTransactions),
