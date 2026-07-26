@@ -1,7 +1,5 @@
 <div align="center">
 
-  <img src="./assets/logo-placeholder.png" alt="VIKSHANA Logo" width="120"/>
-
   <h1>V I K S H A N A</h1>
 
   <p><b>AI-Powered Investigation Intelligence Platform for Modern Law Enforcement</b></p>
@@ -18,8 +16,6 @@
   > **[🎥 Watch the Live Demo Video](https://youtube.com/your-demo-link)** &nbsp;&nbsp;|&nbsp;&nbsp; **[🌍 Live Application URL](https://vikshana-60077000408.development.catalystserverless.in/app/index.html)**
 
   <br/>
-
-  <img src="./assets/hero-dashboard.png" alt="VIKSHANA Dashboard" width="90%"/>
 
 </div>
 
@@ -50,26 +46,6 @@ Officer ➔ AI Copilot ➔ Evidence Correlation ➔ Relationship Graph ➔ Decis
 
 ---
 
-## 📸 Screenshots
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><b>Dashboard</b><br/><img src="./assets/dashboard.png" width="350" alt="Dashboard"/></td>
-      <td align="center"><b>AI Chat</b><br/><img src="./assets/chat.gif" width="350" alt="AI Chat GIF"/></td>
-    </tr>
-    <tr>
-      <td align="center"><b>Investigation Workspace</b><br/><img src="./assets/workspace.png" width="350" alt="Workspace"/></td>
-      <td align="center"><b>Relationship Graph</b><br/><img src="./assets/graph.gif" width="350" alt="Relationship Graph GIF"/></td>
-    </tr>
-    <tr>
-      <td align="center"><b>Evidence Intelligence</b><br/><img src="./assets/evidence.png" width="350" alt="Evidence"/></td>
-      <td align="center"><b>Reports</b><br/><img src="./assets/report.png" width="350" alt="Reports"/></td>
-    </tr>
-  </table>
-</div>
-
----
 
 ## 🏗️ Architecture
 
