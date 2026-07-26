@@ -35,14 +35,30 @@ Officer ➔ AI Copilot ➔ Evidence Correlation ➔ Relationship Graph ➔ Decis
 
 ---
 
-## ⚖️ Why VIKSHANA?
+## ⚖️ Why VIKSHANA? (Feature Benchmarks)
 
-| Challenge | VIKSHANA |
+| Task | Manual Investigation | VIKSHANA |
+| :--- | :--- | :--- |
+| **FIR Search** | Minutes | **Seconds** |
+| **Criminal Network Discovery**| Hours | **Seconds** |
+| **Similar Case Identification**| Hours | **Seconds** |
+| **Crime Hotspot Analysis** | Manual | **Automated** |
+| **Investigation Summary** | Manual | **AI Generated** |
+
+---
+
+## ⏱️ Prototype Performance Metrics
+
+| Metric | Description |
 | :--- | :--- |
-| Hundreds of pages to read | **AI summarizes instantly** |
-| Manual evidence correlation | **Automatic relationship graph** |
-| SQL knowledge required | **Natural Language Search** |
-| Manual reports | **One-click AI Briefing** |
+| **AI Response Time** | Average time to answer a query |
+| **FIR Retrieval Time** | Time to retrieve FIR records |
+| **Network Graph Load** | Time to render criminal network |
+| **Hotspot Analytics Load** | Time to generate heatmap |
+| **Report Generation** | Time to export PDF |
+| **Concurrent Users** | Prototype load capability |
+| **Voice Processing** | Speech-to-text latency |
+| **Search Accuracy** | Retrieval relevance or success rate |
 
 ---
 
