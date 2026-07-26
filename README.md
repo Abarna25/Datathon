@@ -1,270 +1,280 @@
-# VIKSHANA — Intelligent Conversational AI & Crime Analytics Platform
+# 🕵️‍♂️ VIKSHANA
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![React](https://img.shields.io/badge/Frontend-React_18-blue)
-![Backend](https://img.shields.io/badge/Backend-Node.js_Express-green)
-![Cloud](https://img.shields.io/badge/Cloud-Zoho_Catalyst-orange)
-![Security](https://img.shields.io/badge/Security-AES256_HMAC-red)
+> **AI-Powered Investigation Intelligence Platform**
 
-**VIKSHANA** is an enterprise-grade AI-powered crime analytics, sociological insights, offender profiling, and decision support platform engineered for law enforcement agencies, criminology researchers, and criminal justice operations. Built on top of **Zoho Catalyst Serverless Platform**, **React 18 (Vite)**, and **Node.js/Express**, VIKSHANA integrates real-time crime data, AI behavioral vectors, graph neural network visualizers, and court-ready PDF reporting.
-
----
-
-## PART 1 — System Architecture, Workflows & Design
-
-### Overview
-VIKSHANA unifies multi-agency crime intelligence into a single cohesive glassmorphism interface. The platform addresses core criminology requirements:
-1. **Sociological Crime Insights & Migration Analytics**: Crime heatmaps, district distribution, economic correlation.
-2. **Criminology-Based Offender Profiling (Requirement #5)**: 7-tier offender profiling engine including master identity, behavioral vector radar, Modus Operandi (MO) matching, criminal history, geographic associate network, offender comparison matrix, and automated evidentiary timeline.
-3. **Investigator Decision Support System (Requirement #6)**: AI lead recommendations, missing evidence detection, risk assessment gauges (`89/100`), explainable AI assistant, and automated court briefing PDF exporter.
-4. **In-App Custom Authentication**: Zero-redirect REST authentication with JWT tokens, Google Popup OAuth 2.0, modal account registration, and automatic session restoration.
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Zoho Catalyst](https://img.shields.io/badge/Zoho_Catalyst-4353FF?style=for-the-badge&logo=zoho&logoColor=white)
+![QuickML GLM](https://img.shields.io/badge/QuickML_GLM-000000?style=for-the-badge&logo=google&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Datathon](https://img.shields.io/badge/Datathon-Hackathon-FF4B4B?style=for-the-badge)
 
 ---
 
-### Key Features
-* **Zero-Redirect Authentication**: In-app login, modal-driven registration, Google Popup Auth, and password reset.
-* **Master Profile & Identity Shielding**: Masked Aadhaar, distinguishing marks, alias tracking, and habitual offender tagging.
-* **Criminological Behavioral Vector Radar**: Recharts-powered radar visualization tracking violence escalation, premeditation, recidivism risk, and forensic evasion.
-* **Modus Operandi (MO) Pattern Engine**: Automatic tool mark matching, weapon profiling, vehicle detection, and historical case similarity scoring.
-* **Geography & Associate Network Graph**: Dynamic network explorer mapping gang affiliations, safehouses, and crime density heatmaps.
-* **Missing Evidence Detection**: Automatic audit identifying missing logbooks, DNA swabs, witness statements, digital telecom dumps, and magistrate warrants.
-* **Court-Ready PDF Exporter**: One-click generation of court briefing documentation with officer signature blocks.
+## 📖 Overview
+
+**What problem VIKSHANA solves:**  
+Law enforcement agencies often struggle with data silos, unstructured case files, and time-consuming manual processes when trying to connect evidence across different cases. Extracting actionable insights from hundreds of pages of FIR (First Information Report) narratives or interrogations takes days of manual effort.
+
+**Why AI-assisted investigation matters:**  
+By leveraging advanced AI and Large Language Models, investigators can process vast amounts of unstructured data instantly. AI can automatically identify suspects, vehicles, and evidence, resolve aliases, and draw connections that a human might miss—turning hours of reading into seconds of querying.
+
+**Main objectives:**  
+- Accelerate the investigation process using an AI-powered conversational interface.
+- Provide interactive visual relationship mapping of entities (Suspects, Victims, Evidence).
+- Automate the parsing and summarization of complex FIR narratives.
+- Offer data-backed decision support and automated, formatted report generation.
 
 ---
 
-### Design Principles
-* **Dark Glassmorphic Theme**: Deep spatial background gradients (`#0a0b10`), frosted glass panels (`backdrop-filter: blur(12px)`), vibrant neon accents (`#3b82f6`, `#8b5cf6`, `#10b981`, `#ef4444`).
-* **Zero Dummy Fallbacks**: Bulletproof default schemas guaranteeing that no screen or tab ever renders blank.
-* **Responsive Metric Gauges**: Custom SVG arc meters for offender risk and investigation priority.
+## ✨ Key Features
+
+- **✓ AI Investigation Chat:** A conversational Copilot interface for querying case details and receiving contextual answers.
+- **✓ Investigation Workspace:** A unified hub displaying case details, timelines, and connected entities.
+- **✓ Dashboard:** High-level overview of active cases, recent evidence, and alerts.
+- **✓ Evidence Intelligence:** AI-driven analysis of physical, digital, and biological evidence.
+- **✓ Relationship Explorer:** Maltego-style interactive nodal graph mapping connections between people, vehicles, and locations.
+- **✓ FIR Narrative Understanding:** Automated extraction of entities, timelines, and investigation leads from unstructured FIR text.
+- **✓ Text-to-SQL:** "Neural SQL Interface" that converts natural language questions into executable ZCQL database queries.
+- **✓ Decision Support:** AI-recommended next steps and strategic analysis for the active case.
+- **✓ AI Report Generation:** One-click generation of comprehensive investigation reports in Markdown/HTML.
+- **✓ Context-Aware AI:** The LLM actively maintains the context of the currently selected case when answering queries.
+
+*(Note: Features listed represent the current implementation state of the repository.)*
 
 ---
 
-### Authentication Flow
+## 🏗️ Architecture
 
-#### User Login Sequence
-```
-[ User Enters Credentials ] ──► [ Client Validation ] ──► [ POST /auth/login ]
-                                                                 │
-[ Dashboard Loaded ] ◄── [ Session Hydrated ] ◄── [ 200 OK + JWT Token ]
-```
+The platform follows a modern, decoupled architecture hosted entirely on the Zoho Catalyst serverless ecosystem.
 
-#### Sequence Diagram (Mermaid)
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Officer as Law Enforcement Officer
-    participant React as React 18 Application
-    participant Express as Express.js Server
-    participant Catalyst as Zoho Catalyst Data Store
-    participant Google as Google OAuth 2.0
+**React Frontend** (SPA hosted on Catalyst Web Client Hosting)
+↓
+**Zoho Catalyst Advanced I/O** (API Gateway & Serverless Routing)
+↓
+**Node.js Backend** (Express.js powering `vikshana_function`)
+↓
+**Catalyst Data Store** (ZCQL Structured Database) & **QuickML GLM** (Large Language Models via API)
 
-    Officer->>React: Enters credentials / clicks Sign In
-    React->>Express: POST /auth/login (email, password)
-    Express->>Catalyst: Query UserMaster table
-    Catalyst-->>Express: Returns Officer record
-    Express->>Express: Sign HMAC-SHA256 JWT Token
-    Express-->>React: 200 OK { token, userProfile }
-    React->>React: Store token in localStorage & hydrate AuthContext
-    React->>Officer: Seamless transition to /dashboard
-```
+**Data Flow:**
+1. The user interacts with the React frontend, sending natural language or UI-triggered requests.
+2. The frontend communicates securely via authenticated Catalyst Advanced I/O endpoints.
+3. The Node.js backend processes the request, orchestrating the AI Agents.
+4. The backend pulls real-time structured data from the Catalyst Data Store.
+5. The data is fed as context into the Zoho QuickML GLM model.
+6. The AI synthesizes the response, which is routed back and rendered dynamically on the frontend.
 
 ---
 
-### Folder Structure
+## 💻 Technology Stack
 
-```
-e:/Datathon/Vikshana/
-├── functions/
-│   └── vikshana_function/
-│       ├── controllers/
-│       │   ├── AuthController.js              # Authentication controller & token logic
-│       │   ├── DecisionSupportController.js   # Requirement #6 Decision Support Engine
-│       │   └── OffenderProfilingController.js # Requirement #5 Offender Profiling Engine
-│       ├── routes/
-│       │   ├── auth.routes.js                # Express router for /auth
-│       │   ├── decision.routes.js            # Express router for /decision
-│       │   └── offender.routes.js            # Express router for /offender
-│       ├── queries/
-│       │   └── datastoreClient.js            # Zoho Catalyst Data Store client & fallback layer
-│       └── index.js                          # Express application entry point
-├── react-app/
-│   └── src/
-│       ├── auth/
-│       │   └── Login.jsx                     # Modern in-app login page & modals
-│       ├── components/
-│       │   ├── offender/
-│       │   │   └── OffenderProfiling.jsx     # 7-Tab Offender Profiling Module
-│       │   ├── Sidebar.jsx                   # Navigation menu sidebar
-│       │   └── GraphView.jsx                 # Relationship & Knowledge Graph visualizer
-│       ├── context/
-│       │   └── AuthContext.js                # React authentication context provider
-│       ├── pages/
-│       │   └── InvestigatorDecisionSupport.jsx # 6-Tab Decision Support Page
-│       ├── utils/
-│       │   └── pdfExport.js                  # Court-ready PDF exporter utility
-│       └── App.js                            # React Router configuration
-├── AUTH_README.md                            # Complete Authentication Documentation
-└── README.md                                 # Master System Architecture README
-```
+- **Frontend:** React.js, Context API, Lucide React (Icons), Custom CSS
+- **Backend:** Node.js, Express.js (Catalyst Advanced I/O Function)
+- **Database:** Zoho Catalyst Data Store (ZCQL)
+- **Authentication:** Zoho Catalyst Web SDK Authentication
+- **AI / LLM:** Zoho Catalyst QuickML (GLM API) / Gemini AI Fallback
+- **Deployment:** Zoho Catalyst Serverless Ecosystem
+- **Visualization Libraries:** `react-force-graph-2d` (Entity Relationships)
 
 ---
 
-## PART 2 — Security Architecture, Database & API Reference
+## 📁 Project Structure
 
-### Security Architecture
-* **Cryptographic Token Verification**: HMAC-SHA256 tokens protect API endpoints from spoofing and unauthorized access.
-* **Input Validation & Sanitization**: Schema validation eliminates SQL/ZCQL injection risks.
-* **CORS Policy & Headers**: Restricted origin policies prevent cross-site request forgery (CSRF).
-* **Data Privacy**: Identity details (Aadhaar numbers, contact numbers) are masked in UI renders (`XXXX-XXXX-9841`).
-
----
-
-### Route Protection
-
-| Route Path | Access Level | Description |
-| :--- | :--- | :--- |
-| `/auth/login` | Public | Custom in-app login and registration interface |
-| `/dashboard` | Officer, Analyst, Admin | Crime statistics and real-time operational feeds |
-| `/offender-profiling` | Officer, Analyst, Admin | Requirement #5 Criminological Offender Profiling Module |
-| `/decision-support` | Officer, Admin | Requirement #6 Investigator Decision Support System |
-| `/analytics` | Analyst, Admin | Sociological insights, risk maps, and migration analytics |
-
----
-
-### Database Schema (Zoho Catalyst Data Store)
-
-#### `UserMaster` Table Schema
-| Field Name | Type | Key | Description |
-| :--- | :--- | :--- | :--- |
-| `ROWID` | BigInt | Primary | Unique Catalyst record ID |
-| `user_id` | VarChar(64) | Indexed | Internal user ID (`CATALYST_USR_...`) |
-| `full_name` | VarChar(128) | - | Officer legal name |
-| `email` | VarChar(128) | Unique | Official departmental email |
-| `role` | VarChar(32) | - | Assigned role (`Officer`, `Admin`, `Analyst`) |
-| `provider` | VarChar(32) | - | Identity provider (`Email`, `Google`) |
-| `district` | VarChar(64) | - | Primary operational jurisdiction |
-| `status` | VarChar(16) | - | Account status (`ACTIVE`, `SUSPENDED`) |
-
----
-
-### API Endpoints Reference
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/auth/login` | Background REST user authentication |
-| `POST` | `/auth/signup` | Register new law enforcement account |
-| `POST` | `/auth/google` | Verify Google Popup OAuth session |
-| `GET` | `/auth/session` | Validate token and restore officer session |
-| `GET` | `/offender/profile/:id` | Fetch 7-tab offender criminological profile |
-| `GET` | `/decision/full-case/:id` | Fetch complete decision support case payload |
-| `POST` | `/decision/query-assistant` | Query Explainable AI Investigation Assistant |
-
-#### Example Request (`POST /auth/login`)
-```json
-{
-  "email": "officer@vikshana.gov",
-  "password": "SecurePassword123!",
-  "rememberMe": true
-}
-```
-
-#### Example Response (`200 OK`)
-```json
-{
-  "success": true,
-  "message": "Authenticated successfully in background",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "CATALYST_USR_001",
-    "name": "Insp. R. Singh",
-    "email": "officer@vikshana.gov",
-    "role": "Officer",
-    "district": "Peri-Urban",
-    "status": "ACTIVE"
-  }
-}
+```text
+VIKSHANA/
+├── catalyst.json                # Catalyst project configuration
+├── cleanup.bat                  # Local environment cleanup script
+├── dataset/                     # Mock data CSVs for fallback logic
+├── ml_pipeline/                 # Python-based ML training and evaluation scripts
+├── react-app/                   # React Frontend
+│   ├── src/
+│   │   ├── auth/                # Catalyst authentication wrappers
+│   │   ├── components/          # Reusable UI components (chat, fir, data explorer)
+│   │   ├── context/             # React Context for global state (AppContext)
+│   │   ├── hooks/               # Custom React hooks
+│   │   ├── pages/               # Main route views (Dashboard, Cases, Reports)
+│   │   ├── services/            # API client configurations
+│   │   └── styles/              # Global and scoped CSS styles
+└── functions/
+    └── vikshana_function/       # Node.js Advanced I/O Backend
+        ├── agents/              # AI Orchestration Agents (Planner, Report, etc.)
+        ├── controllers/         # Express Route Controllers
+        ├── middleware/          # Express Middlewares
+        ├── prompts/             # System instructions and prompt templates for GLM
+        ├── queries/             # ZCQL Database queries and mock fallbacks
+        ├── routes/              # Express API Route definitions
+        └── services/            # Core business logic and LLM integrations
 ```
 
 ---
 
-## PART 3 — Deployment, Operations & Maintenance
+## 🖥️ Screens
 
-### Authorization Matrix (RBAC)
-
-| Role | Dashboard | Offender Profiling | Decision Support | AI Assistant | PDF Export | Admin Config |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Officer** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Analyst** | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| **Viewer** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-
----
-
-### Environment Variables
-
-| Variable | Scope | Description |
-| :--- | :--- | :--- |
-| `REACT_APP_API_BASE_URL` | Frontend | Express server API root (`/server/vikshana_function`) |
-| `JWT_SECRET` | Backend | Cryptographic key for signing JWT tokens |
-| `CATALYST_PROJECT_ID` | Backend | Cloud Zoho Catalyst Project Identifier |
-| `GOOGLE_CLIENT_ID` | Both | Google Cloud Platform OAuth 2.0 Web Client ID |
+1. **Dashboard:** High-level system overview.
+2. **Cases:** Grid/List view of all active and archived investigations.
+3. **Investigation Workspace:** The primary active case view with timelines and details.
+4. **Relationship Explorer:** Visual graph mapping entities and their connections.
+5. **Evidence Intelligence:** Detailed view of physical/digital case evidence.
+6. **Decision Support:** AI-generated strategic advice for investigators.
+7. **Reports:** Interface for generating and exporting case dockets.
+8. **Audit Logs:** System-level auditing logs.
 
 ---
 
-### Installation & Deployment
+## 🧠 AI Workflow
 
-1. **Clone Repository**:
+**1. User Query:** The investigator asks a question via the chat or triggers an analysis button.
+↓
+**2. Context Builder:** The backend identifies the active case and fetches relevant structured data (Evidence, Suspects) from the Datastore.
+↓
+**3. Planner Agent:** Determines if the query requires multi-step reasoning or a direct answer.
+↓
+**4. Tool Executor:** Fetches any additional required data (e.g., executing a ZCQL query).
+↓
+**5. Catalyst Datastore:** Structured SQL/ZCQL data extraction.
+↓
+**6. QuickML GLM:** The assembled prompt (User Query + System Prompt + Structured Context) is sent to the LLM.
+↓
+**7. Response Formatter:** The backend parses the LLM output (Markdown, JSON, or Graph Data).
+↓
+**8. Frontend:** The React app renders the formatted response (Chat Bubble, Node Graph, or Report).
+
+---
+
+## 🚀 Deployment
+
+**Local Development**
+To run the project locally using the Catalyst CLI emulator:
+```bash
+catalyst serve
+```
+This will start both the React frontend and the Node.js backend on `localhost:3000`.
+
+**Production**
+To deploy the application to the Zoho Catalyst production environment:
+```bash
+catalyst deploy
+```
+*Note: The React application is built and hosted using Zoho Catalyst Web Client Hosting, while the backend runs as an Advanced I/O function.*
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the `functions/vikshana_function/` directory. **Do not expose secrets in public repositories.**
+
+```env
+# Zoho Catalyst Configuration
+CATALYST_PROJECT_ID=<your_project_id>
+CATALYST_ENVIRONMENT=<environment>
+CATALYST_ORG=<your_org_id>
+CATALYST_TOKEN=<your_oauth_token>
+
+# AI Endpoints
+GLM_ENDPOINT=https://api.catalyst.zoho.in/quickml/v1/project/<project_id>/glm/chat
+GLM_MODEL=crm-di-glm47b_30b_it
+```
+
+---
+
+## 🛠️ Installation
+
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/KANISH-850/Vikshana.git
+   git clone https://github.com/your-org/Vikshana.git
    cd Vikshana
    ```
 
-2. **Install Dependencies**:
+2. **Install Frontend Dependencies:**
    ```bash
-   # Backend dependencies
-   cd functions/vikshana_function
+   cd react-app
    npm install
-
-   # Frontend dependencies
-   cd ../../react-app
-   npm install
+   cd ..
    ```
 
-3. **Run Locally using Zoho Catalyst CLI**:
+3. **Install Backend Dependencies:**
    ```bash
-   # From root directory
+   cd functions/vikshana_function
+   npm install
+   cd ../..
+   ```
+
+4. **Configure Environment Variables:**
+   Copy the `.env.example` file and configure it with your credentials.
+   ```bash
+   cp functions/vikshana_function/.env.example functions/vikshana_function/.env
+   ```
+
+5. **Start the Catalyst Local Emulator:**
+   ```bash
    catalyst serve
    ```
 
-4. **Deploy to Zoho Catalyst Cloud**:
-   ```bash
-   catalyst deploy
-   ```
+---
+
+## 🎬 Demo Flow
+
+To effectively demonstrate VIKSHANA, we recommend the following sequence:
+1. **Login:** Authenticate using Catalyst Web SDK.
+2. **Dashboard:** Show the high-level overview of the platform and current alerts.
+3. **Select Case:** Open a complex case (e.g., a burglary or homicide) to populate the Context-Aware AI.
+4. **AI Chat:** Ask the Copilot a complex question requiring case context.
+5. **Evidence:** Demonstrate the intelligent mapping of digital and physical evidence.
+6. **Relationship Explorer:** Demonstrate the Maltego-style visual graph of the extracted entities.
+7. **Decision Support:** Let the AI recommend the next strategic move for the investigation.
+8. **Generate Report:** Use the Report module to create a final, exportable docket.
 
 ---
 
-### Performance Benchmarks
-* **Bundle Compression**: Gzip main bundle optimized to `475 kB`.
-* **API Response Latency**: Serverless endpoints respond in `< 120 ms`.
-* **Zero Blank Renders**: Built-in default schema guarantees 100% component availability under all network conditions.
+## 📊 Current Implemented Modules
+
+| Module | Purpose | Status |
+| :--- | :--- | :--- |
+| **Authentication** | Zoho Catalyst Web SDK integration | Complete |
+| **Dashboard** | High-level system overview | Complete |
+| **Investigation Workspace** | Central hub for active case data | Complete |
+| **AI Copilot** | Context-aware chat interface | Complete |
+| **Evidence Intelligence** | Analysis of case evidence | Complete |
+| **FIR Intelligence** | Narrative understanding and entity extraction | Complete |
+| **Relationship Explorer** | Visual node-based entity mapping | Complete |
+| **Neural SQL** | Text-to-ZCQL database querying | Complete |
+| **Decision Support** | AI-generated strategic next steps | Complete |
+| **Report Generation** | Automated case docket creation | Complete |
+| **Audit Logs** | System action tracking | Complete |
 
 ---
 
-### Tech Stack Summary
+## 🔮 Future Scope
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend Framework** | React 18, Vite |
-| **Icons & Visuals** | Lucide React, Recharts Vector Engine |
-| **PDF Generation** | jsPDF, AutoTable Engine |
-| **Backend API** | Node.js, Express.js |
-| **Cloud Serverless** | Zoho Catalyst Advanced I/O |
-| **Cloud Database** | Zoho Catalyst Data Store & ZCQL |
-| **Identity Provider** | Google OAuth 2.0 API |
+- **Vector Search:** Implementing embeddings for semantic search across historical case files.
+- **Crime Similarity:** Machine Learning models to identify matching Modus Operandi (M.O.) across jurisdictions.
+- **Heat Maps:** Geospatial visualization of crime density and active zones.
+- **Workflow Management:** Task assignment and tracking for investigation teams.
+- **RBAC (Role-Based Access Control):** Granular permissions for Officers, Detectives, and Admins.
+- **Case Sharing:** Secure inter-departmental collaboration frameworks.
+- **Chain of Custody:** Immutable audit trails for digital and physical evidence handling.
 
 ---
 
-### License
-This project is licensed under the **MIT License** — see the `LICENSE` file for details.
+## 🤝 Contributors
 
-Copyright (c) 2026 VIKSHANA Crime Analytics Platform.
+| Name | Role | GitHub |
+| :--- | :--- | :--- |
+| **[Contributor Name]** | Full Stack / AI Engineer | [@username](https://github.com/) |
+| **[Contributor Name]** | Backend Developer | [@username](https://github.com/) |
+| **[Contributor Name]** | Frontend Developer | [@username](https://github.com/) |
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- **Zoho Catalyst** for providing a robust, highly scalable serverless ecosystem.
+- **Datathon** for hosting the hackathon and providing the challenge.
+- **React** & **Node.js** communities for the excellent open-source foundations.
+- **QuickML GLM** for powering our advanced natural language understanding.
