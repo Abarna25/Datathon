@@ -1,10 +1,44 @@
 [
   {
-    "path": "/server/vikshana_function/**",
-    "target": {
-      "type": "advanced_io",
-      "name": "vikshana_function"
+    "name": "vikshana_function_rule",
+    "source_endpoint": "/server/vikshana_function/{path:(.*)}",
+    "path": "/server/vikshana_function/{path:(.*)}",
+    "method": "ANY",
+    "target": "advancedio",
+    "target_value": "vikshana_function",
+    "target_endpoint": "/server/vikshana_function/{path}"
+  },
+  {
+    "name": "Client Wildcard",
+    "source_endpoint": "/app/{path:(.*)}",
+    "target_endpoint": "/app/{path}",
+    "target": "client",
+    "method": "ANY"
+  },
+  {
+    "name": "Client App Direct",
+    "source_endpoint": "/app",
+    "target_endpoint": "/app/",
+    "target": "client",
+    "method": "GET"
+  },
+  {
+    "name": "Root Direct",
+    "source_endpoint": "/",
+    "target_endpoint": "/app/",
+    "target": "client",
+    "method": "GET"
+  },
+  {
+    "name": "Login Redirect",
+    "source_endpoint": "/app/index.html",
+    "target_endpoint": "/app/index.html",
+    "target": "client",
+    "method": "GET",
+    "throttling": {
+      "overall": {},
+      "ip": {}
     },
-    "authentication": "None"
+    "system": true
   }
 ]

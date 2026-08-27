@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, ShieldCheck, AlertTriangle, Fingerprint, Search, FileText, Link, Clock } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Fingerprint, Clock, Search, Link, FileText } from 'lucide-react';
 
 const EvidenceSummaryCards = ({ summary }) => {
   if (!summary) return null;

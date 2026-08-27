@@ -101,27 +101,36 @@ const Dashboard = () => {
       {/* ROW 1: Executive KPI Cards */}
       <motion.div className={styles.kpiGrid} variants={itemVariants}>
         {[
-          { title: 'Active Investigations', value: data.stats?.openCases || 0, trend: '▲ 14 today', subtitle: `${data.stats?.highRiskCases || 0} High Risk`, icon: <Briefcase size={24} color="#3b82f6" />, bg: 'rgba(59,130,246,0.1)' },
-          { title: 'FIRs Today', value: data.stats?.todaysFIR || 0, trend: 'Steady', subtitle: `Avg Closure: ${data.stats?.avgClosureTime || 18} Days`, icon: <FileText size={24} color="#10b981" />, bg: 'rgba(16,185,129,0.1)' },
-          { title: 'High Risk Cases', value: data.stats?.highRiskCases || 0, trend: '▼ 2% MoM', subtitle: 'Priority Monitoring', icon: <AlertTriangle size={24} color="#ef4444" />, bg: 'rgba(239,68,68,0.1)' },
-          { title: 'Pending Evidence', value: data.stats?.pendingEvidence || 0, trend: '▲ 5 suspects', subtitle: 'At large', icon: <FileSearch size={24} color="#f59e0b" />, bg: 'rgba(245,158,11,0.1)' },
-          { title: 'AI Alerts', value: data.alerts?.length || 0, trend: 'Live', subtitle: 'Generated dynamically', icon: <Bot size={24} color="#8b5cf6" />, bg: 'rgba(139,92,246,0.1)' },
-          { title: 'Officers Online', value: data.stats?.officersOnline || 0, trend: 'Peak', subtitle: 'Active Catalyst sessions', icon: <Users size={24} color="#06b6d4" />, bg: 'rgba(6,182,212,0.1)' },
-        ].map((kpi, idx) => (
-          <div key={idx} className={styles.kpiCard}>
-            <div className={styles.kpiIconWrapper} style={{ background: kpi.bg }}>{kpi.icon}</div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiTitle}>
-                {kpi.title} 
-                <span className={styles.kpiTrend} style={{ color: kpi.trend.includes('▲') ? '#10b981' : (kpi.trend.includes('▼') ? '#ef4444' : '#3b82f6') }}>
+          { title: 'Active Investigations', value: data.stats?.openCases || 0, trend: '▲ 14 today', subtitle: `${data.stats?.highRiskCases || 0} High Risk`, icon: <Briefcase size={20} color="#3b82f6" />, bg: 'rgba(59,130,246,0.1)' },
+          { title: 'FIRs Today', value: data.stats?.todaysFIR || 0, trend: 'Steady', subtitle: `Avg Closure: ${data.stats?.avgClosureTime || 18} Days`, icon: <FileText size={20} color="#10b981" />, bg: 'rgba(16,185,129,0.1)' },
+          { title: 'High Risk Cases', value: data.stats?.highRiskCases || 0, trend: '▼ 2% MoM', subtitle: 'Priority Monitoring', icon: <AlertTriangle size={20} color="#ef4444" />, bg: 'rgba(239,68,68,0.1)' },
+          { title: 'Pending Evidence', value: data.stats?.pendingEvidence || 0, trend: '▲ 5 suspects', subtitle: 'At large', icon: <FileSearch size={20} color="#f59e0b" />, bg: 'rgba(245,158,11,0.1)' },
+          { title: 'AI Alerts', value: data.alerts?.length || 0, trend: 'Live', subtitle: 'Generated dynamically', icon: <Bot size={20} color="#8b5cf6" />, bg: 'rgba(139,92,246,0.1)' },
+          { title: 'Officers Online', value: data.stats?.officersOnline || 0, trend: 'Peak', subtitle: 'Active Catalyst sessions', icon: <Users size={20} color="#06b6d4" />, bg: 'rgba(6,182,212,0.1)' },
+        ].map((kpi, idx) => {
+          const isUp = kpi.trend.includes('▲');
+          const isDown = kpi.trend.includes('▼');
+          const trendColor = isUp ? '#10b981' : (isDown ? '#ef4444' : '#3b82f6');
+          const trendBg = isUp ? 'rgba(16, 185, 129, 0.12)' : (isDown ? 'rgba(239, 68, 68, 0.12)' : 'rgba(59, 130, 246, 0.12)');
+
+          return (
+            <div key={idx} className={styles.kpiCard}>
+              <div className={styles.kpiCardTop}>
+                <div className={styles.kpiIconWrapper} style={{ background: kpi.bg }}>
+                  {kpi.icon}
+                </div>
+                <span className={styles.kpiTrendBadge} style={{ color: trendColor, background: trendBg }}>
                   {kpi.trend}
                 </span>
               </div>
-              <div className={styles.kpiValue}>{kpi.value}</div>
-              <div className={styles.kpiSubtitle}>{kpi.subtitle}</div>
+              <div className={styles.kpiBody}>
+                <div className={styles.kpiValue}>{kpi.value}</div>
+                <div className={styles.kpiTitle} title={kpi.title}>{kpi.title}</div>
+                <div className={styles.kpiSubtitle} title={kpi.subtitle}>{kpi.subtitle}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </motion.div>
 
       <div className={styles.mainGrid}>

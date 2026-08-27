@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, User, Search, FolderSearch, LogOut, Languages, Loader, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, User, Search, FolderSearch, LogOut, Languages, Loader, Loader2, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import useAuth from '../hooks/useAuth';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,13 +12,14 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { t, isEnglish } = useLanguage();
-  const { officer, cases, activeCaseId, setActiveCaseId, loadingCases } = useAppContext();
+  const { theme, officer, cases, activeCaseId, setActiveCaseId, loadingCases } = useAppContext();
   const [translating, setTranslating] = useState(false);
   const [translateCount, setTranslateCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const handleSearchChange = async (e) => {
     const q = e.target.value;
@@ -53,6 +54,7 @@ const Navbar = () => {
 
   const displayName = user?.name || officer?.name || 'Unknown User';
   const displayRole = user?.role || officer?.role || 'Viewer';
+  const displayUserName = displayName.toLowerCase() === 'administrator' ? 'Admin User' : displayName;
   const getRoleColor = (role) => {
     switch(role) {
       case 'Administrator': return '#ef4444'; // Red
@@ -81,23 +83,36 @@ const Navbar = () => {
       justifyContent: 'space-between', 
       alignItems: 'center', 
       marginBottom: '20px',
-      padding: '16px 24px',
-      borderRadius: '16px'
+      padding: '12px 24px',
+      borderRadius: '16px',
+      gap: '16px'
     }} className="glass-panel">
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 auto', minWidth: 0 }}>
         {/* Global Search */}
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', padding: '8px 16px', borderRadius: '8px', width: '280px' }}>
+        <div style={{ position: 'relative', flex: '0 1 300px' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            background: 'var(--bg-tertiary)', 
+            padding: '0 14px', 
+            borderRadius: '10px', 
+            height: '40px',
+            border: isSearchFocused ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+            boxShadow: isSearchFocused ? '0 0 0 2px rgba(37, 99, 235, 0.15)' : 'none',
+            transition: 'all 0.2s ease'
+          }}>
             {searching ? (
-              <Loader2 size={18} className="spin" style={{ marginRight: '8px', flexShrink: 0, color: 'var(--text-muted)' }} />
+              <Loader2 size={16} className="spin" style={{ marginRight: '8px', flexShrink: 0, color: 'var(--text-muted)' }} />
             ) : (
-              <Search size={18} color="var(--text-muted)" style={{ marginRight: '8px', flexShrink: 0 }} />
+              <Search size={16} color="var(--text-muted)" style={{ marginRight: '8px', flexShrink: 0 }} />
             )}
             <input 
               type="text" 
               value={searchQuery}
               onChange={handleSearchChange}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
               placeholder={t ? t('nav.searchPlaceholder') : 'Search cases, FIRs, entities...'}
               style={{ 
                 background: 'transparent', border: 'none', color: 'var(--text-primary)', width: '100%', outline: 'none', fontSize: '13px'
@@ -107,7 +122,7 @@ const Navbar = () => {
           {showSearchResults && searchResults.length > 0 && (
             <div className="glass-panel" style={{
               position: 'absolute',
-              top: '45px',
+              top: '46px',
               left: 0,
               width: '320px',
               maxHeight: '350px',
@@ -134,8 +149,8 @@ const Navbar = () => {
                     padding: '8px 12px',
                     borderRadius: '6px',
                     cursor: 'pointer',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid transparent',
+                    background: theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
                     transition: 'all 0.2s',
                     textAlign: 'left'
                   }}
@@ -144,8 +159,8 @@ const Navbar = () => {
                     e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.25)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'transparent';
+                    e.currentTarget.style.background = theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'var(--bg-primary)';
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
@@ -159,69 +174,72 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Global Case Selector Option - Premium Redesign */}
+        {/* Global Case Selector */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))',
-          padding: '6px 12px 6px 16px',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.3s ease',
-          backdropFilter: 'blur(10px)'
+          gap: '8px',
+          background: 'var(--bg-tertiary)',
+          height: '40px',
+          padding: '0 12px',
+          borderRadius: '10px',
+          border: '1px solid var(--border-color)',
+          maxWidth: '300px',
+          flex: '0 1 260px'
         }}>
-          <div style={{
-            width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
-          }}>
-            <FolderSearch size={13} color="#60A5FA" />
-          </div>
+          <FolderSearch size={15} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '9px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              {t ? t('nav.activeCase') : 'Global Workspace'}
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
+            <span style={{ fontSize: '8.5px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1 }}>
+              {t ? t('nav.activeCase') : 'Workspace'}
             </span>
             {loadingCases ? (
-              <span style={{ fontSize: '13px', color: '#F1F5F9', fontWeight: '500' }}>Loading cases...</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500' }}>Loading...</span>
             ) : (
-              <select
-                value={activeCaseId || 'all'}
-                onChange={handleCaseSelect}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#F8FAFC',
-                  fontWeight: '600',
-                  fontSize: '13px',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: '220px',
-                  textOverflow: 'ellipsis'
-                }}
-              >
-                <option value="all" style={{ background: '#0F172A', color: '#F8FAFC' }}>
-                  🌐 All Cases (Global View)
-                </option>
-                {cases.map((c) => (
-                  <option key={c.id} value={String(c.id)} style={{ background: '#1E293B', color: '#F8FAFC' }}>
-                    {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 40 ? c.briefFacts.substring(0, 37) + '...' : c.briefFacts) : 'No Brief Facts'}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select
+                  value={activeCaseId || 'all'}
+                  onChange={handleCaseSelect}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-primary)',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    padding: '0 16px 0 0',
+                    width: '100%',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none'
+                  }}
+                >
+                  <option value="all" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                    🌐 All Cases (Global View)
                   </option>
-                ))}
-              </select>
+                  {cases.map((c) => (
+                    <option key={c.id} value={String(c.id)} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                      {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 30 ? c.briefFacts.substring(0, 27) + '...' : c.briefFacts) : 'No Facts'}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={12} color="var(--text-secondary)" style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         {/* Language Switcher */}
         <LanguageSwitcher />
 
-        {/* Live translation indicator — only visible when Zia NLP is active */}
+        {/* Live translation indicator */}
         {!isEnglish && (
           <div
             title={translating ? `Translating ${translateCount} strings via Zia NLP...` : 'Page translated'}
@@ -231,7 +249,7 @@ const Navbar = () => {
               gap: '5px',
               fontSize: '11px',
               fontWeight: '600',
-              padding: '4px 10px',
+              padding: '4px 8px',
               borderRadius: '20px',
               background: translating
                 ? 'rgba(99, 102, 241, 0.12)'
@@ -258,53 +276,77 @@ const Navbar = () => {
           </div>
         )}
 
-        <div style={{ position: 'relative', cursor: 'pointer' }}>
-          <Bell size={22} color="var(--text-secondary)" />
+        <div style={{ 
+          position: 'relative', 
+          cursor: 'pointer',
+          width: '36px',
+          height: '36px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '50%',
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border-color)'
+        }}>
+          <Bell size={18} color="var(--text-secondary)" />
           <span style={{ 
-            position: 'absolute', top: '-4px', right: '-4px', background: 'var(--accent-danger)', 
-            width: '10px', height: '10px', borderRadius: '50%' 
+            position: 'absolute', top: '7px', right: '7px', background: 'var(--accent-danger)', 
+            width: '7px', height: '7px', borderRadius: '50%' 
           }}></span>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderLeft: '1px solid var(--glass-border)', paddingLeft: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid var(--border-color)', paddingLeft: '14px' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontWeight: '600', fontSize: '14px' }}>{displayName}</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '2px' }}>
+            <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.2 }}>{displayUserName}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '3px' }}>
               <span style={{ 
                 background: getRoleColor(displayRole), 
                 color: 'white', 
-                fontSize: '10px', 
-                padding: '2px 6px', 
+                fontSize: '9.5px', 
+                padding: '1px 6px', 
                 borderRadius: '4px', 
-                fontWeight: 'bold' 
+                fontWeight: '700',
+                letterSpacing: '0.3px',
+                textTransform: 'uppercase'
               }}>
                 {displayRole}
               </span>
             </div>
           </div>
-          <div style={{ 
-            width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-primary)', 
-            display: 'flex', justifyContent: 'center', alignItems: 'center' 
-          }}>
-            <User size={20} color="white" />
+          <div 
+            style={{ 
+              width: '36px', height: '36px', borderRadius: '50%', 
+              background: 'linear-gradient(135deg, var(--accent-primary), #1d4ed8)', 
+              display: 'flex', justifyContent: 'center', alignItems: 'center',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.2)',
+              cursor: 'pointer',
+              flexShrink: 0
+            }}
+          >
+            <User size={18} color="white" />
           </div>
           
           <button 
             onClick={logout}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-danger)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '8px',
-              marginLeft: '8px',
-              color: 'var(--text-secondary)'
+              width: '36px',
+              height: '36px',
+              color: 'var(--text-secondary)',
+              transition: 'all 0.2s ease',
+              flexShrink: 0
             }}
             title="Logout"
           >
-            <LogOut size={20} />
+            <LogOut size={16} />
           </button>
         </div>
       </div>

@@ -8,8 +8,7 @@ const LanguageContext = createContext();
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'EN',     nativeLabel: 'English' },
   { code: 'kn', label: 'ಕನ್ನಡ', nativeLabel: 'Kannada' },
-  { code: 'hi', label: 'हिन्दी', nativeLabel: 'Hindi'   },
-  { code: 'ta', label: 'தமிழ்', nativeLabel: 'Tamil'   },
+  { code: 'hi', label: 'हिन्दी', nativeLabel: 'Hindi'   }
 ];
 
 const VALID_CODES = SUPPORTED_LANGUAGES.map(l => l.code);

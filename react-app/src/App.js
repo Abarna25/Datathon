@@ -26,10 +26,10 @@ import EvidenceIntelligence from './pages/EvidenceIntelligence';
 import InvestigatorDecisionSupport from './pages/InvestigatorDecisionSupport';
 
 const DashboardLayout = ({ children }) => (
-  <div style={{ display: 'flex', minHeight: '100vh', width: '100vw' }}>
+  <div style={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
     <Sidebar />
     {/* Main Content Area */}
-    <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
+    <div style={{ flex: 1, padding: '20px 24px 24px 0', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0 }}>
       <Navbar />
       {children}
     </div>

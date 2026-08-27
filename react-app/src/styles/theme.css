@@ -232,3 +232,13 @@ a[href="cursor://"] {
     overflow: visible !important;
   }
 }
+
+/* Sidebar Link Hover Effects */
+.sidebar-link:not(.active):hover {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.sidebar-link.active:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+}

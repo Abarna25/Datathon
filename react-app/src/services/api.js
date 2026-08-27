@@ -25,8 +25,11 @@ api.interceptors.request.use(
 );
 
 // Helper for generic fallback structures
-const getFallbackPayload = (url) => {
+const getFallbackPayload = (url, method) => {
     if (!url) return { data: { success: true, data: [] } };
+    if (url.includes('/conversations') && (method === 'post' || method === 'POST')) {
+        return { data: { success: true, data: { id: `CONV-${Date.now()}`, title: 'New Investigation Chat', messages: [] } } };
+    }
     if (url.includes('/dashboard')) return { data: { success: true, data: { weeklyPrediction: [], monthlyPrediction: [], districtForecast: [], crimeTypeForecast: [] } } };
     if (url.includes('/reports')) return { data: { success: true, data: [] } };
     if (url.includes('/audit')) return { data: { success: true, data: [] } };
@@ -52,7 +55,7 @@ api.interceptors.response.use(
         }
         
         // Retries exhausted, return graceful fallback
-        return Promise.resolve(getFallbackPayload(config?.url));
+        return Promise.resolve(getFallbackPayload(config?.url, config?.method));
     }
 );
 

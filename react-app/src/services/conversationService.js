@@ -60,8 +60,11 @@ export function listTimeline(caseId) {
 }
 
 export function listConversations(caseId, officerId) {
-    return api.get('/conversations', { params: { caseId, officerId } })
-        .then((r) => r.data.data)
+    return api.get('/conversations', { params: { caseId: caseId || 'global', officerId: officerId || 'System' } })
+        .then((r) => {
+            const d = r.data?.data || r.data;
+            return Array.isArray(d) ? d : [];
+        })
         .catch((err) => {
             console.warn('[listConversations] error:', err.message);
             return [];
@@ -69,18 +72,42 @@ export function listConversations(caseId, officerId) {
 }
 
 export function createConversation(caseId, officerId, title) {
-    return api.post('/conversations', { caseId, officerId, title })
-        .then((r) => r.data.data)
+    return api.post('/conversations', { 
+        caseId: caseId || 'global', 
+        officerId: officerId || 'System', 
+        title: title || 'New Investigation Chat' 
+    })
+        .then((r) => {
+            const d = r.data?.data || r.data;
+            if (d && d.id) return d;
+            return { 
+                id: `CONV-${Date.now()}`, 
+                caseId: caseId || 'global', 
+                officerId: officerId || 'System', 
+                title: title || 'New Investigation Chat', 
+                messages: [] 
+            };
+        })
         .catch((err) => {
             console.warn('[createConversation] error:', err.message);
-            return { id: `local-${Date.now()}`, caseId, officerId, title: title || 'New Investigation Chat', messages: [] };
+            return { 
+                id: `CONV-${Date.now()}`, 
+                caseId: caseId || 'global', 
+                officerId: officerId || 'System', 
+                title: title || 'New Investigation Chat', 
+                messages: [] 
+            };
         });
 }
 
 export function getConversation(conversationId) {
     if (!conversationId) return Promise.resolve(null);
     return api.get(`/conversations/${conversationId}`)
-        .then((r) => r.data.data)
+        .then((r) => {
+            const d = r.data?.data || r.data;
+            if (d && (d.id || d.messages)) return d;
+            return null;
+        })
         .catch((err) => {
             console.warn('[getConversation] error:', err.message);
             return null;

@@ -3,11 +3,7 @@ import { API_BASE_URL } from '../services/api';
 
 /**
  * Consumes the SSE stream from POST /conversations/:id/messages via raw
- * `fetch` + ReadableStream (axios cannot stream in the browser — see
- * services/conversationService.js for the non-streaming axios paths).
- * The backend simulates streaming (glmStreamClient.js) by chunking a
- * completed GLM response into `delta` events, followed by `citations`,
- * `suggestions`, and `done`.
+ * `fetch` + ReadableStream with fallback for JSON responses.
  */
 export function useStreamingChat({ conversationId, officerId, caseId, onUserMessage, onAssistantMessage }) {
     const [isStreaming, setIsStreaming] = useState(false);
@@ -19,8 +15,8 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
     const lastUserMessageRef = useRef(null);
 
     const send = useCallback(async (content, explicitConversationId) => {
-        const resolvedId = explicitConversationId || conversationId;
-        if (!resolvedId || !content || !content.trim()) return;
+        if (!content || !content.trim()) return;
+        const resolvedId = explicitConversationId || conversationId || `CONV-${Date.now()}`;
         lastUserMessageRef.current = content;
 
         setIsStreaming(true);
@@ -29,8 +25,15 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
         setSuggestions([]);
         setError(null);
 
+        // 1. Immediately append user message to UI so it displays right away
+        const userMsg = {
+            role: 'user',
+            content: content.trim(),
+            id: `usr-${Date.now()}`,
+            createdAt: new Date().toISOString()
+        };
         if (onUserMessage) {
-            onUserMessage({ role: 'user', content, id: `local-${Date.now()}` });
+            onUserMessage(userMsg);
         }
 
         const controller = new AbortController();
@@ -39,20 +42,66 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
         let accumulatedText = '';
         let finalCitations = [];
         let finalSuggestions = [];
+        let assistantCommitted = false;
 
         try {
+            const token = localStorage.getItem('vikshana_auth_token') || '';
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['X-Vikshana-Auth'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_BASE_URL}/conversations/${resolvedId}/messages`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Vikshana-Auth': `Bearer ${localStorage.getItem('vikshana_auth_token') || ''}`
-                },
-                body: JSON.stringify({ content, officerId, caseId }),
+                headers,
+                body: JSON.stringify({
+                    content: content.trim(),
+                    officerId: officerId || 'System',
+                    caseId: caseId || 'global'
+                }),
                 signal: controller.signal
             });
 
-            if (!response.ok || !response.body) {
-                throw new Error(`Request failed with status ${response.status}`);
+            if (!response.ok) {
+                let errMsg = `Request failed with status ${response.status}`;
+                try {
+                    const errJson = await response.json();
+                    if (errJson.error || errJson.message) errMsg = errJson.error || errJson.message;
+                } catch (_) {}
+                throw new Error(errMsg);
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            
+            // Handle standard JSON response fallback
+            if (contentType.includes('application/json')) {
+                const json = await response.json();
+                const assistantMsg = json.data?.assistantMessage || json.assistantMessage || json.data;
+                const assistantText = assistantMsg?.content || (typeof assistantMsg === 'string' ? assistantMsg : 'Investigation analysis complete.');
+                const citationsList = assistantMsg?.citations || [];
+                const suggestionsList = assistantMsg?.suggestions || [];
+
+                setIsStreaming(false);
+                setStreamedText('');
+                assistantCommitted = true;
+                if (onAssistantMessage) {
+                    onAssistantMessage({
+                        role: 'assistant',
+                        content: assistantText,
+                        citations: citationsList,
+                        suggestions: suggestionsList,
+                        id: assistantMsg?.id || `msg-${Date.now()}`,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+                return;
+            }
+
+            // Handle SSE Streaming response
+            if (!response.body) {
+                throw new Error('Response body is empty');
             }
 
             const reader = response.body.getReader();
@@ -83,8 +132,10 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
 
                     switch (eventMatch[1].trim()) {
                         case 'delta':
-                            accumulatedText += payload.text;
-                            setStreamedText(accumulatedText);
+                            if (payload.text) {
+                                accumulatedText += payload.text;
+                                setStreamedText(accumulatedText);
+                            }
                             break;
                         case 'citations':
                             finalCitations = payload.citations || [];
@@ -97,17 +148,17 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
                         case 'error':
                             throw new Error(payload.message || 'Streaming error');
                         case 'done':
-                            // Flip isStreaming here (not just in `finally`) so the transient
-                            // streaming bubble and the finalized message from `messages`
-                            // never both render in the same frame.
                             setIsStreaming(false);
+                            setStreamedText('');
+                            assistantCommitted = true;
                             if (onAssistantMessage) {
                                 onAssistantMessage({
                                     role: 'assistant',
-                                    content: accumulatedText,
+                                    content: accumulatedText || 'Investigation report updated.',
                                     citations: finalCitations,
                                     suggestions: finalSuggestions,
-                                    id: payload.messageId
+                                    id: payload.messageId || `msg-${Date.now()}`,
+                                    createdAt: new Date().toISOString()
                                 });
                             }
                             break;
@@ -116,17 +167,47 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
                     }
                 }
             }
+
+            // If stream completed without a 'done' event but with accumulated text
+            if (!assistantCommitted && accumulatedText) {
+                setIsStreaming(false);
+                setStreamedText('');
+                assistantCommitted = true;
+                if (onAssistantMessage) {
+                    onAssistantMessage({
+                        role: 'assistant',
+                        content: accumulatedText,
+                        citations: finalCitations,
+                        suggestions: finalSuggestions,
+                        id: `msg-${Date.now()}`,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                console.debug('[useStreamingChat] send failed:', err);
+                console.warn('[useStreamingChat] send failed:', err);
                 setError(err.message);
-                if (onAssistantMessage && accumulatedText) {
-                    // Partial answer survives a mid-stream failure instead of vanishing.
-                    onAssistantMessage({ role: 'assistant', content: accumulatedText, citations: finalCitations, suggestions: [] });
+                setIsStreaming(false);
+                setStreamedText('');
+                if (!assistantCommitted) {
+                    assistantCommitted = true;
+                    const fallbackReply = accumulatedText || 'I encountered a temporary disruption while analyzing this request. Please try again or check the system logs.';
+                    if (onAssistantMessage) {
+                        onAssistantMessage({
+                            role: 'assistant',
+                            content: fallbackReply,
+                            citations: finalCitations,
+                            suggestions: ['Summarize Case', 'Show Timeline', 'List Evidence'],
+                            id: `fallback-${Date.now()}`,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
                 }
             }
         } finally {
             setIsStreaming(false);
+            setStreamedText('');
             abortRef.current = null;
         }
     }, [conversationId, officerId, caseId, onUserMessage, onAssistantMessage]);
@@ -141,3 +222,4 @@ export function useStreamingChat({ conversationId, officerId, caseId, onUserMess
 
     return { send, stopGeneration, regenerate, isStreaming, streamedText, citations, suggestions, error };
 }
+

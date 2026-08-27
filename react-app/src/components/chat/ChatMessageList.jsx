@@ -34,15 +34,22 @@ const ChatMessageList = ({ messages, isStreaming, streamedText, onOpenEvidence, 
         }
     }, [messages, streamedText]);
 
+    // Filter out consecutive duplicate messages (same role and identical content)
+    const displayMessages = messages.filter((m, idx, arr) => {
+        if (idx === 0) return true;
+        const prev = arr[idx - 1];
+        return !(prev.role === m.role && prev.content?.trim() === m.content?.trim());
+    });
+
     let lastAssistantIndex = -1;
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-        if (messages[i].role === 'assistant') {
+    for (let i = displayMessages.length - 1; i >= 0; i -= 1) {
+        if (displayMessages[i].role === 'assistant') {
             lastAssistantIndex = i;
             break;
         }
     }
 
-    if (messages.length === 0 && !isStreaming) {
+    if (displayMessages.length === 0 && !isStreaming) {
         return (
             <div className={styles.empty}>
                 <div className={styles.emptyIcon}>
@@ -64,7 +71,7 @@ const ChatMessageList = ({ messages, isStreaming, streamedText, onOpenEvidence, 
 
     return (
         <div className={styles.list}>
-            {messages.map((m, i) => (
+            {displayMessages.map((m, i) => (
                 <ChatMessageBubble
                     key={m.id || i}
                     message={m}

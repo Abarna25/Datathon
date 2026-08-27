@@ -55,13 +55,14 @@ const InvestigationChat = ({ caseId }) => {
     const ensureConversation = useCallback(async () => {
         if (activeConversationId) return activeConversationId;
         const convo = await startNewConversation();
-        return convo.id;
+        return convo?.id || `CONV-${Date.now()}`;
     }, [activeConversationId, startNewConversation]);
 
     const handleSend = useCallback(
         async (text) => {
+            if (!text || !text.trim()) return;
             const conversationId = await ensureConversation();
-            send(text, conversationId);
+            send(text.trim(), conversationId);
         },
         [ensureConversation, send]
     );

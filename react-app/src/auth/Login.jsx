@@ -255,9 +255,9 @@ const Login = () => {
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px' }}>Create Catalyst Officer Account</h3>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px' }}>Create Catalyst Officer Account</h3>
               <button onClick={() => setShowSignupModal(false)} style={styles.closeBtn}>
-                <X size={18} color="#94a3b8" />
+                <X size={18} color="var(--text-secondary)" />
               </button>
             </div>
 
@@ -337,16 +337,16 @@ const Login = () => {
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px' }}>Reset Password</h3>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px' }}>Reset Password</h3>
               <button onClick={() => setShowForgotModal(false)} style={styles.closeBtn}>
-                <X size={18} color="#94a3b8" />
+                <X size={18} color="var(--text-secondary)" />
               </button>
             </div>
 
             {forgotMsg ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <CheckCircle2 size={40} color="#10b981" style={{ margin: '0 auto 12px' }} />
-                <div style={{ color: '#ffffff', fontSize: '14px', marginBottom: '16px' }}>{forgotMsg}</div>
+                <CheckCircle2 size={40} color="var(--accent-success, #10b981)" style={{ margin: '0 auto 12px' }} />
+                <div style={{ color: 'var(--text-primary)', fontSize: '14px', marginBottom: '16px' }}>{forgotMsg}</div>
                 <button onClick={() => setShowForgotModal(false)} style={styles.primaryButton}>
                   Back to Sign In
                 </button>
@@ -386,20 +386,21 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0a0b10',
-    backgroundImage: 'radial-gradient(circle at 50% 0%, #1a1e36 0%, #0a0b10 70%)',
+    backgroundColor: 'var(--bg-primary)',
+    backgroundImage: 'radial-gradient(circle at 50% 0%, var(--bg-tertiary, #1e293b) 0%, var(--bg-primary, #09090b) 75%)',
     fontFamily: "'Inter', 'Roboto', sans-serif",
+    padding: '20px',
   },
   glassCard: {
     width: '100%',
-    maxWidth: '420px',
+    maxWidth: '440px',
     padding: '40px',
-    backgroundColor: 'rgba(20, 22, 33, 0.7)',
+    backgroundColor: 'var(--glass-bg, var(--bg-secondary))',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+    borderRadius: '20px',
+    border: '1px solid var(--glass-border, var(--border-color))',
+    boxShadow: 'var(--shadow-lg, 0 10px 30px -4px rgba(0, 0, 0, 0.3))',
   },
   header: {
     textAlign: 'center',
@@ -414,31 +415,31 @@ const styles = {
     width: '56px',
     height: '56px',
     borderRadius: '16px',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+    background: 'linear-gradient(135deg, var(--accent-primary, #3b82f6) 0%, #1d4ed8 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '28px',
     fontWeight: 'bold',
     color: '#ffffff',
-    boxShadow: '0 10px 20px rgba(139, 92, 246, 0.3)',
+    boxShadow: '0 10px 20px rgba(59, 130, 246, 0.3)',
   },
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     margin: '0 0 8px 0',
-    letterSpacing: '1px',
+    letterSpacing: '0.5px',
   },
   subtitle: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-secondary)',
     margin: 0,
   },
   errorAlert: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     border: '1px solid rgba(239, 68, 68, 0.2)',
-    color: '#ef4444',
+    color: 'var(--accent-danger, #ef4444)',
     padding: '12px 16px',
     borderRadius: '12px',
     fontSize: '14px',
@@ -448,7 +449,7 @@ const styles = {
   successAlert: {
     backgroundColor: 'rgba(16, 185, 129, 0.1)',
     border: '1px solid rgba(16, 185, 129, 0.2)',
-    color: '#10b981',
+    color: 'var(--accent-success, #10b981)',
     padding: '12px 16px',
     borderRadius: '12px',
     fontSize: '14px',
@@ -468,7 +469,7 @@ const styles = {
   label: {
     fontSize: '13px',
     fontWeight: '500',
-    color: '#cbd5e1',
+    color: 'var(--text-secondary)',
   },
   inputWrapper: {
     position: 'relative',
@@ -478,15 +479,15 @@ const styles = {
   inputIcon: {
     position: 'absolute',
     left: '16px',
-    color: '#64748b',
+    color: 'var(--text-muted, #64748b)',
   },
   input: {
     width: '100%',
     padding: '12px 16px 12px 48px',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'var(--bg-tertiary, rgba(15, 23, 42, 0.6))',
+    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
     borderRadius: '12px',
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     transition: 'all 0.2s ease',
     outline: 'none',
@@ -497,7 +498,7 @@ const styles = {
     right: '16px',
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted, #64748b)',
     cursor: 'pointer',
     padding: '0',
     display: 'flex',
@@ -512,23 +513,23 @@ const styles = {
   rememberMe: {
     display: 'flex',
     alignItems: 'center',
-    color: '#94a3b8',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
   },
   linkButton: {
     background: 'none',
     border: 'none',
-    color: '#60a5fa',
+    color: 'var(--accent-primary, #3b82f6)',
     cursor: 'pointer',
     fontSize: '13px',
-    fontWeight: '500',
+    fontWeight: '600',
     padding: 0,
   },
   primaryButton: {
     width: '100%',
     padding: '14px',
-    backgroundColor: '#3b82f6',
-    backgroundImage: 'linear-gradient(to right, #3b82f6, #6366f1)',
+    backgroundColor: 'var(--accent-primary, #3b82f6)',
+    backgroundImage: 'linear-gradient(135deg, var(--accent-primary, #3b82f6) 0%, #2563eb 100%)',
     border: 'none',
     borderRadius: '12px',
     color: '#ffffff',
@@ -547,12 +548,12 @@ const styles = {
   dividerLine: {
     flex: 1,
     height: '1px',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'var(--border-color, rgba(255, 255, 255, 0.1))',
   },
   dividerText: {
     padding: '0 12px',
     fontSize: '13px',
-    color: '#64748b',
+    color: 'var(--text-muted, #64748b)',
   },
   demoAccountsContainer: {
     display: 'flex',
@@ -565,12 +566,12 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '10px 16px',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'var(--bg-tertiary, rgba(255, 255, 255, 0.03))',
+    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))',
     borderRadius: '10px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    color: '#cbd5e1',
+    color: 'var(--text-primary)',
   },
   demoAccountLabel: {
     fontSize: '14px',
@@ -578,15 +579,15 @@ const styles = {
   },
   demoAccountRole: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: 'var(--text-secondary)',
   },
   googleButton: {
     width: '100%',
     padding: '12px',
-    backgroundColor: '#ffffff',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'var(--bg-tertiary, #ffffff)',
+    border: '1px solid var(--border-color, #e2e8f0)',
     borderRadius: '12px',
-    color: '#334155',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -599,7 +600,7 @@ const styles = {
     textAlign: 'center',
     marginTop: '32px',
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-secondary)',
   },
   modalOverlay: {
     position: 'fixed',
@@ -618,9 +619,9 @@ const styles = {
   modalContent: {
     width: '100%',
     maxWidth: '420px',
-    backgroundColor: '#141621',
+    backgroundColor: 'var(--bg-secondary, #141621)',
     borderRadius: '20px',
-    border: '1px solid rgba(255, 255, 255, 0.12)',
+    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.12))',
     padding: '24px',
     boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
   },
@@ -629,7 +630,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingBottom: '12px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+    borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))'
   },
   closeBtn: {
     background: 'none',
