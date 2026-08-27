@@ -4,7 +4,7 @@ import ResultRenderer from '../components/DataExplorer/ResultRenderer';
 import ExplanationPanel from '../components/DataExplorer/ExplanationPanel';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
-import { Database, AlertTriangle, Sparkles, Terminal } from 'lucide-react';
+import { Database, AlertTriangle, Sparkles, Terminal, Search } from 'lucide-react';
 
 const DataExplorer = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,23 +21,6 @@ const DataExplorer = () => {
     setIsLoading(true);
     setError(null);
 
-    // Mock delay for demo video
-    setTimeout(() => {
-      setIsLoading(false);
-      setQueryState({
-        query: query,
-        sql: "SELECT * FROM Evidence WHERE CaseID = '4' ORDER BY timestamp DESC;",
-        explanation: "This ZCQL query filters the Evidence table by the active case ID and returns all matching records sorted by their chronological timestamp.",
-        results: [
-          { EvidenceID: "EV-992", Type: "Physical", Description: "Muddy footprints near window", Status: "Collected" },
-          { EvidenceID: "EV-993", Type: "Digital", Description: "CCTV Footage from neighboring house", Status: "Under Review" },
-          { EvidenceID: "EV-994", Type: "Biological", Description: "Fingerprints on broken glass", Status: "Sent to Lab" },
-          { EvidenceID: "EV-995", Type: "Vehicle", Description: "Silver Maruti Swift (KA-01-MJ-4592)", Status: "Flagged" }
-        ]
-      });
-    }, 1500);
-
-    /* Original code disabled for demo video
     try {
       const response = await api.post('/text-to-sql/query', { query, caseId: activeCaseId });
       
@@ -57,7 +40,6 @@ const DataExplorer = () => {
     } finally {
       setIsLoading(false);
     }
-    */
   };
 
   return (
@@ -89,9 +71,9 @@ const DataExplorer = () => {
             letterSpacing: '-0.5px'
           }}>
             <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', padding: '10px', borderRadius: '14px', display: 'flex', boxShadow: '0 4px 15px rgba(59,130,246,0.3)' }}>
-              <Database size={24} color="#ffffff" />
+              <Search size={24} color="#ffffff" />
             </div>
-            Neural SQL Interface
+            Investigation Search
           </h1>
           <p style={{ color: '#94a3b8', margin: 0, fontSize: '15px', maxWidth: '600px', lineHeight: '1.6' }}>
             Enter a natural language query. The intelligence engine will autonomously synthesize a secure ZCQL database query and retrieve live case data.

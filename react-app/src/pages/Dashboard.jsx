@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell 
+  BarChart, Bar, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis 
 } from 'recharts';
 import { motion } from 'framer-motion';
 import styles from './Dashboard.module.css';
@@ -294,14 +294,12 @@ const Dashboard = () => {
           <div className={styles.cardContent} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <ResponsiveContainer width="100%" height={160}>
                 {(() => {
-                    // Import inside IIFE to avoid top-level import conflicts if recharts isn't fully imported
-                    const { Radar, RadarChart, PolarGrid, PolarAngleAxis } = require('recharts');
                     const radarData = [
-                        { subject: 'Digital', A: data.evidenceProgress?.digital || 85, fullMark: 100 },
-                        { subject: 'Physical', A: data.evidenceProgress?.forensics || 65, fullMark: 100 },
-                        { subject: 'Testimonial', A: data.evidenceProgress?.witnesses || 90, fullMark: 100 },
-                        { subject: 'Financial', A: 45, fullMark: 100 },
-                        { subject: 'Forensic', A: data.evidenceProgress?.forensics || 60, fullMark: 100 }
+                        { subject: 'Digital', A: data.evidenceProgress?.digital || 0, fullMark: 100 },
+                        { subject: 'Physical', A: data.evidenceProgress?.forensics || 0, fullMark: 100 },
+                        { subject: 'Testimonial', A: data.evidenceProgress?.witnesses || 0, fullMark: 100 },
+                        { subject: 'Financial', A: data.evidenceProgress?.financial || 0, fullMark: 100 },
+                        { subject: 'Forensic', A: data.evidenceProgress?.forensics || 0, fullMark: 100 }
                     ];
                     return (
                         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>

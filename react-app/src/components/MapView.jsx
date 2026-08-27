@@ -53,18 +53,9 @@ const AutoFitBounds = ({ nodes }) => {
 };
 
 const MapView = ({ nodes, onNodeSelect }) => {
-    // Generate dummy coordinates if real ones are missing for demo purposes
-    const mapNodes = nodes.map((node, i) => {
-        // Base center (Mysore area for example)
-        const baseLat = 12.2958;
-        const baseLng = 76.6394;
-        
-        // Use real lat/lng if present, otherwise scatter them around
-        const lat = node.lat || baseLat + (Math.random() - 0.5) * 0.1;
-        const lng = node.lng || baseLng + (Math.random() - 0.5) * 0.1;
-        
-        return { ...node, lat, lng };
-    });
+    // Strictly filter out nodes without actual coordinates.
+    // DO NOT generate synthetic/random coordinates.
+    const mapNodes = nodes.filter(node => node.lat != null && node.lng != null);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', zIndex: 1, animation: 'fadeIn 0.5s ease-out' }}>

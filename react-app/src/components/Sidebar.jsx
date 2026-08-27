@@ -30,12 +30,9 @@ const Sidebar = () => {
   const allItems = [
     { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'decision-support', name: 'Decision Support', icon: Compass, path: '/decision-support', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'fir-intelligence', name: 'FIR Intelligence', icon: FileTextIcon, path: '/fir-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'data-explorer', name: 'Text-to-SQL', icon: Database, path: '/data-explorer', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
     { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'] },
-    { id: 'evidence-intelligence', name: 'Evidence Intelligence', icon: Hexagon, path: '/evidence-intelligence', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
-    { id: 'reports', name: t('nav.reports', 'Reports'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
+    { id: 'reports', name: t('nav.reports', 'Investigation Report'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
   ];
 
@@ -84,29 +81,83 @@ const Sidebar = () => {
       )}  
 
       {/* Dynamic Navigation Menu */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
-        {filteredMenuItems.map((item) => (
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
+        
+        {/* DASHBOARD */}
+        {filteredMenuItems.filter(i => i.id === 'dashboard').map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className="sidebar-link"
             style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              textDecoration: 'none',
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
               color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
               background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
               borderLeft: isActive ? '4px solid var(--accent-primary)' : '4px solid transparent',
-              transition: 'all 0.2s ease',
-              fontWeight: isActive ? '600' : '400',
-              fontSize: '13.5px'
+              transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
             })}
           >
-            <item.icon size={19} />
-            <span>{item.name}</span>
+            <item.icon size={18} /><span>{item.name}</span>
+          </NavLink>
+        ))}
+
+        {/* INVESTIGATION */}
+        <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          INVESTIGATION
+        </div>
+        {filteredMenuItems.filter(i => i.id === 'investigate').map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
+              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              borderLeft: isActive ? '4px solid var(--accent-primary)' : '4px solid transparent',
+              transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
+            })}
+          >
+            <item.icon size={18} /><span>{item.name}</span>
+          </NavLink>
+        ))}
+
+        {/* INTELLIGENCE */}
+        <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          INTELLIGENCE
+        </div>
+        {filteredMenuItems.filter(i => ['search', 'relationships'].includes(i.id)).map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
+              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              borderLeft: isActive ? '4px solid var(--accent-primary)' : '4px solid transparent',
+              transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
+            })}
+          >
+            <item.icon size={18} /><span>{item.name}</span>
+          </NavLink>
+        ))}
+
+        {/* REPORTING & OTHERS */}
+        <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          REPORTING
+        </div>
+        {filteredMenuItems.filter(i => ['reports', 'audit-logs'].includes(i.id)).map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
+              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              borderLeft: isActive ? '4px solid var(--accent-primary)' : '4px solid transparent',
+              transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
+            })}
+          >
+            <item.icon size={18} /><span>{item.name}</span>
           </NavLink>
         ))}
       </nav>

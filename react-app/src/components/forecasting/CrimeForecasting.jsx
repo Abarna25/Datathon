@@ -8,14 +8,18 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
     Legend, ResponsiveContainer, AreaChart, Area, ComposedChart, Line
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import MapView from '../MapView';
 import api from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 
 const CrimeForecasting = () => {
     const { t } = useLanguage();
+    const navigate = useNavigate();
     const [dashboardData, setDashboardData] = useState(null);
     const [hotspots, setHotspots] = useState([]);
     const [alerts, setAlerts] = useState([]);
+    const [geospatialData, setGeospatialData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // XAI Explanation Drawer state
@@ -28,12 +32,14 @@ const CrimeForecasting = () => {
         Promise.all([
             api.get('/forecasting/dashboard'),
             api.get('/forecasting/hotspots'),
-            api.get('/forecasting/early-warning')
+            api.get('/forecasting/early-warning'),
+            api.get('/forecasting/geospatial')
         ])
-        .then(([dashRes, hotRes, alertRes]) => {
+        .then(([dashRes, hotRes, alertRes, geoRes]) => {
             if (dashRes.data.success) setDashboardData(dashRes.data.data);
             if (hotRes.data.success) setHotspots(hotRes.data.data);
             if (alertRes.data.success) setAlerts(alertRes.data.data);
+            if (geoRes.data.success) setGeospatialData(geoRes.data.data);
             setLoading(false);
         })
         .catch(err => {
@@ -102,27 +108,33 @@ const CrimeForecasting = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
-                    {alerts.map(a => (
-                        <div key={a.id} style={{ padding: '16px', borderRadius: '10px', background: 'var(--bg-secondary)', border: `1px solid ${a.severity === 'CRITICAL' ? '#dc2626' : 'var(--border-color)'}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', background: a.severity === 'CRITICAL' ? 'rgba(220,38,38,0.2)' : 'rgba(245,158,11,0.2)', color: a.severity === 'CRITICAL' ? '#dc2626' : '#f59e0b' }}>
-                                    {a.severity}
-                                </span>
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.district}</span>
+                    {alerts && alerts.length > 0 ? (
+                        alerts.map(a => (
+                            <div key={a.id} style={{ padding: '16px', borderRadius: '10px', background: 'var(--bg-secondary)', border: `1px solid ${a.severity === 'CRITICAL' ? '#dc2626' : 'var(--border-color)'}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', background: a.severity === 'CRITICAL' ? 'rgba(220,38,38,0.2)' : 'rgba(245,158,11,0.2)', color: a.severity === 'CRITICAL' ? '#dc2626' : '#f59e0b' }}>
+                                        {a.severity || a.threatLevel}
+                                    </span>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.district}</span>
+                                </div>
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: '1.4' }}>{a.title || `Alert: ${a.district}`}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{a.summary || a.description}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', padding: '8px', borderRadius: '6px' }}>
+                                    <strong>Recommended Action:</strong> {a.recommendedAction || 'Increase patrol vigilance in the affected area.'}
+                                </div>
+                                <button
+                                    onClick={() => handleExplainPrediction(a.id)}
+                                    style={{ padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}
+                                >
+                                    <Cpu size={12} color="var(--accent-primary)" /> Explain Prediction Model (XAI)
+                                </button>
                             </div>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: '1.4' }}>{a.title}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{a.summary}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', padding: '8px', borderRadius: '6px' }}>
-                                <strong>Recommended Action:</strong> {a.recommendedAction}
-                            </div>
-                            <button
-                                onClick={() => handleExplainPrediction(a.id)}
-                                style={{ padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}
-                            >
-                                <Cpu size={12} color="var(--accent-primary)" /> Explain Prediction Model (XAI)
-                            </button>
+                        ))
+                    ) : (
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '13px', padding: '10px' }}>
+                            Insufficient data to generate predictive alerts.
                         </div>
-                    ))}
+                    )}
                 </div>
 
                 {/* XAI Explanation Drawer */}
@@ -202,6 +214,32 @@ const CrimeForecasting = () => {
                 </div>
             </div>
 
+            {/* Geospatial Crime Map */}
+            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MapPin size={18} color="#3b82f6" />
+                    <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)' }}>Geospatial Crime Map</h3>
+                </div>
+                {geospatialData && geospatialData.length > 0 ? (
+                    <div style={{ height: '400px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                        <MapView 
+                            nodes={geospatialData.map(c => ({
+                                id: c.id,
+                                type: 'case',
+                                lat: c.latitude,
+                                lng: c.longitude,
+                                label: `Case #${c.caseNumber} - ${c.crimeType}`
+                            }))}
+                            onNodeSelect={(node) => navigate(`/cases/${node.id}`)}
+                        />
+                    </div>
+                ) : (
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '13px', padding: '20px', textAlign: 'center', background: 'var(--bg-tertiary)', borderRadius: '12px' }}>
+                        Insufficient geographic data. No historical cases with mapped coordinates found.
+                    </div>
+                )}
+            </div>
+
             {/* Hotspots Density Grid */}
             <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -209,19 +247,30 @@ const CrimeForecasting = () => {
                     <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)' }}>Emerging Hotspots & Crime Density Ranking</h3>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
-                    {hotspots.map(h => (
-                        <div key={h.id} style={{ padding: '12px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '10px', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', background: 'rgba(220,38,38,0.15)', color: '#dc2626' }}>
-                                    DENSITY {h.densityScore}
-                                </span>
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.district}</span>
+                    {hotspots && hotspots.length > 0 ? (
+                        hotspots.map((h, idx) => (
+                            <div key={h.id || idx} style={{ padding: '16px', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: '800', padding: '3px 8px', borderRadius: '12px', background: 'rgba(220,38,38,0.15)', color: '#dc2626' }}>
+                                        {h.caseCount} RECORDED CASES
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{h.location}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}><strong>Dominant Crime:</strong> <span style={{color: '#f59e0b'}}>{h.dominantCrime}</span></div>
+                                {h.explanation && (
+                                    <div style={{ marginTop: '4px', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                        <div style={{ marginBottom: '4px' }}><strong>WHAT:</strong> {h.explanation.what}</div>
+                                        <div style={{ marginBottom: '4px' }}><strong>WHY:</strong> {h.explanation.why}</div>
+                                        <div><strong>SOURCE:</strong> {h.explanation.source}</div>
+                                    </div>
+                                )}
                             </div>
-                            <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{h.name}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}><strong>Threat:</strong> {h.threatType}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}><strong>Peak Window:</strong> {h.peakHours}</div>
+                        ))
+                    ) : (
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '13px', padding: '10px' }}>
+                            Insufficient geographic data to detect hotspots.
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         </div>

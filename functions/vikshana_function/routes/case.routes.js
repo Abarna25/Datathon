@@ -14,6 +14,7 @@ router.get('/:caseId/cctv', InvestigationDataController.getCctv);
 router.get('/:caseId/phone-records', InvestigationDataController.getPhoneRecords);
 router.get('/:caseId/financial-transactions', InvestigationDataController.getFinancialTransactions);
 router.get('/:caseId/timeline', InvestigationDataController.getTimeline);
+router.get('/:caseId/timeline-intelligence', InvestigationDataController.getTimelineIntelligence);
 router.put('/:caseId', CaseController.updateCase);
 router.delete('/:caseId/:recordId', CaseController.deleteRecord);
 

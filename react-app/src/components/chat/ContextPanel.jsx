@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useCaseData } from '../../hooks/useCaseData';
 import {
     PanelRightClose,
     PanelRightOpen,
@@ -21,10 +22,7 @@ import styles from './ContextPanel.module.css';
 const RISK_COLORS = { low: 'var(--accent-success)', medium: 'var(--accent-warning)', high: 'var(--accent-danger)' };
 
 const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
-    const [summary, setSummary] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [seeding, setSeeding] = useState(false);
-    const [seeded, setSeeded] = useState(false);
+    const { currentCase: summary, loading } = useCaseData(caseId);
 
     // Accordion expand/collapse states
     const [overviewOpen, setOverviewOpen] = useState(true);
@@ -32,37 +30,6 @@ const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
     const [timelineOpen, setTimelineOpen] = useState(false);
     const [evidenceOpen, setEvidenceOpen] = useState(false);
     const [riskOpen, setRiskOpen] = useState(false);
-
-    const load = useCallback(async () => {
-        if (!caseId) return;
-        setLoading(true);
-        try {
-            const data = await conversationService.getCaseSummary(caseId);
-            setSummary(data);
-        } catch (err) {
-            console.debug('Failed to load case summary', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [caseId]);
-
-    useEffect(() => {
-        load();
-    }, [load, refreshKey]);
-
-    const handleSeedData = async () => {
-        setSeeding(true);
-        try {
-            await conversationService.seedDatabase(caseId || '1');
-            setSeeded(true);
-            setTimeout(() => setSeeded(false), 3000);
-            load();
-        } catch (error) {
-            console.debug('Failed to seed database:', error);
-        } finally {
-            setSeeding(false);
-        }
-    };
 
     if (collapsed) {
         return (
@@ -219,31 +186,7 @@ const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
                                     </div>
                                 )}
 
-                                <button
-                                    type="button"
-                                    onClick={handleSeedData}
-                                    disabled={seeding}
-                                    style={{
-                                        width: '100%',
-                                        background: '#DBEAFE',
-                                        color: '#2563EB',
-                                        border: '1px solid rgba(37, 99, 235, 0.25)',
-                                        borderRadius: '6px',
-                                        padding: '6px 10px',
-                                        cursor: seeding ? 'not-allowed' : 'pointer',
-                                        fontSize: '11.5px',
-                                        fontWeight: '600',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '6px',
-                                        transition: 'all 0.15s ease',
-                                        marginTop: '4px'
-                                    }}
-                                >
-                                    {seeded ? <Check size={12} color="#10B981" /> : <Database size={12} />}
-                                    <span>{seeding ? 'Seeding...' : seeded ? 'Seeded!' : 'Seed Sample Evidence'}</span>
-                                </button>
+                                {/* Seed button removed for final verification */}
                             </div>
                         )}
                     </div>

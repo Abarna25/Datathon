@@ -8,7 +8,7 @@ class PlannerAgent {
      * @param {Array} history - The chat history for context.
      * @returns {Promise<Object>} The JSON investigation plan.
      */
-    async generatePlan(officerQuery, history = []) {
+    async planInvestigation(officerQuery, history = []) {
         const messages = [
             { role: 'system', content: plannerSystemPrompt }
         ];

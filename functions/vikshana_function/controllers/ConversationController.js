@@ -10,49 +10,7 @@ const crypto = require('crypto');
 const datastoreClient = require('../queries/datastoreClient');
 
 async function detectCaseIdFromQuery(req, queryText, defaultCaseId) {
-    const text = String(queryText || '').toLowerCase();
-    
-    // 1. Check if the text matches a specific case number directly (e.g. 100110486202100001)
-    const caseNoMatch = text.match(/\b\d{10,20}\b/);
-    if (caseNoMatch) {
-        const targetNum = caseNoMatch[0];
-        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 200 }).catch(() => []);
-        const found = allCases.find(c => String(c.CrimeNo || c.CaseNo || '').includes(targetNum));
-        if (found) {
-            return found.CaseMasterID || found.ROWID;
-        }
-    }
-
-    // 2. Check for keyword matches in CrimeType / BriefFacts / Jurisdiction
-    const keywords = ['stalking', 'theft', 'counterfeiting', 'rape', 'identity theft', 'kidnapping', 'fraud', 'accident', 'murder', 'harassment', 'cheating', 'assault', 'burglary'];
-    const locations = ['ballari', 'davanagere', 'mandya', 'mysuru', 'yadgir', 'bengaluru', 'belagavi', 'dakshina kannada', 'mangaluru', 'tumakuru', 'shivamogga', 'vijayanagara', 'kalyana karnataka'];
-    
-    const matchedKeyword = keywords.find(kw => text.includes(kw));
-    const matchedLoc = locations.find(loc => text.includes(loc));
-
-    if (matchedKeyword || matchedLoc) {
-        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 200 }).catch(() => []);
-        let bestCase = null;
-        let maxScore = 0;
-        
-        for (const c of allCases) {
-            let score = 0;
-            const facts = String(c.BriefFacts || '').toLowerCase();
-            
-            if (matchedKeyword && facts.includes(matchedKeyword)) score += 3;
-            if (matchedLoc && facts.includes(matchedLoc)) score += 2;
-            
-            if (score > maxScore) {
-                maxScore = score;
-                bestCase = c;
-            }
-        }
-        
-        if (bestCase && maxScore >= 2) {
-            return bestCase.CaseMasterID || bestCase.ROWID;
-        }
-    }
-
+    // Phase 14: Strict case scoping. Do not guess cases from text to prevent cross-case leakage.
     return defaultCaseId;
 }
 

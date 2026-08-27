@@ -24,6 +24,49 @@ api.interceptors.request.use(
     }
 );
 
+// Simple Request Deduplicator / Cache (10 second TTL)
+const pendingRequests = new Map();
+const cache = new Map();
+const CACHE_TTL = 10000; 
+
+const getCacheKey = (config) => `${config.method}:${config.url}?${new URLSearchParams(config.params || {}).toString()}`;
+
+api.interceptors.request.use((config) => {
+    return config;
+});
+
+// Since overriding axios adapter in interceptor is tricky, we'll wrap api.get directly.
+const originalGet = api.get;
+api.get = async (url, config = {}) => {
+    const key = `get:${url}?${new URLSearchParams(config.params || {}).toString()}`;
+    
+    // Check short-term cache
+    const cached = cache.get(key);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        return Promise.resolve(cached.response);
+    }
+    
+    // Check in-flight
+    if (pendingRequests.has(key)) {
+        return pendingRequests.get(key);
+    }
+    
+    // Execute and store in-flight
+    const promise = originalGet.call(api, url, config)
+        .then(response => {
+            cache.set(key, { response, timestamp: Date.now() });
+            pendingRequests.delete(key);
+            return response;
+        })
+        .catch(error => {
+            pendingRequests.delete(key);
+            throw error;
+        });
+        
+    pendingRequests.set(key, promise);
+    return promise;
+};
+
 // Helper for generic fallback structures
 const getFallbackPayload = (url, method) => {
     if (!url) return { data: { success: true, data: [] } };

@@ -1,27 +1,4 @@
 const datastoreClient = require('../queries/datastoreClient');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-
-// Robust fallback storage for when Catalyst Datastore tables aren't deployed
-const LOCAL_DB_PATH = path.join(os.tmpdir(), 'vikshana_chat_history_fallback.json');
-let localDb = { Investigation_Conversation: [], Investigation_Message: [] };
-
-try {
-    if (fs.existsSync(LOCAL_DB_PATH)) {
-        localDb = JSON.parse(fs.readFileSync(LOCAL_DB_PATH, 'utf8'));
-    }
-} catch (e) {
-    console.error('Failed to load local chat fallback db:', e.message);
-}
-
-function saveLocalDb() {
-    try {
-        fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(localDb, null, 2));
-    } catch (e) {
-        console.error('Failed to save local chat fallback db:', e.message);
-    }
-}
 
 class ConversationService {
     static async listConversations(req, { caseId, officerId }) {
@@ -29,9 +6,8 @@ class ConversationService {
             const rows = await datastoreClient.getRowsWhere(req, 'Investigation_Conversation', { caseId }, { maxRows: 100 });
             return rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         } catch (e) {
-            console.error('Error listing conversations (falling back to local cache):', e.message);
-            const rows = (localDb.Investigation_Conversation || []).filter(c => String(c.caseId) === String(caseId));
-            return rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            console.error('Error listing conversations (table may not exist):', e.message);
+            return [];
         }
     }
 
@@ -52,11 +28,8 @@ class ConversationService {
             await datastoreClient.insertRow(req, 'Investigation_Conversation', conversation);
             return conversation;
         } catch (e) {
-            console.error('Error creating conversation (falling back to local cache):', e.message);
-            if (!localDb.Investigation_Conversation) localDb.Investigation_Conversation = [];
-            localDb.Investigation_Conversation.push(conversation);
-            saveLocalDb();
-            return conversation;
+            console.error('Error creating conversation (table may not exist):', e.message);
+            throw new Error('Investigation_Conversation table is unavailable.');
         }
     }
 
@@ -85,9 +58,8 @@ class ConversationService {
             msgsData = Array.from(msgMap.values());
 
         } catch (e) {
-            console.error('Error getting conversation (falling back to local cache):', e.message);
-            convData = (localDb.Investigation_Conversation || []).filter(c => String(c.id) === String(id) || String(c.ROWID) === String(id));
-            msgsData = (localDb.Investigation_Message || []).filter(m => String(m.conversationId) === String(id));
+            console.error('Error getting conversation (table may not exist):', e.message);
+            return null;
         }
 
         if (!convData || convData.length === 0) return null;
@@ -124,16 +96,7 @@ class ConversationService {
             }
             return { ...conversation, ...payload };
         } catch (e) {
-            console.error('Error updating conversation (falling back to local cache):', e.message);
-            const c = (localDb.Investigation_Conversation || []).find(x => String(x.id) === String(id));
-            if (c) {
-                if (title !== undefined) c.title = title;
-                if (isBookmarked !== undefined) c.isBookmarked = !!isBookmarked;
-                if (isArchived !== undefined) c.isArchived = !!isArchived;
-                c.lastMessageAt = new Date().toISOString();
-                saveLocalDb();
-                return c;
-            }
+            console.error('Error updating conversation (table may not exist):', e.message);
             return null;
         }
     }
@@ -148,11 +111,8 @@ class ConversationService {
             }
             return true;
         } catch (e) {
-            console.error('Error deleting conversation (falling back to local cache):', e.message);
-            localDb.Investigation_Conversation = (localDb.Investigation_Conversation || []).filter(x => String(x.id) !== String(id));
-            localDb.Investigation_Message = (localDb.Investigation_Message || []).filter(x => String(x.conversationId) !== String(id));
-            saveLocalDb();
-            return true;
+            console.error('Error deleting conversation (table may not exist):', e.message);
+            return false;
         }
     }
 
@@ -176,18 +136,8 @@ class ConversationService {
             
             return { ...message, citations: citations || [] };
         } catch (e) {
-            console.error('Error appending message (falling back to local cache):', e.message);
-            
-            if (!localDb.Investigation_Message) localDb.Investigation_Message = [];
-            localDb.Investigation_Message.push(message);
-            
-            if (localDb.Investigation_Conversation) {
-                const c = localDb.Investigation_Conversation.find(x => String(x.id) === String(conversationId));
-                if (c) c.lastMessageAt = new Date().toISOString();
-            }
-            saveLocalDb();
-            
-            return { ...message, citations: citations || [] };
+            console.error('Error appending message (table may not exist):', e.message);
+            throw new Error('Investigation_Message table is unavailable.');
         }
     }
 }

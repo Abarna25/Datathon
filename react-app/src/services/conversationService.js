@@ -175,6 +175,3 @@ export function triggerThreatSync() {
     return api.get('/jobs/threat-sync').then((r) => r.data.data);
 }
 
-export function seedDatabase(caseId = '') {
-    return api.post('/dev/seed', { caseId }).then((r) => r.data);
-}

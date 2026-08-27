@@ -2,6 +2,9 @@ const evidenceAggregatorService = require('../services/EvidenceAggregatorService
 const evidenceCorrelationService = require('../services/EvidenceCorrelationService');
 const investigationRecommendationService = require('../services/InvestigationRecommendationService');
 const copilotService = require('../services/CopilotService');
+const ContextBuilderService = require('../services/ContextBuilderService');
+const AnomalyDetectionService = require('../services/AnomalyDetectionService');
+const ConfidenceEngineService = require('../services/ConfidenceEngineService');
 
 class EvidenceIntelligenceController {
     
@@ -9,12 +12,21 @@ class EvidenceIntelligenceController {
         try {
             const caseId = req.query.caseId || 'UNASSIGNED';
             
+            const context = await ContextBuilderService.buildCaseContext(req, caseId).catch(() => null);
+            const anomalies = context ? AnomalyDetectionService.detectAnomalies(context) : [];
+            const evidenceStrength = context ? ConfidenceEngineService.calculateScore(context) : null;
+
             // Execute services in parallel for speed
             const [aggregated, correlations, analysis] = await Promise.all([
                 evidenceAggregatorService.getAggregatedEvidence(req, caseId),
                 evidenceCorrelationService.findCorrelations(req, caseId),
-                investigationRecommendationService.generateRecommendationsAndGaps(req, caseId)
+                investigationRecommendationService.generateRecommendationsAndGaps(req, caseId, context, anomalies)
             ]);
+            
+            if (aggregated && aggregated.summary) {
+                aggregated.summary.anomalies = anomalies;
+                aggregated.summary.evidenceStrength = evidenceStrength;
+            }
 
             return res.status(200).json({
                 success: true,
@@ -26,32 +38,22 @@ class EvidenceIntelligenceController {
                 }
             });
         } catch (error) {
-            console.error('[EvidenceIntelligenceController] Error, using Demo Mock:', error);
-            // RICH DEMO FALLBACK
+            console.error('[EvidenceIntelligenceController] Error:', error);
+            // Return a minimal explicit error state indicating data unavailability.
             return res.status(200).json({ 
                 success: true, 
                 data: {
                     unified_evidence: {
                         summary: {
-                            total_items: 4,
-                            high_relevance: 3,
-                            critical_gaps: 1
+                            total_items: 0,
+                            high_relevance: 0,
+                            critical_gaps: 0
                         },
-                        evidence: [
-                            { id: 'EVID-1', title: 'CCTV Footage from AT Road', type: 'Digital', source: 'CCTV', date: '2021-05-18T01:40:00' },
-                            { id: 'EVID-2', title: 'Witness Statement - Shopkeeper', type: 'Testimonial', source: 'Witness', date: '2021-05-18T09:15:00' }
-                        ]
+                        evidence: []
                     },
-                    correlations: [
-                        { source: 'EVID-1', target: 'EVID-2', reason: 'Time and location match', strength: 0.95 }
-                    ],
-                    gaps: [
-                        { missing_item: 'Suspect Identification', priority: 'Critical', reasoning: 'CCTV footage is grainy. Need enhanced analysis or secondary angle.' }
-                    ],
-                    recommendations: [
-                        { action: 'Request CCTV enhancement', priority: 'High', reason: 'Clarify suspect face.', expected_impact: 'Identify suspect', confidence: 0.9, evidence_used: ['EVID-1'] },
-                        { action: 'Canvas area for secondary cameras', priority: 'Medium', reason: 'Find better angles.', expected_impact: 'Track suspect escape route', confidence: 0.8, evidence_used: [] }
-                    ]
+                    correlations: [],
+                    gaps: [{ missing_item: 'Data Unavailable', priority: 'Critical', reasoning: 'Evidence intelligence generation failed or is unavailable.' }],
+                    recommendations: []
                 }
             });
         }

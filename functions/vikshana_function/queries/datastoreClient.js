@@ -1,102 +1,5 @@
 const catalyst = require('zcatalyst-sdk-node');
 const tablesSchema = require('./tables');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-
-const LOCAL_DB_PATH = path.join(os.tmpdir(), 'vikshana_local_datastore.json');
-
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    result.push(current.trim());
-    return result;
-}
-
-function loadFromCSV() {
-    const datasetDir = 'c:/project/VIKS/vikshana/dataset';
-    const db = {};
-    const files = [
-        { name: 'CaseMaster.csv', table: 'CaseMaster' },
-        { name: 'Victim.csv', table: 'Victim' },
-        { name: 'Accused.csv', table: 'Accused' },
-        { name: 'ComplainantDetails.csv', table: 'ComplainantDetails' },
-        { name: 'ArrestSurrender.csv', table: 'ArrestSurrender' },
-        { name: 'ChargesheetDetails.csv', table: 'ChargesheetDetails' },
-        { name: 'ActSectionAssociation.csv', table: 'ActSectionAssociation' },
-        { name: 'Inv_OccuranceTime.csv', table: 'Inv_OccuranceTime' }
-    ];
-
-    for (const file of files) {
-        const filePath = path.join(datasetDir, file.name);
-        if (fs.existsSync(filePath)) {
-            try {
-                const content = fs.readFileSync(filePath, 'utf8');
-                const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-                if (lines.length === 0) continue;
-                const headers = parseCSVLine(lines[0]);
-                const rows = [];
-                // Load first 150 rows for performance
-                for (let i = 1; i < Math.min(lines.length, 150); i++) {
-                    const values = parseCSVLine(lines[i]);
-                    const row = {};
-                    headers.forEach((header, index) => {
-                        row[header] = values[index] !== undefined ? values[index] : '';
-                    });
-                    rows.push(row);
-                }
-                db[file.table] = rows;
-            } catch (e) {
-                console.error(`Failed to load CSV ${file.name}:`, e.message);
-            }
-        }
-    }
-    return db;
-}
-
-function loadLocalDb() {
-    try {
-        if (fs.existsSync(LOCAL_DB_PATH)) {
-            const db = JSON.parse(fs.readFileSync(LOCAL_DB_PATH, 'utf8'));
-            if (db && Object.keys(db).length > 0 && db.CaseMaster && db.CaseMaster.length > 5) return db;
-        }
-        
-        console.log('[datastoreClient] Compiling mock database from local CSV datasets...');
-        const db = loadFromCSV();
-        if (db && Object.keys(db).length > 0) {
-            saveLocalDb(db);
-            return db;
-        }
-    } catch (e) {
-        console.error('[datastoreClient] Failed to load local DB:', e.message);
-    }
-    return {};
-}
-
-function saveLocalDb(db) {
-    try { fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(db, null, 2)); } catch (e) {}
-}
-
-function generateId() {
-    return String(Math.floor(Math.random() * 100000000000000) + 100000000000000);
-}
-
-function isMissingTableError(error) {
-    if (!error) return false;
-    return true; // Gracefully fallback to local datastore for any Catalyst initialization or query errors
-}
 
 function unwrapRow(row) {
     if (!row) return null;
@@ -146,11 +49,22 @@ function validateZCQL(sql) {
 
 function wrapError(err, tableName) {
     const msg = String(err.message || err.code || '').toLowerCase();
-    if (msg.includes('no such table') || msg.includes('invalid_id') || msg.includes('does not exist')) {
-        return new Error(`Missing Datastore Table: The table '${tableName}' does not exist in the Catalyst Data Store.`);
+    
+    if (msg.includes('unauthorized') || msg.includes('invalid credentials') || msg.includes('authentication failed') || msg.includes('unauthenticated')) {
+        const error = new Error(`AUTHENTICATION_ERROR: Catalyst authentication failed for table '${tableName}'`);
+        error.code = 'AUTHENTICATION_ERROR';
+        return error;
+    }
+    
+    if (msg.includes('no such table') || msg.includes('invalid_id') || msg.includes('does not exist') || msg.includes('no such resource')) {
+        const error = new Error(`SCHEMA_MISMATCH: The table '${tableName}' does not exist or has an invalid ID in Catalyst.`);
+        error.code = 'SCHEMA_MISMATCH';
+        return error;
     }
     if (msg.includes('no such column') || msg.includes('column does not exist')) {
-        return new Error(`Missing Datastore Column: A referenced column does not exist in table '${tableName}'.`);
+        const error = new Error(`SCHEMA_MISMATCH: A referenced column does not exist in table '${tableName}'.`);
+        error.code = 'SCHEMA_MISMATCH';
+        return error;
     }
     return err;
 }
@@ -158,14 +72,22 @@ function wrapError(err, tableName) {
 async function getRows(req, tableName, { maxRows = 50 } = {}) {
     try {
         validateTable(tableName);
-        const response = await getTable(req, tableName).getPagedRows({ maxRows });
-        return (response.data || []).map(unwrapRow);
+        const actualMaxRows = Math.min(Number(maxRows) || 50, 300);
+        const response = await getTable(req, tableName).getPagedRows({ maxRows: actualMaxRows });
+        const rows = (response.data || []).map(unwrapRow);
+        
+        console.log(`DATA_SOURCE=Catalyst | TABLE=${tableName} | ROW_COUNT=${rows.length} | QUERY=getPagedRows`);
+        if (rows.length === 0) console.log(`[datastoreClient] EMPTY_TABLE: No rows returned for ${tableName}`);
+        
+        return rows;
     } catch (err) {
-        console.warn(`[datastoreClient] getRows Failed for ${tableName}. Falling back to local mock data.`);
-        const localDb = loadLocalDb();
-        if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
-            return localDb[tableName].slice(0, maxRows);
+        if (req && req.requireRealData) {
+            const e = new Error("Case completeness cannot be calculated because the investigation datastore is currently unavailable.");
+            e.code = 'DATASTORE_UNAVAILABLE';
+            throw e;
         }
+        
+        console.error(`[datastoreClient DIAGNOSTICS] getRows EXACT ERROR for ${tableName}:`, err.message || err);
         throw wrapError(err, tableName);
     }
 }
@@ -176,20 +98,36 @@ async function getRowById(req, tableName, id) {
         validateTable(tableName);
         const row = await getTable(req, tableName).getRow(id);
         const unwrapped = unwrapRow(row);
-        if ((!unwrapped || Object.keys(unwrapped).length === 0 || !unwrapped.ROWID) && process.env.NODE_ENV !== 'production') {
-            throw new Error("Row not found in live datastore");
+        
+        console.log(`DATA_SOURCE=Catalyst | TABLE=${tableName} | ROW_COUNT=${unwrapped ? 1 : 0} | QUERY=getRowById(${id})`);
+        if (!unwrapped || Object.keys(unwrapped).length === 0) {
+            console.log(`[datastoreClient] EMPTY_TABLE: Row ID ${id} not found in ${tableName}`);
         }
+        
         return unwrapped;
     } catch (err) {
-        console.warn(`[datastoreClient] getRowById Failed for ${tableName} ID ${id}. Falling back to local mock data.`);
-        const localDb = loadLocalDb();
-        if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
-            const found = localDb[tableName].find(row => {
-                const rowId = row.ROWID || row.CaseMasterID || row.VictimMasterID || row.AccusedMasterID || row.ComplainantID || row.id;
-                return String(rowId || '') === String(id);
-            });
-            if (found) return found;
+        if (tableName === 'CaseMaster') {
+            try {
+                const rows = await getRowsWhere(req, 'CaseMaster', { CaseMasterID: id }, { maxRows: 1 });
+                if (rows.length > 0) return rows[0];
+                const rows2 = await getRowsWhere(req, 'CaseMaster', { CrimeNo: id }, { maxRows: 1 });
+                if (rows2.length > 0) return rows2[0];
+                const rows3 = await getRowsWhere(req, 'CaseMaster', { CaseNo: id }, { maxRows: 1 });
+                if (rows3.length > 0) return rows3[0];
+            } catch (fallbackErr) {
+                console.error(`[datastoreClient] Fallback query failed for CaseMaster ${id}:`, fallbackErr.message);
+            }
         }
+        
+        if (req && req.requireRealData) {
+            if (err.message && (err.message.includes('Invalid Row ID') || err.message.includes('not found') || err.message.includes('no such table'))) {
+                return null;
+            }
+            const e = new Error("Case completeness cannot be calculated because the investigation datastore is currently unavailable.");
+            e.code = 'DATASTORE_UNAVAILABLE';
+            throw e;
+        }
+        console.error(`[datastoreClient DIAGNOSTICS] getRowById EXACT ERROR for ${tableName} ID ${id}:`, err.message || err);
         throw wrapError(err, tableName);
     }
 }
@@ -203,45 +141,27 @@ async function query(req, sql) {
         validateZCQL(sql);
         const app = catalyst.initialize(req);
         const rows = await app.zcql().executeZCQLQuery(sql);
-        if ((!rows || rows.length === 0) && process.env.NODE_ENV !== 'production') {
-            throw new Error("No rows returned from live datastore");
-        }
+        
+        const tableMatch = /FROM\s+([A-Za-z0-9_]+)/i.exec(sql);
+        const tableName = tableMatch ? tableMatch[1] : 'UnknownTable';
+        const count = rows ? rows.length : 0;
+        
+        console.log(`DATA_SOURCE=Catalyst | TABLE=${tableName} | ROW_COUNT=${count} | QUERY=${sql}`);
+        if (count === 0) console.log(`[datastoreClient] EMPTY_TABLE: No matching records for query in ${tableName}`);
+
         return rows || [];
     } catch (err) {
+        if (req && req.requireRealData) {
+            const e = new Error("Case completeness cannot be calculated because the investigation datastore is currently unavailable.");
+            e.code = 'DATASTORE_UNAVAILABLE';
+            throw e;
+        }
+
         const tableMatch = /FROM\s+([A-Za-z0-9_]+)/i.exec(sql);
         const tableName = tableMatch ? tableMatch[1] : 'UnknownTable';
         
-        console.warn(`[datastoreClient] ZCQL Query Failed. Falling back to local mock data for ${tableName}`);
-        const localDb = loadLocalDb();
-        if (localDb && localDb[tableName] && Array.isArray(localDb[tableName])) {
-            let data = localDb[tableName];
-            
-            // In-memory ZCQL WHERE filtering fallback
-            const whereMatch = /WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/i.exec(sql);
-            if (whereMatch) {
-                const whereClause = whereMatch[1];
-                const conditions = whereClause.split(/\s+AND\s+/i);
-                for (const condition of conditions) {
-                    const condMatch = /([A-Za-z0-9_]+)\s*=\s*'?(.*?)'?$/i.exec(condition.trim());
-                    if (condMatch) {
-                        const col = condMatch[1].trim();
-                        const val = condMatch[2].trim();
-                        data = data.filter(row => {
-                            const rowVal = Object.entries(row).find(([k]) => k.toLowerCase() === col.toLowerCase())?.[1];
-                            return String(rowVal || '').toLowerCase() === String(val || '').toLowerCase();
-                        });
-                    }
-                }
-            }
-            
-            const limitMatch = /LIMIT\s+(\d+)/i.exec(sql);
-            const limit = limitMatch ? parseInt(limitMatch[1], 10) : 50;
-            
-            return data.slice(0, limit).map(r => ({ [tableName]: r }));
-        }
-
-        // If no mock data, return a generic mock row so the UI doesn't crash empty
-        return [ { [tableName]: { id: generateId(), mock_status: "Simulated Data (Table Missing)" } } ];
+        console.error(`[datastoreClient DIAGNOSTICS] query EXACT ERROR for ${tableName}, SQL [${sql}]:`, err.message || err);
+        throw wrapError(err, tableName);
     }
 }
 
@@ -257,10 +177,17 @@ async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, ord
             .map(([k, v]) => `${k} = '${escapeVal(v)}'`);
         const where = clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '';
         const orderClause = orderBy ? ` ORDER BY ${orderBy} ${order}` : '';
-        const sql = `SELECT * FROM ${tableName}${where}${orderClause} LIMIT ${Number(maxRows) || 50}`;
+        const actualMaxRows = Math.min(Number(maxRows) || 50, 300);
+        const sql = `SELECT * FROM ${tableName}${where}${orderClause} LIMIT ${actualMaxRows}`;
         const rows = await query(req, sql);
         return rows.map((r) => r[tableName] || unwrapRow(r));
     } catch (err) {
+        console.error(`[datastoreClient DIAGNOSTICS] getRowsWhere EXACT ERROR for ${tableName}:`, err.message || err);
+        if (req && req.requireRealData) {
+            const e = new Error("Case completeness cannot be calculated because the investigation datastore is currently unavailable.");
+            e.code = 'DATASTORE_UNAVAILABLE';
+            throw e;
+        }
         throw wrapError(err, tableName);
     }
 }

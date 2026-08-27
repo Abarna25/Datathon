@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Lightbulb, MapPin, BarChart2, Target, CheckCircle2,
     Clock, XCircle, AlertTriangle, ChevronDown, ChevronUp,
@@ -7,193 +7,7 @@ import {
     Loader2
 } from 'lucide-react';
 
-// ─── MOCK DATA ───────────────────────────────────────────────────────────────
-const MOCK_RECOMMENDATIONS = [
-    {
-        id: 'PR-001',
-        title: 'Youth Employment Accelerator Program',
-        description: 'Deploy targeted job placement drives and skill-building workshops in high-unemployment zones. Partner with local industries to create at least 500 apprenticeships per quarter. Focus on youth aged 18–24 who are not in education, employment, or training (NEET).',
-        priority: 'CRITICAL',
-        targetDistrict: 'Peri-Urban',
-        category: 'Economic',
-        status: 'IN_PROGRESS',
-        supportingData: [
-            { label: 'Youth Unemployment', value: '15.2%', delta: '+2.4%', worse: true },
-            { label: 'Property Crime Correlation', value: '0.82', delta: null, worse: false },
-            { label: 'NEET Population', value: '12,400', delta: '+800', worse: true },
-        ],
-        expectedImpact: {
-            crimeReduction: '18%',
-            timeframe: '12 months',
-            beneficiaries: '~4,000 youth',
-            confidence: 'HIGH',
-        },
-        createdAt: '2026-06-15',
-        updatedAt: '2026-07-20',
-        icon: 'briefcase',
-    },
-    {
-        id: 'PR-002',
-        title: 'After-School Safe Zones Initiative',
-        description: 'Fund and operate supervised after-school centres in Sector 1 and Sector 3 from 3pm–8pm on school days. Programmes to include mentoring, sports, digital literacy, and counselling. Directly targets the peak juvenile offence window (4pm–7pm).',
-        priority: 'HIGH',
-        targetDistrict: 'Central',
-        category: 'Social',
-        status: 'APPROVED',
-        supportingData: [
-            { label: 'Juvenile Offences (4–7pm)', value: '64%', delta: null, worse: false },
-            { label: 'At-Risk Youth Identified', value: '2,100', delta: '+150', worse: true },
-            { label: 'Existing Centre Capacity', value: '300 seats', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '22%',
-            timeframe: '6 months',
-            beneficiaries: '~2,100 youth',
-            confidence: 'HIGH',
-        },
-        createdAt: '2026-06-28',
-        updatedAt: '2026-07-18',
-        icon: 'users',
-    },
-    {
-        id: 'PR-003',
-        title: 'Education Bridge Grant Scheme',
-        description: 'Provide conditional cash transfers to families keeping children enrolled through secondary school completion. Supplement with free vocational certification courses at district learning centres. Targets the 40% secondary school dropout rate in low-income sectors.',
-        priority: 'HIGH',
-        targetDistrict: 'North',
-        category: 'Education',
-        status: 'DRAFT',
-        supportingData: [
-            { label: 'Secondary Dropout Rate', value: '40%', delta: '-3%', worse: false },
-            { label: 'Education Disparity Index', value: '45.0', delta: null, worse: false },
-            { label: 'Low-Income Families Eligible', value: '8,700', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '14%',
-            timeframe: '18 months',
-            beneficiaries: '~8,700 families',
-            confidence: 'MEDIUM',
-        },
-        createdAt: '2026-07-01',
-        updatedAt: '2026-07-15',
-        icon: 'book',
-    },
-    {
-        id: 'PR-004',
-        title: 'Rehabilitation-First Sentencing Policy',
-        description: 'Shift first and second-time non-violent offenders from custodial sentences to community service, electronic monitoring, and mandatory rehabilitation programmes. Pilot in South and East districts with low recidivism rates to build evidence base.',
-        priority: 'MEDIUM',
-        targetDistrict: 'South',
-        category: 'Justice',
-        status: 'APPROVED',
-        supportingData: [
-            { label: 'Recidivism Rate (Custodial)', value: '62%', delta: null, worse: false },
-            { label: 'Recidivism Rate (Rehab)', value: '28%', delta: '-5.1%', worse: false },
-            { label: 'Non-Violent Offenders', value: '1,840/yr', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '11%',
-            timeframe: '24 months',
-            beneficiaries: '~1,800 offenders/yr',
-            confidence: 'MEDIUM',
-        },
-        createdAt: '2026-05-10',
-        updatedAt: '2026-07-10',
-        icon: 'shield',
-    },
-    {
-        id: 'PR-005',
-        title: 'Emergency Housing Stabilisation Fund',
-        description: 'Establish rapid-response rental assistance and transitional housing units for families at eviction risk. Housing insecurity is a top-3 predictor of entry into crime. Target the Peri-Urban zone where 22.3% of residents are housing insecure.',
-        priority: 'MEDIUM',
-        targetDistrict: 'Peri-Urban',
-        category: 'Housing',
-        status: 'UNDER_REVIEW',
-        supportingData: [
-            { label: 'Housing Insecurity Rate', value: '22.3%', delta: '+1.2%', worse: true },
-            { label: 'Families at Eviction Risk', value: '3,200', delta: null, worse: false },
-            { label: 'Crime-Housing Correlation', value: '0.68', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '9%',
-            timeframe: '9 months',
-            beneficiaries: '~3,200 families',
-            confidence: 'MEDIUM',
-        },
-        createdAt: '2026-05-10',
-        updatedAt: '2026-07-10',
-        icon: 'home',
-    },
-    {
-        id: 'PR-006',
-        title: 'Migrant Worker Digital Registration & Support Mission',
-        description: 'Mandatory digital onboarding and mobile banking support for seasonal inward migrant workers. Establishes legal protection, transparent remittances, and reduces informal exploitation.',
-        priority: 'CRITICAL',
-        targetDistrict: 'Peri-Urban',
-        category: 'Migration',
-        status: 'IN_PROGRESS',
-        supportingData: [
-            { label: 'Inward Migration Rate', value: '48,200/yr', delta: '+14%', worse: true },
-            { label: 'Unregistered Remittances', value: '₹4.2 Cr', delta: null, worse: false },
-            { label: 'Migrant Property Offence Correlation', value: '0.84', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '21%',
-            timeframe: '6 months',
-            beneficiaries: '~48,000 workers',
-            confidence: 'HIGH',
-        },
-        createdAt: '2026-07-12',
-        updatedAt: '2026-07-22',
-        icon: 'users',
-    },
-    {
-        id: 'PR-007',
-        title: 'Urban Infrastructure & Smart Street Lighting Scheme',
-        description: 'Install high-lumen solar street lights and emergency call boxes in high-density informal settlements and unlit transit corridors in Central District.',
-        priority: 'HIGH',
-        targetDistrict: 'Central',
-        category: 'Urbanization',
-        status: 'APPROVED',
-        supportingData: [
-            { label: 'Population Density', value: '6,200/km²', delta: '+8%', worse: true },
-            { label: 'Night Street Crime Share', value: '68%', delta: null, worse: false },
-            { label: 'Lighting Deficit Coverage', value: '42 km', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '26%',
-            timeframe: '3 months',
-            beneficiaries: '~140,000 residents',
-            confidence: 'HIGH',
-        },
-        createdAt: '2026-07-05',
-        updatedAt: '2026-07-20',
-        icon: 'home',
-    },
-    {
-        id: 'PR-006',
-        title: 'Substance Abuse Community Clinic Expansion',
-        description: 'Open 4 new community clinics offering free addiction counselling, harm reduction services, and medical detox support. Target the West district where substance abuse index stands at 34.1. Integrate with existing police liaison programs.',
-        priority: 'LOW',
-        targetDistrict: 'West',
-        category: 'Health',
-        status: 'DRAFT',
-        supportingData: [
-            { label: 'Substance Abuse Index', value: '34.1', delta: '+2.3', worse: true },
-            { label: 'Drug-Related Offences', value: '28% of total', delta: null, worse: false },
-            { label: 'Existing Clinic Capacity', value: '42% utilised', delta: null, worse: false },
-        ],
-        expectedImpact: {
-            crimeReduction: '7%',
-            timeframe: '15 months',
-            beneficiaries: '~1,500 individuals',
-            confidence: 'LOW',
-        },
-        createdAt: '2026-07-12',
-        updatedAt: '2026-07-12',
-        icon: 'heart',
-    },
-];
+import api from '../../services/api';
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const PRIORITY_CFG = {
@@ -485,17 +299,39 @@ const PolicyRecommendations = () => {
     const [status, setStatus]       = useState('All');
     const [category, setCategory]   = useState('All');
     const [sortBy, setSortBy]       = useState('priority');
+    
+    const [recommendations, setRecommendations] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            try {
+                const res = await api.get('/policy-recommendations');
+                if (res.data && res.data.success) {
+                    setRecommendations(res.data.data || []);
+                } else {
+                    setRecommendations([]);
+                }
+            } catch (err) {
+                console.error('Error fetching policy recommendations:', err);
+                setRecommendations([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRecommendations();
+    }, []);
 
     const PRIORITY_ORDER = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
-    const filtered = MOCK_RECOMMENDATIONS
+    const filtered = recommendations
         .filter(r => priority  === 'All' || r.priority  === priority)
         .filter(r => status    === 'All' || r.status    === status)
         .filter(r => category  === 'All' || r.category  === category)
-        .filter(r => !search   || r.title.toLowerCase().includes(search.toLowerCase()) || r.targetDistrict.toLowerCase().includes(search.toLowerCase()))
+        .filter(r => !search   || r.title?.toLowerCase().includes(search.toLowerCase()) || r.targetDistrict?.toLowerCase().includes(search.toLowerCase()))
         .sort((a, b) => {
             if (sortBy === 'priority') return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
-            if (sortBy === 'impact')   return parseFloat(b.expectedImpact.crimeReduction) - parseFloat(a.expectedImpact.crimeReduction);
+            if (sortBy === 'impact' && a.expectedImpact && b.expectedImpact) return parseFloat(b.expectedImpact.crimeReduction) - parseFloat(a.expectedImpact.crimeReduction);
             if (sortBy === 'date')     return new Date(b.updatedAt) - new Date(a.updatedAt);
             return 0;
         });
@@ -510,7 +346,7 @@ const PolicyRecommendations = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
             {/* Summary */}
-            <SummaryStats recs={MOCK_RECOMMENDATIONS} />
+            <SummaryStats recs={recommendations} />
 
             {/* Filter Bar */}
             <div className="glass-panel" style={{ padding: '14px 18px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -546,16 +382,21 @@ const PolicyRecommendations = () => {
                 </select>
 
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: 'auto', flexShrink: 0 }}>
-                    {filtered.length} of {MOCK_RECOMMENDATIONS.length} shown
+                    {filtered.length} of {recommendations.length} shown
                 </span>
             </div>
 
             {/* Cards */}
-            {filtered.length === 0 ? (
+            {loading ? (
+                <div className="glass-panel" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <Loader2 size={30} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 14px' }} />
+                    <div style={{ fontSize: '15px' }}>Loading real-time policy recommendations...</div>
+                </div>
+            ) : filtered.length === 0 ? (
                 <div className="glass-panel" style={{ padding: '48px', textAlign: 'center' }}>
                     <Lightbulb size={40} color="var(--text-muted)" style={{ margin: '0 auto 14px' }} />
                     <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>No recommendations match your filters</div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>Try adjusting the priority, status, or category filters.</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>There are no active policies in the database right now.</div>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

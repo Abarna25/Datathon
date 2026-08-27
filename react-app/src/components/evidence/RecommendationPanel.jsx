@@ -32,16 +32,14 @@ const RecommendationPanel = ({ recommendations }) => {
             </div>
             
             <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '8px' }}>
-              <strong>AI Reasoning:</strong> {rec.reason}
-            </div>
-            
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              <strong>Impact:</strong> {rec.expected_impact}
+              <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--accent-primary)' }}>WHY?</strong>
+              <div style={{ whiteSpace: 'pre-line' }}>{rec.reason}</div>
             </div>
             
             {rec.evidence_used && rec.evidence_used.length > 0 && (
-              <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent-primary)' }}>
-                Evidence Used: {rec.evidence_used.join(', ')}
+              <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>SOURCE</strong>
+                {rec.evidence_used.map((e, idx) => <div key={idx}>• {e}</div>)}
               </div>
             )}
           </div>

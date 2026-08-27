@@ -58,12 +58,7 @@ class SeedService {
         let cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 10 }).catch(() => []);
         
         if (!cases || cases.length === 0) {
-            const dummyCases = [
-                { Status: 'Open', Jurisdiction: 'Indiranagar PS' },
-                { Status: 'Under Investigation', Jurisdiction: 'Koramangala PS' }
-            ];
-            await datastoreClient.insertRows(req, 'CaseMaster', dummyCases).catch(() => []);
-            cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 10 }).catch(() => []);
+            return { userSeeding: userResults, caseSeeding: [] };
         }
 
         const results = [];

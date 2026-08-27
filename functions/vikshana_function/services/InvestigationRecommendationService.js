@@ -1,22 +1,30 @@
 const evidenceAggregatorService = require('./EvidenceAggregatorService');
 
 class InvestigationRecommendationService {
-    async generateRecommendationsAndGaps(req, caseId) {
+    async generateRecommendationsAndGaps(req, caseId, context = null, anomalies = []) {
         const unified = await evidenceAggregatorService.getAggregatedEvidence(req, caseId);
         
-        if (unified.isAggregated || !unified.evidence || unified.evidence.length === 0) {
-            return { gaps: [], recommendations: [] };
-        }
-
-        const evidence = unified.evidence;
         const gaps = [];
         const recommendations = [];
-
-        const hasVictim = evidence.some(e => e.type === 'Victim');
-        const accused = evidence.filter(e => e.source === 'Accused');
-        const arrests = evidence.filter(e => e.source === 'ArrestSurrender');
-        const hasChargesheet = evidence.some(e => e.source === 'ChargesheetDetails');
         
+        let hasVictim = false;
+        let accused = [];
+        let arrests = [];
+        let hasChargesheet = false;
+        
+        if (context) {
+            hasVictim = context.victims && context.victims.length > 0;
+            accused = context.suspects || [];
+            arrests = (context.timeline || []).filter(t => t.source_type === 'arrest_record');
+            hasChargesheet = context.chargesheet && context.chargesheet.length > 0;
+        } else if (unified && unified.evidence) {
+            const evidence = unified.evidence;
+            hasVictim = evidence.some(e => e.type === 'Victim');
+            accused = evidence.filter(e => e.source === 'Accused');
+            arrests = evidence.filter(e => e.source === 'ArrestSurrender');
+            hasChargesheet = evidence.some(e => e.source === 'ChargesheetDetails');
+        }
+
         if (!hasVictim) {
             gaps.push({
                 missing_item: "Missing Victim Details",
@@ -26,10 +34,10 @@ class InvestigationRecommendationService {
             recommendations.push({
                 action: "Identify and Register Victim",
                 priority: "Medium",
-                reason: "Crucial for building the case timeline.",
+                reason: "• Required for building case timeline\n• Establishes corpus delicti\n• Necessary for generating the initial FIR",
                 expected_impact: "Establishes corpus delicti.",
                 confidence: 0.8,
-                evidence_used: []
+                evidence_used: [`Case #${caseId}`]
             });
         }
 
@@ -42,29 +50,35 @@ class InvestigationRecommendationService {
             recommendations.push({
                 action: "Identify Suspects",
                 priority: "Critical",
-                reason: "Identify suspects through witness or CCTV correlation.",
+                reason: "• Suspect identity is completely unresolved\n• Prosecution cannot proceed without a named accused\n• CCTV and witness correlation required",
                 expected_impact: "Moves investigation to apprehension phase.",
                 confidence: 0.9,
-                evidence_used: evidence.filter(e => e.type === 'Victim').map(e => String(e.id))
+                evidence_used: [`Case #${caseId}`]
             });
         } else {
             // We have accused. Check if they are arrested.
-            const arrestedIds = new Set(arrests.map(a => a.description.match(/ID (\d+)/)?.[1]));
+            let arrestedIds = new Set();
+            if (context) {
+                arrestedIds = new Set(arrests.map(a => String(a.accused_id || a.description.match(/ID (\d+)/)?.[1])));
+            } else {
+                arrestedIds = new Set(arrests.map(a => a.description.match(/ID (\d+)/)?.[1]));
+            }
             
             accused.forEach(acc => {
-                if (!arrestedIds.has(String(acc.id))) {
+                const accId = String(acc.ROWID || acc.id);
+                if (!arrestedIds.has(accId)) {
                     gaps.push({
-                        missing_item: `Missing Arrest Record for ${acc.title}`,
+                        missing_item: `Missing Arrest Record for ${acc.name || acc.title}`,
                         priority: "High",
                         reasoning: "Suspect identified but no formal arrest recorded."
                     });
                     recommendations.push({
-                        action: `Execute Arrest for ${acc.title}`,
+                        action: `Execute Arrest for ${acc.name || acc.title}`,
                         priority: "High",
-                        reason: "Prevent flight risk.",
+                        reason: `• Suspect ${acc.name || acc.title} is formally accused\n• Flight risk is elevated without arrest\n• Required to secure suspect for interrogation`,
                         expected_impact: "Secures suspect for interrogation.",
                         confidence: 0.95,
-                        evidence_used: [String(acc.id)]
+                        evidence_used: [`Case #${caseId}`, `Suspect Record #${accId}`]
                     });
                 }
             });
@@ -79,10 +93,28 @@ class InvestigationRecommendationService {
             recommendations.push({
                 action: "Draft and File Chargesheet",
                 priority: "Critical",
-                reason: "Required to proceed to court.",
+                reason: "• Suspects are mapped but no formal charges filed\n• Necessary to proceed to court phase\n• Overdue based on investigation timeline",
                 expected_impact: "Initiates judicial process.",
                 confidence: 0.9,
-                evidence_used: []
+                evidence_used: [`Case #${caseId}`]
+            });
+        }
+
+        if (anomalies && anomalies.length > 0) {
+            anomalies.forEach(anomaly => {
+                gaps.push({
+                    missing_item: `Anomaly: ${anomaly.type}`,
+                    priority: anomaly.severity,
+                    reasoning: anomaly.description
+                });
+                recommendations.push({
+                    action: `Resolve Anomaly: ${anomaly.type}`,
+                    priority: anomaly.severity,
+                    reason: anomaly.description,
+                    expected_impact: "Resolving data inconsistency.",
+                    confidence: 0.9,
+                    evidence_used: anomaly.affectedRecords || []
+                });
             });
         }
 
@@ -93,7 +125,7 @@ class InvestigationRecommendationService {
                 reason: "All primary evidence components are present.",
                 expected_impact: "Ensures successful prosecution.",
                 confidence: 0.85,
-                evidence_used: evidence.map(e => String(e.id)).slice(0, 5)
+                evidence_used: []
             });
         }
 

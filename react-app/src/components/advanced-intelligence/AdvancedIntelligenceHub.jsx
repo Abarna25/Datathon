@@ -7,6 +7,7 @@ import {
 import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import api from '../../services/api';
 import styles from './AdvancedIntelligence.module.css';
+import CaseCompletenessCard from './CaseCompletenessCard';
 
 const ExplainAIWrapper = ({ explainData, children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,6 +103,11 @@ const AdvancedIntelligenceHub = ({ caseId }) => {
 
       <div className={styles.grid}>
         
+        {/* Case Completeness Metric */}
+        <motion.div className={styles.col4} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <CaseCompletenessCard caseId={caseId} />
+        </motion.div>
+
         {/* Hypotheses */}
         <motion.div className={`${styles.card} ${styles.col6}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className={styles.cardHeader}>
@@ -203,11 +209,17 @@ const AdvancedIntelligenceHub = ({ caseId }) => {
               data.contradictions.map((c, i) => (
                 <div key={i} className={styles.listItem} style={{ borderLeft: '4px solid #ef4444' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>Contradiction Detected</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{c.type || 'Contradiction Detected'}</span>
                     <span className={styles.priorityTag} style={{ background: '#fee2e2', color: '#ef4444' }}>{c.severity}</span>
                   </div>
-                  <div style={{ fontSize: 13, color: '#475569', marginBottom: 4 }}>{c.description}</div>
-                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Action: {c.recommendation}</div>
+                  <div style={{ fontSize: 13, color: '#475569', marginBottom: 4 }}>{c.explanation || c.description}</div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
+                    {c.source_a && c.source_b ? (
+                        <>Conflict between <span style={{color: '#3b82f6'}}>{c.source_a}</span> and <span style={{color: '#3b82f6'}}>{c.source_b}</span></>
+                    ) : (
+                        <>Action: {c.recommendation}</>
+                    )}
+                  </div>
                 </div>
               ))
             )}

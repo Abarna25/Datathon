@@ -1,5 +1,6 @@
 const ContextBuilderService = require('./ContextBuilderService');
 const glmClient = require('./glmClient');
+const ContradictionDetectionService = require('./ContradictionDetectionService');
 
 class AdvancedIntelligenceService {
     static async getFullScan(req, caseId) {
@@ -98,68 +99,48 @@ CRITICAL RULES:
             }
 
             const intelligenceData = JSON.parse(rawJson);
+            
+            // Phase 1: Override LLM contradictions with deterministic real data
+            const contradictionResult = ContradictionDetectionService.detect(context);
+            intelligenceData.contradictions = contradictionResult.contradictions;
+
             return intelligenceData;
         } catch (error) {
-            console.error('[AdvancedIntelligenceService] Error (Fallback to Demo Mock):', error);
-            // RICH DEMO FALLBACK TO SAVE THE PRESENTATION
+            console.error('[AdvancedIntelligenceService] Error:', error);
+            // Even in fallback, try to run deterministic logic if context is available
+            let safeContradictions = [];
+            try {
+                if (context) {
+                    safeContradictions = ContradictionDetectionService.detect(context).contradictions;
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            // Throw or return minimal error state indicating unavailability.
             return {
-              "hypotheses": [
-                { "confidence": 85, "summary": "The theft was premeditated, targeting specific electronics based on prior surveillance of the perimeter.", "supportingEvidence": ["CCTV blind spot usage", "Tool marks"], "weaknesses": ["No distinct suspect ID"], "recommendedAction": "Cross-reference known local offenders with specific MO." },
-                { "confidence": 62, "summary": "The incident was an opportunistic crime by a passerby.", "supportingEvidence": ["Witness heard a vehicle idling"], "weaknesses": ["Complex lock bypassed quickly"], "recommendedAction": "Interview secondary witnesses." }
-              ],
-              "contradictions": [
-                { "severity": "High", "description": "Witness stated they heard a vehicle idling at 01:30, but CCTV on AT Road shows no vehicles until 01:40.", "recommendation": "Re-interview witness regarding time perception or check alternative camera timestamps." }
-              ],
-              "missingEvidence": {
-                "score": 65,
-                "missingItems": ["Clear Suspect Facial Image", "Vehicle License Plate", "Suspect Footprints"],
-                "priority": "HIGH"
-              },
-              "courtReadiness": {
-                "overall": 45,
-                "evidence": 35,
-                "witness": 60,
-                "legal": 75,
-                "documentation": 50
-              },
-              "crimeSignature": {
-                "violence": 1,
-                "planning": 5,
-                "repeatPattern": 4,
-                "financialMotive": 5,
-                "organizedNetwork": 3
-              },
+              "hypotheses": [],
+              "contradictions": safeContradictions,
+              "missingEvidence": { "score": 0, "missingItems": [], "priority": "UNKNOWN" },
+              "courtReadiness": { "overall": 0, "evidence": 0, "witness": 0, "legal": 0, "documentation": 0 },
+              "crimeSignature": { "violence": 0, "planning": 0, "repeatPattern": 0, "financialMotive": 0, "organizedNetwork": 0 },
               "officerBrief": {
-                "title": "Shift Handover Brief",
-                "status": "Active / Golden Hour",
-                "highRisk": true,
-                "victimsCount": 1,
+                "title": "Data Unavailable",
+                "status": "Unavailable",
+                "highRisk": false,
+                "victimsCount": 0,
                 "suspectsCount": 0,
-                "evidenceCount": 4,
-                "pendingItems": ["FSL Tool Mark Report", "Expanded CCTV Dump"],
-                "recommendedAction": "Assign teams to canvas pawn shops.",
-                "expectedDuration": "7-10 Days"
+                "evidenceCount": 0,
+                "pendingItems": [],
+                "recommendedAction": "Check datastore connectivity.",
+                "expectedDuration": "Unknown"
               },
-              "interviewQuestions": {
-                "Victim": ["Can you confirm the exact inventory of stolen goods?", "Did you notice anyone loitering near the premises yesterday?"],
-                "Witness": ["Are you absolutely certain about the 01:30 AM timestamp?", "Can you describe the engine sound of the idling vehicle?"],
-                "Suspect": ["(Pending Identification)"]
-              },
-              "readinessRadar": [
-                { "subject": "Evidence", "A": 35, "fullMark": 100 },
-                { "subject": "Witnesses", "A": 60, "fullMark": 100 },
-                { "subject": "Timeline", "A": 85, "fullMark": 100 },
-                { "subject": "Documentation", "A": 50, "fullMark": 100 },
-                { "subject": "Legal", "A": 75, "fullMark": 100 },
-                { "subject": "Forensics", "A": 20, "fullMark": 100 }
-              ],
-              "recommendations": [
-                { "priority": 1, "action": "Expand CCTV Search Radius", "confidence": 95, "why": "Suspect vehicle evaded primary perimeter cameras." },
-                { "priority": 2, "action": "Re-interview Shopkeeper", "confidence": 88, "why": "Resolve timeline contradiction between audio and video evidence." }
-              ],
+              "interviewQuestions": { "Victim": [], "Suspect": [], "Witness": [] },
+              "readinessRadar": [],
+              "recommendations": [],
               "explainAI": {
-                "hypotheses": { "confidence": 88, "evidenceUsed": ["CCTV blind spot", "Tool mark analysis"], "reasoning": "The rapid bypass of a complex lock combined with the evasion of the primary camera suggests prior surveillance and premeditation rather than a crime of opportunity." },
-                "courtReadiness": { "confidence": 92, "evidenceUsed": ["Missing Suspect ID", "Pending FSL"], "reasoning": "Case currently lacks direct physical evidence tying a suspect to the scene, drastically reducing court viability." }
+                "hypotheses": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI Generation failed." },
+                "courtReadiness": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI Generation failed." }
               }
             };
         }

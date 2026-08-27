@@ -85,42 +85,7 @@ const EntityGraph = ({ relationships, aliases }) => {
       });
     }
 
-    // DEMO HARDENING: Heuristic Graph Expansion
-    if (nodes.length > 0 && nodes.length < 8) {
-      const personNodes = nodes.filter(n => n.type === 'Person');
-      personNodes.forEach((p, index) => {
-        const associate = `Known Associate ${index + 1}`;
-        const location = `Frequent Location ${index + 1}`;
-        const vehicle = `Suspect Vehicle ${index + 1}`;
-        const mobile = `Trace Mobile ${index + 1}`;
-
-        addNode(associate, 'Person');
-        addNode(location, 'Location');
-        addNode(vehicle, 'Vehicle');
-        addNode(mobile, 'Phone');
-
-        links.push({ source: p.id, target: associate, label: 'Associates With', color: 'rgba(59,130,246,0.4)', lineDash: [4, 4] });
-        links.push({ source: p.id, target: location, label: 'Spotted At', color: 'rgba(245,158,11,0.4)', lineDash: [4, 4] });
-        links.push({ source: p.id, target: vehicle, label: 'Registered To', color: 'rgba(239,68,68,0.4)', lineDash: [4, 4] });
-        links.push({ source: p.id, target: mobile, label: 'Uses', color: 'rgba(16,185,129,0.4)', lineDash: [4, 4] });
-        
-        // Interlink them slightly for density
-        links.push({ source: associate, target: location, label: 'Visits', color: 'rgba(255,255,255,0.1)' });
-      });
-    }
-
-    // Default node if empty
-    if (nodes.length === 0) {
-      nodes.push({ id: 'Investigation_Core', label: 'Investigation Core', type: 'Location', val: 25, color: '#3b82f6' });
-      addNode('Missing Suspect', 'Person');
-      addNode('Crime Scene', 'Location');
-      addNode('Unidentified Vehicle', 'Vehicle');
-      
-      links.push({ source: 'Missing Suspect', target: 'Investigation_Core', label: 'Wanted For', color: 'rgba(239,68,68,0.4)' });
-      links.push({ source: 'Crime Scene', target: 'Investigation_Core', label: 'Location', color: 'rgba(59,130,246,0.4)' });
-      links.push({ source: 'Unidentified Vehicle', target: 'Crime Scene', label: 'Spotted At', color: 'rgba(245,158,11,0.4)' });
-    }
-
+    // Removed heuristic demo graph expansion
     setGraphData({ nodes, links });
   }, [relationships, aliases]);
 
@@ -141,7 +106,13 @@ const EntityGraph = ({ relationships, aliases }) => {
       </div>
       
       <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <ForceGraph2D
+        {graphData.nodes.length === 0 ? (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>
+            No entity relationships extracted for this case.
+          </div>
+        ) : (
+          <>
+            <ForceGraph2D
           ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
@@ -233,6 +204,8 @@ const EntityGraph = ({ relationships, aliases }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b' }}/> Alias</div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

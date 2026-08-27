@@ -4,6 +4,7 @@ import {
     Search, MapPin, ArrowRight, ShieldCheck, AlertCircle,
     BookOpen, Layers, Lightbulb, ExternalLink, ChevronDown, ChevronUp, BarChart2, Check, Target, Activity, Brain, Users, Database, Scale, AlertTriangle, ShieldAlert
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
@@ -27,6 +28,7 @@ const GaugeChart = ({ value, label, color, max = 100 }) => {
     );
 };
 const DecisionSupportPanel = ({ caseId = '', defaultExpanded = true }) => {
+    const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const [summary, setSummary] = useState(null);
     const [timeline, setTimeline] = useState([]);
@@ -68,8 +70,8 @@ const DecisionSupportPanel = ({ caseId = '', defaultExpanded = true }) => {
         );
     }
 
-    // Deterministic metrics
-    const confidenceScore = Math.min(98, 50 + (timeline.length * 6) + (leads.length * 3));
+    // Deterministic metrics from backend
+    const confidenceScore = summary?.evidenceStrength?.score || 20;
     const courtReadiness = Math.min(100, 30 + (summary?.evidenceSummary?.length % 60) + (confidenceScore > 80 ? 20 : 0));
     
     const riskLevel = confidenceScore > 80 ? 'Low' : confidenceScore > 60 ? 'Moderate' : 'High';
@@ -167,13 +169,33 @@ const DecisionSupportPanel = ({ caseId = '', defaultExpanded = true }) => {
                         </div>
                     </div>
 
-                    {/* BOTTOM ROW: AI Recommendations & Similar Cases */}
-                    <div className="card" style={{ gridColumn: 'span 8', padding: '20px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)' }}>
+                    {/* BOTTOM ROW: Spatial Context, AI Recommendations & Similar Cases */}
+                    <div className="card" style={{ gridColumn: 'span 4', padding: '20px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)' }}>
+                        <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <MapPin size={16} color="#3b82f6"/> Geospatial Context
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Location</span>
+                                <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{summary?.overview?.district || 'Unknown Location'}</strong>
+                            </div>
+                            <div style={{ padding: '12px', background: 'rgba(59,130,246,0.05)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)' }}>
+                                <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Location Pattern</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                    {similarCases.filter(c => c.matchDetails?.location).length > 0 
+                                        ? `Recurring: ${similarCases.filter(c => c.matchDetails?.location).length} similar historical cases in this jurisdiction.` 
+                                        : 'Insufficient geographic precedent or non-recurring location.'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card" style={{ gridColumn: 'span 4', padding: '20px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)' }}>
                         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Lightbulb size={16} color="#38bdf8"/> AI Recommendations
                         </h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-                            {leads.length > 0 ? leads.map((l, i) => (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {leads.length > 0 ? leads.slice(0,2).map((l, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px', background: 'rgba(59,130,246,0.05)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)' }}>
                                     <CheckCircle2 size={18} color="#38bdf8" style={{ flexShrink: 0, marginTop: '2px' }} />
                                     <div>
@@ -189,22 +211,41 @@ const DecisionSupportPanel = ({ caseId = '', defaultExpanded = true }) => {
 
                     <div className="card" style={{ gridColumn: 'span 4', padding: '20px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)' }}>
                         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Layers size={16} color="#8b5cf6"/> Precedent Cases
+                            <Layers size={16} color="#8b5cf6"/> Similar Cases
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {similarCases.length > 0 ? similarCases.slice(0, 3).map((c, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(139,92,246,0.05)', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.2)' }}>
-                                    <div>
-                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Crime {c.caseId.slice(0, 8)}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{c.title}</div>
+                                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', background: 'rgba(139,92,246,0.05)', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Case #{c.caseId.slice(0, 8)}</div>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Similarity: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{c.similarityScore}%</span></div>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>{c.similarityScore}</span>
-                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Match</span>
-                                    </div>
+                                    {c.matchDetails && (
+                                        <div style={{ marginTop: '4px' }}>
+                                            <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>Why similar:</div>
+                                            <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                {c.matchDetails.crimeType && <li>{c.matchDetails.crimeType}</li>}
+                                                {c.matchDetails.mo && <li>{c.matchDetails.mo}</li>}
+                                                {c.matchDetails.location && <li>{c.matchDetails.location}</li>}
+                                                {c.matchDetails.temporal && <li>{c.matchDetails.temporal}</li>}
+                                                {c.matchDetails.sharedEntities && <li>{c.matchDetails.sharedEntities}</li>}
+                                                {c.matchDetails.sharedEvidence && <li>{c.matchDetails.sharedEvidence}</li>}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={() => navigate(`/cases/${c.caseId}`)} 
+                                        style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '6px', color: '#c4b5fd', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
+                                        onMouseOver={(e) => e.target.style.background = 'rgba(139,92,246,0.3)'}
+                                        onMouseOut={(e) => e.target.style.background = 'rgba(139,92,246,0.2)'}
+                                    >
+                                        View Case <ArrowRight size={14} />
+                                    </button>
                                 </div>
                             )) : (
-                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No historical precedents flagged in Catalyst.</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Insufficient data for similarity analysis. No historical precedents flagged.</div>
                             )}
                         </div>
                     </div>

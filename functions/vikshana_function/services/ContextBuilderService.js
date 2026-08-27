@@ -1,4 +1,5 @@
 const datastoreClient = require('../queries/datastoreClient');
+const EntityResolutionService = require('./EntityResolutionService');
 
 /**
  * TABLE MAPPING — Actual Catalyst Data Store tables vs what the app expected:
@@ -185,13 +186,18 @@ class ContextBuilderService {
         }
 
         if (!caseRow && caseId) {
-            const matchedRows = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CrimeNo: caseId }, { maxRows: 1 }).catch(() => []);
-            if (matchedRows.length > 0) {
-                caseRow = matchedRows[0];
+            const matchedRowsId = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseMasterID: caseId }, { maxRows: 1 }).catch(() => []);
+            if (matchedRowsId.length > 0) {
+                caseRow = matchedRowsId[0];
             } else {
-                const matchedRows2 = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseNo: caseId }, { maxRows: 1 }).catch(() => []);
-                if (matchedRows2.length > 0) {
-                    caseRow = matchedRows2[0];
+                const matchedRows = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CrimeNo: caseId }, { maxRows: 1 }).catch(() => []);
+                if (matchedRows.length > 0) {
+                    caseRow = matchedRows[0];
+                } else {
+                    const matchedRows2 = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseNo: caseId }, { maxRows: 1 }).catch(() => []);
+                    if (matchedRows2.length > 0) {
+                        caseRow = matchedRows2[0];
+                    }
                 }
             }
         }
@@ -209,27 +215,26 @@ class ContextBuilderService {
             getCaseSections(req, dbCaseId).catch(() => [])
         ]);
 
-        let normalizedCase = normalizeCase(caseRow);
-        if (!normalizedCase) {
-            const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 1 }).catch(() => []);
-            if (allCases.length > 0) {
-                normalizedCase = normalizeCase(allCases[0]);
+        // Enrich suspects with cross-case / repeat offender status
+        // DISABLED FOR PERFORMANCE: Querying cross-case profiles synchronously during context 
+        // building causes the Catalyst API to hang/timeout when multiple suspects exist.
+        /*
+        for (let suspect of suspects) {
+            try {
+                const profile = await EntityResolutionService.getRepeatOffenderProfile(req, suspect.name, suspect.age);
+                if (profile.isRepeatOffender) {
+                    suspect.repeat_offender = true;
+                    suspect.linked_cases = profile.linkedCases;
+                }
+            } catch (e) {
+                console.error("Failed to run entity resolution for suspect", e);
             }
         }
+        */
+
+        let normalizedCase = normalizeCase(caseRow);
         if (!normalizedCase) {
-            normalizedCase = {
-                ROWID: String(caseId || '1'),
-                caseId: String(caseId || '1'),
-                caseNumber: `CASE-2026-001`,
-                title: `Investigation Case #${caseId || '1'}`,
-                category: 'General',
-                jurisdiction: 'Station 405',
-                status: 'Under Investigation',
-                date: new Date().toISOString(),
-                latitude: '12.9716',
-                longitude: '77.5946',
-                briefFacts: 'Investigation underway.'
-            };
+            throw new Error(`Case ID ${caseId} not found in datastore.`);
         }
 
         return {

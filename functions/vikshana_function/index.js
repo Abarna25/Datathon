@@ -49,6 +49,16 @@ app.use((req, res, next) => {
     next();
 });
 
+// Request timing middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[API] ${req.method} ${req.originalUrl || req.url} duration=${duration}ms`);
+    });
+    next();
+});
+
 // Startup Validation Middleware
 app.use(async (req, res, next) => {
     if (!startupChecked) {
@@ -86,6 +96,7 @@ app.use('/audit', authorizeRole('Administrator', 'Supervisor'), auditRoutes);
 
 // Role Protected API Routes
 app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), dashboardRoutes);
+app.use('/test_zcql', require('./test_zcql'));
 app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), investigateRoutes);
 app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), conversationRoutes);
 app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), caseRoutes);

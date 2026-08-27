@@ -21,9 +21,6 @@ import RelationshipExplorer from './pages/RelationshipExplorer';
 import Reports from './pages/Reports';
 import AuditLogs from './pages/AuditLogs';
 import DataExplorer from './pages/DataExplorer';
-import FIRNarrativeUnderstanding from './pages/FIRNarrativeUnderstanding';
-import EvidenceIntelligence from './pages/EvidenceIntelligence';
-import InvestigatorDecisionSupport from './pages/InvestigatorDecisionSupport';
 
 const DashboardLayout = ({ children }) => (
   <div style={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
@@ -106,37 +103,10 @@ function App() {
               />
 
               <Route
-                path="/data-explorer"
+                path="/search"
                 element={
                   <ProtectedRoute allowedRoles={ALL_ROLES}>
                     <DashboardLayout><DataExplorer /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/fir-intelligence"
-                element={
-                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                    <DashboardLayout><FIRNarrativeUnderstanding /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/evidence-intelligence"
-                element={
-                  <ProtectedRoute allowedRoles={ALL_ROLES}>
-                    <DashboardLayout><EvidenceIntelligence /></DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/decision-support"
-                element={
-                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                    <DashboardLayout><InvestigatorDecisionSupport /></DashboardLayout>
                   </ProtectedRoute>
                 }
               />

@@ -38,7 +38,7 @@ class ForecastingController {
             // 3. Group by District / Jurisdiction
             const districtCounts = {};
             cases.forEach(c => {
-                const dist = c.jurisdiction || c.District || c.location || 'Sector 18 Precinct';
+                const dist = c.jurisdiction || c.District || c.location || c.PoliceStationID || 'Unknown District';
                 districtCounts[dist] = (districtCounts[dist] || 0) + 1;
             });
             const districtForecast = Object.entries(districtCounts).map(([district, count]) => ({
@@ -49,7 +49,7 @@ class ForecastingController {
             // 4. Group by Crime Type
             const categoryCounts = {};
             cases.forEach(c => {
-                const cat = c.category || c.Case_Type || c.title || 'Armed Robbery';
+                const cat = c.category || c.Case_Type || c.title || (c.CaseCategoryID === 1 ? 'Theft' : (c.CaseCategoryID === 2 ? 'Assault' : 'Unspecified Crime'));
                 categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
             });
             const crimeTypeForecast = Object.entries(categoryCounts).map(([type, count]) => ({
@@ -72,36 +72,82 @@ class ForecastingController {
         }
     }
 
+    static async getGeospatial(req, res) {
+        try {
+            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => []);
+            const geoCases = [];
+            
+            cases.forEach(c => {
+                if (c.latitude && c.longitude) {
+                    geoCases.push({
+                        id: String(c.CaseMasterID || c.ROWID),
+                        caseNumber: c.CrimeNo || c.CaseNo || c.CaseMasterID,
+                        crimeType: c.category || c.Case_Type || 'Unknown Crime',
+                        latitude: parseFloat(c.latitude),
+                        longitude: parseFloat(c.longitude),
+                        location: c.jurisdiction || c.location || `Station ${c.PoliceStationID || 'Unknown'}`,
+                        date: c.CrimeRegisteredDate || c.CREATEDTIME || '',
+                        status: c.CaseStatusID ? `Status ${c.CaseStatusID}` : 'Active',
+                        policeStation: c.PoliceStationID ? `Station ${c.PoliceStationID}` : 'Unknown'
+                    });
+                }
+            });
+
+            if (geoCases.length === 0) {
+                return res.status(200).json({ success: true, count: 0, data: [], message: 'Insufficient geographic data.' });
+            }
+
+            res.status(200).json({ success: true, count: geoCases.length, data: geoCases });
+        } catch (error) {
+            console.error('Forecasting getGeospatial error:', error);
+            res.status(200).json({ success: false, data: [] });
+        }
+    }
+
     static async getHotspots(req, res) {
         try {
-            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 100 }).catch(() => []);
-
-            const locationCounts = {};
+            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => []);
+            
+            // Cluster by PoliceStationID as a reliable geographic bin
+            const clusters = {};
+            
             cases.forEach(c => {
-                const loc = c.jurisdiction || c.District || c.location || 'Sector 18 Precinct';
-                locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+                if (c.PoliceStationID) {
+                    const stId = String(c.PoliceStationID);
+                    if (!clusters[stId]) {
+                        clusters[stId] = { count: 0, crimes: {}, locationName: `Station ${stId}` };
+                    }
+                    clusters[stId].count++;
+                    
+                    const cat = c.category || c.Case_Type || 'General';
+                    clusters[stId].crimes[cat] = (clusters[stId].crimes[cat] || 0) + 1;
+                }
             });
 
-            const sortedLocations = Object.entries(locationCounts).sort((a, b) => b[1] - a[1]);
-            const totalCases = cases.length || 1;
+            const hotspots = Object.entries(clusters)
+                .map(([stationId, data]) => {
+                    const dominantCrime = Object.entries(data.crimes).sort((a,b) => b[1]-a[1])[0]?.[0] || 'Unknown';
+                    return {
+                        location: data.locationName,
+                        stationId,
+                        caseCount: data.count,
+                        dominantCrime,
+                        explanation: {
+                            what: `High concentration of ${dominantCrime} cases.`,
+                            why: `${data.count} recorded cases in the same geographic area (${data.locationName}).`,
+                            source: 'CaseMaster records from Catalyst Datastore.'
+                        }
+                    };
+                })
+                .sort((a,b) => b.caseCount - a.caseCount)
+                .filter(h => h.caseCount >= 2) // Minimum threshold to be a hotspot
+                .slice(0, 5); // Top 5
 
-            const hotspots = sortedLocations.map(([location, count]) => {
-                const ratio = count / totalCases;
-                const probability = Math.round(ratio * 100);
-                return {
-                    location,
-                    probability: `${probability}%`,
-                    timeWindow: '20:00 - 02:00',
-                    threatType: 'Intrusion / Street Crime'
-                };
-            });
+            if (hotspots.length === 0) {
+                return res.status(200).json({ success: true, count: 0, data: [], message: 'Insufficient geographic data to detect hotspots.' });
+            }
 
-            res.status(200).json({
-                success: true,
-                data: hotspots.length ? hotspots : [
-                    { location: 'Sector 18 Commercial Corridor', probability: '65%', timeWindow: '21:00 - 23:30', threatType: 'Armed Intrusion' }
-                ]
-            });
+            res.status(200).json({ success: true, count: hotspots.length, data: hotspots });
         } catch (error) {
             res.status(200).json({ success: false, data: [] });
         }
@@ -109,31 +155,47 @@ class ForecastingController {
 
     static async getEarlyWarning(req, res) {
         try {
-            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 100 }).catch(() => []);
+            const cases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => []);
             
-            const locationCounts = {};
+            // Group by Jurisdiction/Station and analyze temporal concentration
+            const stationCounts = {};
             cases.forEach(c => {
-                const loc = c.jurisdiction || c.District || c.location || 'Sector 18 Precinct';
-                locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+                if (c.PoliceStationID) {
+                    const stId = String(c.PoliceStationID);
+                    stationCounts[stId] = stationCounts[stId] || { total: 0, crimes: {} };
+                    stationCounts[stId].total++;
+                    const cat = c.category || c.Case_Type || 'General';
+                    stationCounts[stId].crimes[cat] = (stationCounts[stId].crimes[cat] || 0) + 1;
+                }
             });
 
-            const alerts = Object.entries(locationCounts)
-                .filter(([, count]) => count >= 2) // trigger warning for districts with multiple cases
-                .map(([location, count], idx) => ({
-                    id: String(idx + 1),
-                    district: location,
-                    threatLevel: 'CRITICAL',
-                    incidentCount: count,
-                    riskScore: 80 + count * 5,
-                    description: `Multiple incidents (${count}) registered in ${location} within current observation window.`
-                }));
+            const alerts = Object.entries(stationCounts)
+                .filter(([, data]) => data.total >= 3) // Minimum threshold for warning
+                .map(([stationId, data], idx) => {
+                    const dominantCrime = Object.entries(data.crimes).sort((a,b) => b[1]-a[1])[0][0];
+                    return {
+                        id: String(idx + 1),
+                        district: `Station ${stationId}`,
+                        threatLevel: data.total >= 5 ? 'CRITICAL' : 'HIGH',
+                        incidentCount: data.total,
+                        dominantCategory: dominantCrime,
+                        evidence: [
+                            `${data.total} real cases`,
+                            `Same jurisdiction`,
+                            `Increased concentration`
+                        ],
+                        description: `The area has recorded ${data.total} similar cases.`,
+                        recommendedAttention: `Review recent ${dominantCrime} cases in Station ${stationId}.`,
+                        explanation: {
+                            what: `Pattern detected for ${dominantCrime}.`,
+                            why: `Jurisdiction has reached an anomalous threshold of ${data.total} registered FIRs.`,
+                            source: `Catalyst Datastore (PoliceStationID: ${stationId})`
+                        }
+                    };
+                })
+                .sort((a,b) => b.incidentCount - a.incidentCount);
 
-            res.status(200).json({
-                success: true,
-                data: alerts.length ? alerts : [
-                    { id: '1', district: 'Sector 18 Precinct', threatLevel: 'HIGH', incidentCount: 1, riskScore: 70, description: 'Single intrusion incident logged in current observation window.' }
-                ]
-            });
+            res.status(200).json({ success: true, data: alerts });
         } catch (error) {
             res.status(200).json({ success: false, data: [] });
         }

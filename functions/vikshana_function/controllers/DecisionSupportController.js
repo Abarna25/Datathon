@@ -4,6 +4,10 @@ const AILogService = require('../services/AILogService');
 const datastoreClient = require('../queries/datastoreClient');
 const EntityExtractionService = require('./entity_extraction.service');
 const NetworkAnalysisService = require('./network_analysis.service');
+const ConfidenceEngineService = require('../services/ConfidenceEngineService');
+const AnomalyDetectionService = require('../services/AnomalyDetectionService');
+const SimilarCaseService = require('../services/SimilarCaseService');
+const CaseCompletenessService = require('../services/CaseCompletenessService');
 
 class DecisionSupportController {
     static async getContextAndGenerate(req, caseId) {
@@ -11,6 +15,9 @@ class DecisionSupportController {
         if (!context || !context.case) {
             throw new Error(`Case not found: ${caseId}`);
         }
+
+        // Phase 1: Real Anomaly Detection
+        const detectedAnomalies = AnomalyDetectionService.detectAnomalies(context);
 
         // Fetch all other cases for similar cases query
         const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 100 }).catch(() => []);
@@ -20,6 +27,9 @@ class DecisionSupportController {
         
         Active Case Context:
         ${JSON.stringify(context)}
+        
+        Algorithmic Anomalies Detected in Data:
+        ${JSON.stringify(detectedAnomalies)}
         
         Historical Cases (for identifying similar cases):
         ${JSON.stringify(allCases)}
@@ -142,117 +152,45 @@ class DecisionSupportController {
                 { role: 'user', content: 'Generate consolidated decision support report JSON.' }
             ], { temperature: 0.2 });
             raw = res.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            
+            // Phase 1: Real Evidence Confidence
+            const confidenceScore = ConfidenceEngineService.calculateScore(context);
+            if (parsed.aiExecutiveSummary) {
+                parsed.aiExecutiveSummary.confidence = confidenceScore.description;
+            }
+            parsed.evidenceStrength = confidenceScore;
+            
+            // Phase 1: Real Anomaly Detection
+            parsed.detectedAnomalies = AnomalyDetectionService.detectAnomalies(context);
+            
+            return parsed;
         } catch (error) {
-            console.error('[DecisionSupport] AI generation failed, using rich demo mock:', error.message);
-            // RICH DEMO FALLBACK TO SAVE THE PRESENTATION
+            console.error('[DecisionSupport] AI generation failed:', error.message);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('not found'))) {
+                throw error;
+            }
+            // If LLM fails but datastore is up, return deterministic safe fallback
+            const confidenceScore = ConfidenceEngineService.calculateScore(context);
+            const detectedAnomalies = AnomalyDetectionService.detectAnomalies(context);
             return {
+              "evidenceStrength": confidenceScore,
+              "detectedAnomalies": detectedAnomalies,
               "overview": {
                 "caseId": caseId,
-                "firNumber": "FIR-2021-002",
-                "crimeType": "Aggravated Theft",
-                "crimeSeverity": "HIGH",
-                "investigationStatus": "ACTIVE_72HR_WINDOW",
-                "officerAssigned": "Lead Investigator",
-                "priority": "HIGH_PRIORITY",
-                "district": "Ballari PS-02",
-                "dateOpened": "2021-05-18T00:00:00.000Z",
-                "lastUpdated": new Date().toISOString()
+                "firNumber": context.case?.caseNumber || "Unavailable",
+                "crimeType": context.case?.category || "Unknown",
+                "investigationStatus": "UNAVAILABLE",
+                "priority": "UNKNOWN",
+                "district": context.case?.jurisdiction || "Unknown",
+                "dateOpened": context.case?.date || new Date().toISOString()
               },
               "aiCaseSummary": {
-                "executiveSummary": "A high-priority investigation involving theft at Ballari PS-02 limits.",
-                "crimeSummary": "Theft reported around 01:43. Initial response units secured the perimeter.",
-                "investigationProgress": "CCTV requested, initial witness canvassing completed.",
-                "majorFindings": ["CCTV indicates multiple perpetrators", "Witness heard a vehicle at 01:30"],
-                "currentStatus": "Gathering digital evidence."
+                "executiveSummary": "AI Investigation Analysis is currently unavailable.",
+                "majorFindings": []
               },
-              "victimSummary": {
-                "details": { "name": "Complainant", "age": 45, "role": "Victim", "contact": "N/A" },
-                "timeline": [{ "time": "01:00", "event": "Property secured" }],
-                "injurySummary": "Economic loss, property damage.",
-                "riskFactors": ["Targeted theft"],
-                "relatedCases": []
-              },
-              "suspectSummary": {
-                "offenderId": "UNKNOWN",
-                "name": "Unidentified Suspect",
-                "riskScore": 75,
-                "riskLevel": "HIGH",
-                "currentCharges": "IPC 379",
-                "behaviourSummary": "Calculated entry, evading primary cameras.",
-                "knownAssociates": []
-              },
-              "evidenceSummary": {
-                "physical": ["Broken lock", "Footprints"],
-                "digital": ["CCTV from adjacent street"],
-                "financial": [],
-                "witnessStatements": ["Shopkeeper statement"],
-                "forensicReports": ["Fingerprint sweep pending"],
-                "timeline": [{ "time": "02:00", "event": "Physical evidence collected" }],
-                "status": "PHYSICAL_SECURED",
-                "missingEvidence": ["Suspect vehicle license plate", "Clear facial CCTV"]
-              },
-              "witnessSummary": {
-                "witnesses": [
-                  { "name": "Shopkeeper", "role": "Earwitness", "reliability": "85%", "interviewStatus": "COMPLETED", "followUp": "Review CCTV timeline" }
-                ]
-              },
-              "investigationProgress": {
-                "timeline": [{ "date": "2021-05-18", "task": "FIR Filed" }, { "date": "2021-05-18", "task": "Scene Secured" }],
-                "completedTasks": ["FIR filing", "Scene security", "Initial statements"],
-                "pendingTasks": ["CCTV enhancement", "Forensic lab results", "Suspect profiling"],
-                "investigationScore": 40,
-                "completionPercentage": "40%",
-                "officerNotes": "Requires expedited forensic processing."
-              },
-              "aiExecutiveSummary": {
-                "currentSituation": "Active investigation within the golden hour.",
-                "strongEvidence": ["Confirmed timeline", "Witness audio confirmation"],
-                "weakEvidence": ["No suspect face yet"],
-                "riskAssessment": "Flight risk of stolen goods.",
-                "recommendations": ["Enhance CCTV", "Monitor local pawn shops"],
-                "confidence": "HIGH (85%)",
-                "evidenceReferences": []
-              },
-              "leadRecommendations": {
-                "highestPrioritySuspect": { "name": "Unknown", "reason": "Not identified", "action": "Generate profile from CCTV" },
-                "highestPriorityEvidence": { "name": "CCTV Footage", "reason": "Contains vehicle signature", "action": "Send to tech lab for enhancement" },
-                "recommendedWitness": { "name": "Shopkeeper", "reason": "May have heard a name or specific vehicle engine", "action": "Follow-up interview" },
-                "digitalInvestigation": "Pull cell tower dumps for 01:00 to 02:00",
-                "financialInvestigation": "Monitor online marketplaces for stolen goods",
-                "searchWarrant": "N/A",
-                "surveillance": "N/A",
-                "arrestRecommendation": "N/A"
-              },
-              "missingEvidence": {
-                "documents": ["Detailed inventory of stolen items"],
-                "forensicReports": ["FSL fingerprint report"],
-                "witnessInterviews": ["Neighbors"],
-                "digitalEvidence": ["Cell tower dump"],
-                "approvals": ["Subpoena for telecom records"]
-              },
-              "investigationRisk": {
-                "caseRisk": "HIGH",
-                "evidenceRisk": "MEDIUM",
-                "witnessRisk": "LOW",
-                "offenderEscapeRisk": "HIGH",
-                "evidenceTamperingRisk": "MEDIUM"
-              },
-              "investigationPriority": {
-                "priorityScore": 88,
-                "crimeSeverityScore": 85,
-                "offenderHistoryScore": 50,
-                "evidenceStrengthScore": 60,
-                "victimRiskScore": 50,
-                "timeSensitivityScore": 95,
-                "priorityTier": "TIER 2"
-              },
-              "similarCasesRecommendation": [
-                { "caseId": "100020248202199999", "matchReason": "Similar MO at Ballari PS-02 last month", "recommendedStrategy": "Cross-reference suspect lists." }
-              ],
-              "automaticTimeline": [
-                { "time": "2021-05-18T01:43:00", "title": "Incident", "description": "Theft occurred at limits." }
-              ]
+              "leadRecommendations": {},
+              "missingEvidence": {}
             };
         }
     }
@@ -268,11 +206,47 @@ class DecisionSupportController {
                 overview: data.aiCaseSummary?.executiveSummary || data.aiCaseSummary?.crimeSummary || 'No case overview compiled.',
                 victimSummary: data.victimSummary?.injurySummary || (data.victimSummary?.details?.name ? `Victim: ${data.victimSummary.details.name}` : 'No victim details resolved.'),
                 accusedSummary: data.suspectSummary?.behaviourSummary || (data.suspectSummary?.name ? `Accused: ${data.suspectSummary.name}` : 'No suspect details resolved.'),
-                evidenceSummary: data.evidenceSummary?.status || 'No evidence records resolved.'
+                evidenceSummary: data.evidenceSummary?.status || 'No evidence records resolved.',
+                evidenceStrength: data.evidenceStrength || { score: 20, level: 'LOW', factors: [] },
+                detectedAnomalies: data.detectedAnomalies || []
             };
             res.status(200).json({ success: true, data: summaryData });
         } catch (error) {
-            console.error('Error in DecisionSupportController.getSummary:', error);
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+ 
+    static async getCaseCompleteness(req, res) {
+        try {
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            const data = await CaseCompletenessService.calculateCompleteness(req, caseId);
+            res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('Error in DecisionSupportController.getCaseCompleteness:', error);
+            
+            if (error.code === 'DATASTORE_UNAVAILABLE') {
+                return res.status(503).json({
+                    success: false,
+                    error: {
+                        code: "DATASTORE_UNAVAILABLE",
+                        message: "Case completeness cannot be calculated because the investigation datastore is currently unavailable."
+                    }
+                });
+            }
+            
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -293,7 +267,42 @@ class DecisionSupportController {
             }));
             res.status(200).json({ success: true, data: timelineEvents });
         } catch (error) {
-            console.error('Error in DecisionSupportController.getTimeline:', error);
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    static async getContradictions(req, res) {
+        try {
+            const caseId = req.params.caseId || req.query.caseId;
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'caseId parameter is required' });
+            }
+            // Import dynamically to avoid circular dependency issues if any
+            const ContradictionDetectionService = require('../services/ContradictionDetectionService');
+            const ContextBuilderService = require('../services/ContextBuilderService');
+            
+            const context = await ContextBuilderService.buildCaseContext(req, caseId);
+            const result = ContradictionDetectionService.detect(context);
+            
+            res.status(200).json({ 
+                success: true, 
+                data: result 
+            });
+        } catch (error) {
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -304,17 +313,31 @@ class DecisionSupportController {
             if (!caseId) {
                 return res.status(400).json({ success: false, error: 'caseId parameter is required' });
             }
-            const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
-            const precedents = (data.similarCasesRecommendation || []).map(c => ({
-                title: `Case match for ID ${c.caseId}`,
-                caseId: c.caseId,
-                matchReason: c.matchReason || 'Highly matching MO patterns.',
-                evidenceMatch: ['Modus Operandi', 'Crime Category'],
-                similarityScore: '85%'
-            }));
-            res.status(200).json({ success: true, data: precedents });
+            const similarCases = await SimilarCaseService.findSimilarCases(req, caseId);
+            if (similarCases.length === 0) {
+                return res.status(200).json({ 
+                    success: true, 
+                    count: 0, 
+                    cases: [], 
+                    data: [], 
+                    message: "No sufficiently similar cases were found in the available records." 
+                });
+            }
+            res.status(200).json({ success: true, data: similarCases, cases: similarCases, count: similarCases.length });
         } catch (error) {
-            console.error('Error in DecisionSupportController.getSimilarCases:', error);
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(200).json({ 
+                    success: true, 
+                    count: 0, 
+                    cases: [], 
+                    data: [], 
+                    message: "No sufficiently similar cases were found in the available records." 
+                });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -370,7 +393,13 @@ class DecisionSupportController {
             }
             res.status(200).json({ success: true, data: recommendations });
         } catch (error) {
-            console.error('Error in DecisionSupportController.getLeadRecommendations:', error);
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -384,7 +413,13 @@ class DecisionSupportController {
             const data = await DecisionSupportController.getContextAndGenerate(req, caseId);
             res.status(200).json({ success: true, data });
         } catch (error) {
-            console.error('Error in DecisionSupportController.getFullCaseSupport:', error);
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+            }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -402,25 +437,14 @@ class DecisionSupportController {
             await AILogService.logInteraction(req, req.user, caseId, 'Generate Executive Summary', 'crm-di-glm47b', aiData.confidence, aiData.evidenceReferences);
             res.status(200).json({ success: true, data: aiData });
         } catch (error) {
-            console.error('Error in DecisionSupportController.generateExecutiveSummary:', error);
-            try {
-                const context = await ContextBuilderService.buildCaseContext(req, reqCaseId).catch(() => ({}));
-                const mockSummary = {
-                    executiveSummary: `Investigation support details for Case #${reqCaseId}. Brief Facts: ${context.case?.briefFacts || "No details in logs."}`,
-                    crimeSummary: `Crime registered at jurisdiction limits. Status: ${context.case?.status || "Active"}.`,
-                    investigationProgress: `Evidence log contains ${context.suspects?.length || 0} suspect records and ${context.timeline?.length || 0} occurrence/arrest timestamps.`,
-                    majorFindings: [
-                        "Perimeter matches registered occurrence logs.",
-                        "Accused profile lists surrendered status."
-                    ],
-                    currentStatus: "Under active investigation",
-                    confidence: "MEDIUM",
-                    evidenceReferences: context.case ? [context.case.caseId || context.case.ROWID] : []
-                };
-                res.status(200).json({ success: true, data: mockSummary });
-            } catch (e) {
-                res.status(500).json({ success: false, error: error.message });
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
+            res.status(500).json({ success: false, error: error.message });
         }
     }
  
@@ -488,33 +512,14 @@ class DecisionSupportController {
                 data: responseData
             });
         } catch (error) {
-            console.error('Error in DecisionSupportController.queryAIAssistant:', error);
-            try {
-                const context = await ContextBuilderService.buildCaseContext(req, reqCaseId).catch(() => ({}));
-                let answer = `Senior Investigator AI Assistant (Offline Fallback): Active Case details:`;
-                if (context.case) {
-                    answer += `\n- Brief Facts: ${context.case.briefFacts}`;
-                    answer += `\n- Jurisdiction: ${context.case.jurisdiction}`;
-                    answer += `\n- Status: ${context.case.status}`;
-                }
-                if (context.suspects && context.suspects.length > 0) {
-                    answer += `\n- Identified Suspects: ${context.suspects.map(s => s.name || 'UnknownAccused').join(', ')}`;
-                }
-                if (context.timeline && context.timeline.length > 0) {
-                    answer += `\n- Key Timeline Events: ${context.timeline.map(t => `${t.title} (${t.description})`).join('; ')}`;
-                }
-                res.status(200).json({
-                    success: true,
-                    data: {
-                        answer: answer,
-                        confidence: "MEDIUM",
-                        evidenceReferences: context.case ? [context.case.caseId || context.case.ROWID] : [],
-                        dataSources: ["Local Datastore Fallback"]
-                    }
-                });
-            } catch (e) {
-                res.status(500).json({ success: false, error: error.message });
+            console.error('Error in DecisionSupportController:', error);
+            if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
+                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
+            if (error.message && error.message.includes('not found')) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 }
