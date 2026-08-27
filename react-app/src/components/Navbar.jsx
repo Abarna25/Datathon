@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, User, Search, FolderSearch, LogOut, Languages, Loader, Loader2, ChevronDown } from 'lucide-react';
+import { User, Search, FolderSearch, LogOut, Languages, Loader, Loader2, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import useAuth from '../hooks/useAuth';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationCenter from './NotificationCenter';
 import TranslationStatus from '../services/TranslationStatus';
 import api from '../services/api';
 
@@ -79,6 +80,8 @@ const Navbar = () => {
 
   return (
     <header style={{ 
+      position: 'relative',
+      zIndex: 100,
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center', 
@@ -276,24 +279,7 @@ const Navbar = () => {
           </div>
         )}
 
-        <div style={{ 
-          position: 'relative', 
-          cursor: 'pointer',
-          width: '36px',
-          height: '36px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '50%',
-          background: 'var(--bg-tertiary)',
-          border: '1px solid var(--border-color)'
-        }}>
-          <Bell size={18} color="var(--text-secondary)" />
-          <span style={{ 
-            position: 'absolute', top: '7px', right: '7px', background: 'var(--accent-danger)', 
-            width: '7px', height: '7px', borderRadius: '50%' 
-          }}></span>
-        </div>
+        <NotificationCenter />
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid var(--border-color)', paddingLeft: '14px' }}>
           <div style={{ textAlign: 'right' }}>
