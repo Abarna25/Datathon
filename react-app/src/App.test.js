@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders VIKSHANA application brand or login screen', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  // When unauthenticated, App redirects to /auth/login which displays VIKSHANA brand
+  const brandElements = screen.getAllByText(/VIKSHANA/i);
+  expect(brandElements.length).toBeGreaterThan(0);
 });

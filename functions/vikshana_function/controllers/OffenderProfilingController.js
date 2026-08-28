@@ -1,5 +1,5 @@
 const datastoreClient = require('../queries/datastoreClient');
-const glmClient = require('../services/glmClient');
+const LLMService = require('../services/LLMService');
 const AuditService = require('../services/AuditService');
 const AILogService = require('../services/AILogService');
 
@@ -48,16 +48,20 @@ class OffenderProfilingController {
             res.status(200).json({ success: true, data: offenders });
         } catch (error) {
             console.error('Error in OffenderProfiling.getList:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
 
     static async getProfile(req, res) {
         try {
             const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ success: false, error: 'Accused ID parameter is required' });
+            }
+
             const row = await datastoreClient.getRowById(req, 'Accused', id);
             if (!row) {
-                return res.status(404).json({ success: false, error: 'Accused not found' });
+                return res.status(404).json({ success: false, error: 'Accused record not found in Datastore' });
             }
 
             // Find all accused records matching this name to get full case history
@@ -70,9 +74,9 @@ class OffenderProfilingController {
 
             const caseIds = [...new Set(allRecords.map(r => r.CaseMasterID).filter(Boolean))];
             
-            // Fetch real related cases
+            // Fetch real related cases using getRowsWhere or getRowById
             const cases = await Promise.all(
-                caseIds.map(cid => datastoreClient.getRowWhere(req, 'CaseMaster', { CaseMasterID: cid }).catch(() => null))
+                caseIds.map(cid => datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseMasterID: cid }, { maxRows: 1 }).then(r => r[0] || null).catch(() => null))
             ).then(results => results.filter(Boolean));
 
             const arrests = await Promise.all(
@@ -123,7 +127,7 @@ class OffenderProfilingController {
             res.status(200).json({ success: true, data: offender });
         } catch (error) {
             console.error('Error in OffenderProfiling.getProfile:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 
@@ -136,7 +140,7 @@ class OffenderProfilingController {
             ]);
 
             if (!offender1 || !offender2) {
-                return res.status(404).json({ success: false, error: 'One or both accused not found.' });
+                return res.status(404).json({ success: false, error: 'One or both accused not found in Datastore records.' });
             }
 
             const prompt = `You are a Senior Criminology Expert comparing suspects.
@@ -154,39 +158,50 @@ class OffenderProfilingController {
             }
             Do NOT include markdown blocks.`;
 
-            const resGLM = await glmClient.generate([
-                { role: 'system', content: prompt },
-                { role: 'user', content: 'Compare offenders.' }
-            ], { temperature: 0.2 });
+            let data = {
+                similarityScore: "N/A",
+                sharedMo: ["Analysis unavailable"],
+                sharedVictims: [],
+                sharedLocations: [],
+                sharedAssociates: []
+            };
 
-            const cleaned = resGLM.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
-            const data = JSON.parse(cleaned);
+            try {
+                const resLLM = await LLMService.generate([
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: 'Compare offenders.' }
+                ], { temperature: 0.2 });
+
+                const cleaned = String(resLLM?.content || '').trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+                data = JSON.parse(cleaned);
+            } catch (llmErr) {
+                console.warn('[OffenderProfiling] LLM compare fallback:', llmErr.message);
+            }
 
             res.status(200).json({
                 success: true,
                 data: {
-                    offender1: { id: offender1.ROWID, name: offender1.name, riskScore: offender1.risk_level === 'high' ? 88 : 55, district: 'Sector 18' },
-                    offender2: { id: offender2.ROWID, name: offender2.name, riskScore: offender2.risk_level === 'high' ? 88 : 55, district: 'Sector 18' },
+                    offender1: { id: offender1.ROWID, name: offender1.AccusedName || offender1.name, riskScore: 70, district: offender1.PoliceStationID || 'Sector 18' },
+                    offender2: { id: offender2.ROWID, name: offender2.AccusedName || offender2.name, riskScore: 70, district: offender2.PoliceStationID || 'Sector 18' },
                     ...data
                 }
             });
         } catch (error) {
             console.error('Error in compareOffenders:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 
     static async askAIInsights(req, res) {
         try {
-            const { offenderId, question } = req.body;
+            const { offenderId, question } = req.body || {};
             if (!offenderId || !question) {
                 return res.status(400).json({ success: false, error: 'offenderId and question are required.' });
             }
 
-            // Real table: Accused
             const offender = await datastoreClient.getRowById(req, 'Accused', offenderId);
             if (!offender) {
-                return res.status(404).json({ success: false, error: 'Accused not found.' });
+                return res.status(404).json({ success: false, error: 'Accused record not found.' });
             }
 
             const prompt = `You are a Senior Offender Profiling Expert.
@@ -209,22 +224,35 @@ class OffenderProfilingController {
             }
             Do NOT include markdown blocks.`;
 
-            const resGLM = await glmClient.generate([
-                { role: 'system', content: prompt },
-                { role: 'user', content: question }
-            ], { temperature: 0.3 });
+            let responseData = {
+                answer: "AI analysis is currently unavailable.",
+                confidence: "LOW",
+                reasoning: ["LLM service offline or query could not be completed."],
+                evidence: [],
+                supportingRecords: []
+            };
 
-            const cleaned = resGLM.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
-            const responseData = JSON.parse(cleaned);
+            try {
+                const resLLM = await LLMService.generate([
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: question }
+                ], { temperature: 0.3 });
 
-            await AILogService.logInteraction(req, req.user, offender.CaseMasterID, question, 'crm-di-glm47b', responseData.confidence, []);
+                const cleaned = String(resLLM?.content || '').trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+                responseData = JSON.parse(cleaned);
+            } catch (llmErr) {
+                console.warn('[OffenderProfiling] askAIInsights fallback:', llmErr.message);
+            }
+
+            await AILogService.logInteraction(req, req.user, offender.CaseMasterID, question, 'dual-llm', responseData.confidence, []);
 
             res.status(200).json({ success: true, data: responseData });
         } catch (error) {
             console.error('Error in askAIInsights:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 }
 
 module.exports = OffenderProfilingController;
+

@@ -6,16 +6,18 @@ app.use(catalyst.initialize);
 
 app.get('/', async (req, res) => {
     try {
-        const app = catalyst.initialize(req);
-        const zcql = app.zcql();
+        const catalystApp = catalyst.initialize(req);
+        const zcql = catalystApp.zcql();
         try {
             const queryRes = await zcql.executeZCQLQuery("SHOW TABLES");
-            res.json({ success: true, data: queryRes });
+            res.status(200).json({ success: true, data: queryRes });
         } catch(err) {
-            res.json({ success: false, error: err.message, stack: err.stack });
+            console.error('[test_zcql] Query error:', err);
+            res.status(500).json({ success: false, error: err.message });
         }
     } catch (err) {
-        res.json({ success: false, error: err.message });
+        console.error('[test_zcql] Init error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 

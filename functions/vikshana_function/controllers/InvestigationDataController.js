@@ -42,7 +42,7 @@ class InvestigationDataController {
             });
         } catch (error) {
             console.error('Error in InvestigationDataController.getCaseSummary:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to retrieve case summary', data: null });
         }
     }
 
@@ -53,7 +53,7 @@ class InvestigationDataController {
                 res.status(200).json({ success: true, data: rows });
             } catch (error) {
                 console.error(`Error in InvestigationDataController(${table}):`, error);
-                res.status(200).json({ success: false, data: [] });
+                res.status(500).json({ success: false, error: error.message || `Failed to retrieve ${table}`, data: [] });
             }
         };
     }

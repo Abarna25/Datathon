@@ -14,7 +14,7 @@ class AITraceabilityController {
             });
         } catch (error) {
             console.error('[AITraceabilityController] getLogs error:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Traceability lookup failed', data: [] });
         }
     }
 }

@@ -67,39 +67,44 @@ api.get = async (url, config = {}) => {
     return promise;
 };
 
-// Helper for generic fallback structures
-const getFallbackPayload = (url, method) => {
-    if (!url) return { data: { success: true, data: [] } };
-    if (url.includes('/conversations') && (method === 'post' || method === 'POST')) {
-        return { data: { success: true, data: { id: `CONV-${Date.now()}`, title: 'New Investigation Chat', messages: [] } } };
-    }
-    if (url.includes('/dashboard')) return { data: { success: true, data: { weeklyPrediction: [], monthlyPrediction: [], districtForecast: [], crimeTypeForecast: [] } } };
-    if (url.includes('/reports')) return { data: { success: true, data: [] } };
-    if (url.includes('/audit')) return { data: { success: true, data: [] } };
-    return { data: { success: true, data: [] } };
-};
-
-// Global interceptor for retries and silent fallbacks
+// Global interceptor for standard response error handling
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const config = error.config;
+        const status = error.response ? error.response.status : null;
         
-        if (!config || !config.retry) {
-            if (config) {
-                config.retry = { count: 0, maxRetries: 2, delay: 1000 };
+        // Handle 401 Unauthorized: clear expired token so app redirects to login
+        if (status === 401) {
+            localStorage.removeItem('vikshana_auth_token');
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                // Event listener can catch this or redirect
+                window.dispatchEvent(new CustomEvent('vikshana_auth_expired'));
             }
         }
         
-        if (config && config.retry.count < config.retry.maxRetries) {
-            config.retry.count += 1;
-            await new Promise(resolve => setTimeout(resolve, config.retry.delay));
-            return api(config);
+        // Retry transient network or 503/504 errors on idempotent GET requests only
+        if (config && config.method === 'get' && (!status || status === 503 || status === 504)) {
+            if (!config.retry) {
+                config.retry = { count: 0, maxRetries: 2, delay: 1000 };
+            }
+            if (config.retry.count < config.retry.maxRetries) {
+                config.retry.count += 1;
+                await new Promise(resolve => setTimeout(resolve, config.retry.delay));
+                return api(config);
+            }
         }
         
-        // Retries exhausted, return graceful fallback
-        return Promise.resolve(getFallbackPayload(config?.url, config?.method));
+        // Format readable message for UI components
+        if (error.response && error.response.data && error.response.data.error) {
+            error.message = error.response.data.error;
+        } else if (!error.response) {
+            error.message = 'Network connection to VIKSHANA backend unavailable. Please verify server status.';
+        }
+        
+        return Promise.reject(error);
     }
 );
 
 export default api;
+

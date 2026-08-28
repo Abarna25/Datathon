@@ -26,6 +26,7 @@ const textToSqlRoutes = require('./routes/textToSql.routes');
 const firIntelligenceRoutes = require('./routes/firIntelligence.routes');
 const evidenceIntelligenceRoutes = require('./routes/evidenceIntelligence.routes');
 const forecastingRoutes = require('./routes/forecasting.routes');
+const forensicRoutes = require('./routes/forensic.routes');
 
 const app = express();
 
@@ -61,8 +62,9 @@ app.use((req, res, next) => {
 
 // Startup Validation Middleware
 app.use(async (req, res, next) => {
-    if (!startupChecked) {
+    if (!startupChecked && process.env.NODE_ENV !== 'test') {
         startupChecked = true;
+
         console.log('[Startup Validation] Verifying 10 core tables in Catalyst Data Store...');
         const missing = [];
         for (const table of requiredTables) {
@@ -86,23 +88,43 @@ app.use(async (req, res, next) => {
 // Global Middleware
 app.use(cors());
 app.use(express.json());
+
+// Public Routes (Accessible without JWT)
+app.use('/auth', authRoutes);
+const HealthService = require('./services/HealthService');
+app.get('/health', async (req, res) => {
+    try {
+        const health = await HealthService.getSystemHealth(req);
+        const statusCode = health.status === 'UP' ? 200 : 200; // 200 with DEGRADED payload for observability
+        res.status(statusCode).json({ success: true, ...health });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message, status: 'DOWN' });
+    }
+});
+
+// Authenticate all subsequent routes with HMAC-SHA256 JWT validation
 app.use(authenticateToken);
 app.use(fieldFilter);
 
-// Public Routes
-app.use('/auth', authRoutes);
-app.use('/dev', devRoutes);
+// Development & Diagnostic routes (Administrator ONLY, disabled in production)
+if (process.env.NODE_ENV !== 'production') {
+    app.use('/dev', authorizeRole('Administrator'), devRoutes);
+    app.use('/test_zcql', authorizeRole('Administrator'), require('./test_zcql'));
+}
+
+// Audit Routes (Restricted to Administrator and Supervisor)
 app.use('/audit', authorizeRole('Administrator', 'Supervisor'), auditRoutes);
 
 // Role Protected API Routes
 app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), dashboardRoutes);
-app.use('/test_zcql', require('./test_zcql'));
+
 app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), investigateRoutes);
 app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), conversationRoutes);
 app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), caseRoutes);
 app.use('/decision', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), decisionRoutes);
 app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), offenderRoutes);
 app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), evidenceRoutes);
+app.use('/forensics', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), forensicRoutes);
 
 app.use('/relationships', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'), relationshipRoutes);
 app.use('/forecasting', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), forecastingRoutes);
@@ -113,25 +135,32 @@ app.use('/signals', authorizeRole('Administrator', 'Investigator', 'Analyst', 'S
 app.use('/jobs', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), jobRoutes);
 app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), convokraftRoutes);
 const advancedIntelligenceRoutes = require('./routes/advancedIntelligence.routes');
+const sociologicalRoutes = require('./routes/sociological.routes');
+const intelligenceRoutes = require('./routes/intelligence.routes');
 
 app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), textToSqlRoutes);
 app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), firIntelligenceRoutes);
 app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), evidenceIntelligenceRoutes);
 app.use('/advanced-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), advancedIntelligenceRoutes);
+app.use('/sociological', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), sociologicalRoutes);
+app.use('/intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), intelligenceRoutes);
+
 // Fallback for missing routes
 app.use((req, res) => {
     res.status(404).json({ success: false, error: 'Endpoint not found in VIKSHANA API', data: [] });
 });
 
-// Global Error Handler for graceful fallbacks instead of crashing
+// Global Error Handler returning proper HTTP status codes
 app.use((err, req, res, next) => {
     console.error('Unhandled Global Error:', err);
-    res.status(200).json({ 
+    const statusCode = err.status || err.statusCode || 500;
+    res.status(statusCode).json({ 
         success: false, 
-        message: 'Internal error, but recovered gracefully.',
-        error: err.message,
+        message: 'Internal server error occurred.',
+        error: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred.' : err.message,
         data: [] 
     });
 });
 
 module.exports = app;
+

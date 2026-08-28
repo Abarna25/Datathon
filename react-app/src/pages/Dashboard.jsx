@@ -33,6 +33,7 @@ const itemVariants = {
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
+  const [emergingPatterns, setEmergingPatterns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -43,11 +44,19 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/dashboard');
-      if (response.data.success) {
-        setData(response.data.data);
+      const [dashRes, patRes] = await Promise.all([
+        api.get('/dashboard'),
+        api.get('/intelligence/patterns/emerging').catch(() => ({ data: { success: false } }))
+      ]);
+
+      if (dashRes.data.success) {
+        setData(dashRes.data.data);
       } else {
-        throw new Error(response.data.error || 'Failed to fetch data');
+        throw new Error(dashRes.data.error || 'Failed to fetch data');
+      }
+
+      if (patRes.data?.success) {
+        setEmergingPatterns(patRes.data.data?.patterns || []);
       }
     } catch (err) {
       setError(err.message);
@@ -97,6 +106,36 @@ const Dashboard = () => {
         <h1 className="page-title">Good Evening, Officer.</h1>
         <p style={{ color: 'var(--text-secondary)' }}>Welcome to the VIKSHANA AI Command Center.</p>
       </div>
+
+      {/* VIKSHANA 2.0 Live Emerging Pattern & Crime Surge Alerts */}
+      {emergingPatterns.length > 0 && (
+        <motion.div variants={itemVariants} style={{ marginBottom: '20px', padding: '16px 20px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', fontWeight: '800', fontSize: '13px' }}>
+              <AlertTriangle size={18} />
+              <span>EMERGING CRIME PATTERN & SURGE ALERTS ({emergingPatterns.length} ACTIVE)</span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Automated Aggregate Density Shift Detection</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+            {emergingPatterns.slice(0, 3).map((pat, i) => (
+              <div key={pat.patternId || i} style={{ padding: '12px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{pat.title}</strong>
+                  <span style={{ fontSize: '10.5px', fontWeight: '800', padding: '2px 6px', borderRadius: '6px', background: pat.severity === 'CRITICAL' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)', color: pat.severity === 'CRITICAL' ? '#ef4444' : '#f59e0b' }}>
+                    {pat.percentageChange}
+                  </span>
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>{pat.detectionBasis}</div>
+                <div style={{ fontSize: '10.5px', color: 'var(--accent-primary)', marginTop: '2px' }}>
+                  <strong>Action:</strong> {pat.recommendedIntervention}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* ROW 1: Executive KPI Cards */}
       <motion.div className={styles.kpiGrid} variants={itemVariants}>
@@ -401,27 +440,28 @@ const Dashboard = () => {
       {/* BOTTOM SECTION: System Health */}
       <motion.div className={styles.healthBar} variants={itemVariants}>
         <div className={styles.healthItem}>
-          <div className={styles.healthDot} /> Catalyst Connected
+          <div className={styles.healthDot} /> Catalyst Serverless Ready
         </div>
         <div className={styles.healthItem}>
-          <Bot size={14} color="#10b981" /> AI Engine Online
+          <Bot size={14} color="#10b981" /> Dual-LLM Engine Online
         </div>
         <div className={styles.healthItem}>
-          <Database size={14} color="#10b981" /> Database Healthy
+          <Database size={14} color="#10b981" /> Datastore Connected
         </div>
         <div className={styles.healthItem}>
-          <Server size={14} color="#64748b" /> {data.systemHealth?.casesIndexed || 0} Cases Indexed
+          <Server size={14} color="#64748b" /> {data.systemHealth?.casesIndexed || data.kpis?.totalCases || 0} Cases Indexed
         </div>
         <div className={styles.healthItem}>
-          <Clock size={14} color="#64748b" /> Sync: {data.systemHealth?.lastSync || 'Now'}
+          <Clock size={14} color="#64748b" /> Sync: {data.systemHealth?.lastSync || 'Live'}
         </div>
         <div className={styles.healthItem}>
-          <TerminalSquare size={14} color="#64748b" /> API: {data.systemHealth?.apiLatency || '12ms'}
+          <TerminalSquare size={14} color="#64748b" /> API: {data.systemHealth?.apiLatency || 'Operational'}
         </div>
         <div className={styles.healthItem}>
-          <Cpu size={14} color="#64748b" /> GPU: {data.systemHealth?.gpuStatus || 'Idle'}
+          <Cpu size={14} color="#64748b" /> Runtime: Serverless Node.js V8
         </div>
       </motion.div>
+
 
     </motion.div>
   );

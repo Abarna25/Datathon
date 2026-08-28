@@ -6,6 +6,7 @@ const { authorizeRole } = require('../middleware/authorize.middleware');
 
 // Admin only route to get logs
 router.get('/', authorizeRole(['Administrator']), AuditController.getLogs);
+router.get('/logs', authorizeRole(['Administrator']), AuditController.getLogs);
 
 // Get AI logs
 router.get('/ai-logs', authorizeRole(['Administrator', 'Supervisor']), AITraceabilityController.getLogs);

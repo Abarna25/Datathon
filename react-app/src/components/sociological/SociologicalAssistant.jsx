@@ -451,7 +451,7 @@ const UserBubble = memo(({ content, userName }) => (
 ));
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────────
-const SociologicalAssistant = () => {
+const SociologicalAssistant = ({ caseId }) => {
     const { user } = useContext(AuthContext);
     const { t, language } = useLanguage();
     const [history, setHistory] = useState([]);
@@ -491,17 +491,18 @@ const SociologicalAssistant = () => {
                 messages: history,
                 officerName: user?.name || 'Officer Kanishk',
                 officerRole: user?.role || t('common.activeRole', 'Senior Investigator'),
-                caseId: 'CASE-2026-SOC-' + Math.floor(1000 + Math.random() * 9000),
+                caseId: caseId || `CASE-SOC-${Date.now().toString(36).toUpperCase()}`,
                 language
             });
             showToast(t('assistant.exportSuccess', 'PDF Exported Successfully!'));
+
         } catch (err) {
             console.debug('[SociologicalAssistant] PDF export error:', err);
             setError(t('assistant.exportError', 'Failed to export PDF. Please try again.'));
         } finally {
             setIsExportingPdf(false);
         }
-    }, [history, isExportingPdf, user, language, t, showToast]);
+    }, [history, isExportingPdf, user, language, t, showToast, caseId]);
 
     const sendQuestion = useCallback(async (question) => {
         const trimmed = question.trim();
@@ -716,8 +717,12 @@ const SociologicalAssistant = () => {
                 )}
 
                 {/* Error */}
-                }
-                    >
+                {error && (
+                    <div style={{
+                        padding: '12px 16px', borderRadius: '8px',
+                        background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                        display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px'
+                    }}>
                         <AlertCircle size={16} color="var(--accent-danger)" aria-hidden="true" />
                         <span style={{ fontSize: '13px', color: 'var(--text-primary)', flex: 1 }}>{error}</span>
                         <button

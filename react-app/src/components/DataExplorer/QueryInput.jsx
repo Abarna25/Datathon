@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Loader2, Sparkles, Send } from 'lucide-react';
+import { Loader2, Sparkles, Send } from 'lucide-react';
 
 const QueryInput = ({ onExecute, isLoading }) => {
   const [query, setQuery] = useState('');
@@ -13,10 +13,10 @@ const QueryInput = ({ onExecute, isLoading }) => {
   };
 
   const suggestions = [
-    'Find all suspects matching this case',
-    'Show me the evidence timeline',
-    'List all seized vehicles in Mysore',
-    'Find connections to Rajesh'
+    'Show all cases registered in 2021',
+    'Find all suspects and accused',
+    'List all crime incidents',
+    'Show all victim details'
   ];
 
   return (
@@ -25,17 +25,16 @@ const QueryInput = ({ onExecute, isLoading }) => {
         onSubmit={handleSubmit} 
         style={{ 
           display: 'flex', 
-          background: 'rgba(19, 26, 42, 0.7)',
-          border: `1px solid ${isFocused ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '16px',
-          padding: '8px',
-          transition: 'all 0.3s ease',
-          boxShadow: isFocused ? '0 0 0 4px rgba(59, 130, 246, 0.15)' : '0 4px 20px rgba(0,0,0,0.2)',
-          backdropFilter: 'blur(12px)'
+          background: 'var(--bg-secondary)',
+          border: `1px solid ${isFocused ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+          borderRadius: '14px',
+          padding: '6px 8px',
+          transition: 'all 0.2s ease',
+          boxShadow: isFocused ? '0 0 0 3px rgba(37, 99, 235, 0.15)' : 'var(--shadow-sm)'
         }}
       >
-        <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center' }}>
-          <Sparkles size={22} color={isFocused ? '#3b82f6' : '#64748b'} style={{ transition: 'color 0.3s' }} />
+        <div style={{ padding: '0 12px', display: 'flex', alignItems: 'center' }}>
+          <Sparkles size={20} color={isFocused ? 'var(--accent-primary)' : 'var(--text-muted)'} style={{ transition: 'color 0.2s' }} />
         </div>
         
         <input
@@ -44,16 +43,16 @@ const QueryInput = ({ onExecute, isLoading }) => {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder="e.g., Show me all suspects involved in gold theft..."
+          placeholder="e.g., Show all cases registered in 2021..."
           disabled={isLoading}
           style={{
             flex: 1,
             background: 'transparent',
             border: 'none',
-            color: '#ffffff',
-            fontSize: '16px',
+            color: 'var(--text-primary)',
+            fontSize: '15px',
             outline: 'none',
-            padding: '12px 0',
+            padding: '10px 0',
             fontWeight: '500'
           }}
         />
@@ -62,10 +61,10 @@ const QueryInput = ({ onExecute, isLoading }) => {
           type="submit"
           disabled={isLoading || !query.trim()}
           style={{
-            padding: '0 24px',
-            borderRadius: '12px',
-            background: query.trim() ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255,255,255,0.05)',
-            color: query.trim() ? '#ffffff' : '#64748b',
+            padding: '0 20px',
+            borderRadius: '10px',
+            background: query.trim() ? 'linear-gradient(135deg, var(--accent-primary) 0%, #1d4ed8 100%)' : 'var(--bg-tertiary)',
+            color: query.trim() ? '#ffffff' : 'var(--text-muted)',
             border: 'none',
             fontWeight: '600',
             cursor: isLoading || !query.trim() ? 'not-allowed' : 'pointer',
@@ -73,43 +72,46 @@ const QueryInput = ({ onExecute, isLoading }) => {
             alignItems: 'center',
             gap: '8px',
             transition: 'all 0.2s',
-            boxShadow: query.trim() ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none'
+            boxShadow: query.trim() ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none',
+            fontSize: '14px'
           }}
         >
-          {isLoading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
+          {isLoading ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
           {isLoading ? 'Processing...' : 'Execute'}
         </button>
       </form>
 
-      <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Suggested Queries:</span>
+      <div style={{ marginTop: '14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>Suggested Queries:</span>
         {suggestions.map(suggestion => (
           <button
             key={suggestion}
-            onClick={() => setQuery(suggestion)}
+            type="button"
+            onClick={() => {
+              setQuery(suggestion);
+              onExecute(suggestion);
+            }}
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: '#94a3b8',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-secondary)',
               borderRadius: '20px',
-              padding: '6px 14px',
-              fontSize: '13px',
+              padding: '5px 12px',
+              fontSize: '12px',
+              fontWeight: '500',
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              ':hover': {
-                background: 'rgba(255,255,255,0.08)',
-                color: '#ffffff'
-              }
+              transition: 'all 0.15s ease',
+              boxShadow: 'var(--shadow-sm)'
             }}
             onMouseOver={(e) => {
-              e.target.style.background = 'rgba(59,130,246,0.1)';
-              e.target.style.borderColor = 'rgba(59,130,246,0.3)';
-              e.target.style.color = '#60a5fa';
+              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+              e.currentTarget.style.color = 'var(--accent-primary)';
+              e.currentTarget.style.background = 'var(--color-primary-light, #eff6ff)';
             }}
             onMouseOut={(e) => {
-              e.target.style.background = 'rgba(255,255,255,0.03)';
-              e.target.style.borderColor = 'rgba(255,255,255,0.08)';
-              e.target.style.color = '#94a3b8';
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.background = 'var(--bg-secondary)';
             }}
           >
             {suggestion}

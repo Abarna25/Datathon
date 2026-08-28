@@ -129,12 +129,22 @@ class ConversationController {
                 LLMService.initSSE(res);
             }
 
-            // HACKATHON STABILIZATION: Bypass dynamic planning and just fetch 100% of case context
-            if (streaming) LLMService.sendEvent(res, 'progress', { step: 'correlating', status: 'Detecting target case and building context...' });
+            // VIKSHANA 2.0: Fetch 100% of case context + 2.0 Intelligence Layers in parallel
+            if (streaming) LLMService.sendEvent(res, 'progress', { step: 'correlating', status: 'Correlating case context, leads, and MO patterns...' });
             const detectedCaseId = await detectCaseIdFromQuery(req, content, conversation.caseId);
-            const contextData = await ContextBuilderService.buildCaseContext(req, detectedCaseId);
             
-            // Format context into a structured ledger so it aligns with existing pipelines, but it's indestructible
+            const InvestigationReasoningService = require('../services/InvestigationReasoningService');
+            const MOIntelligenceService = require('../services/MOIntelligenceService');
+            const InvestigationGapService = require('../services/InvestigationGapService');
+
+            const [contextData, leadsData, moData, gapsData] = await Promise.all([
+                ContextBuilderService.buildCaseContext(req, detectedCaseId),
+                InvestigationReasoningService.generateLeads(req, detectedCaseId).catch(() => null),
+                MOIntelligenceService.getMOAnalysis(req, detectedCaseId).catch(() => null),
+                InvestigationGapService.getGapsAndActions(req, detectedCaseId).catch(() => null)
+            ]);
+            
+            // Format context into a structured 2.0 intelligence ledger
             const ledger = [{
                 _type: 'FullCaseContext',
                 case: contextData.case,
@@ -142,7 +152,12 @@ class ConversationController {
                 suspects: contextData.suspects,
                 witnesses: contextData.witnesses,
                 timeline: contextData.timeline,
-                arrests: contextData.timeline.filter(e => e.source_type === 'arrest_record')
+                arrests: contextData.timeline.filter(e => e.source_type === 'arrest_record'),
+                investigationLeads: leadsData?.leads || [],
+                modusOperandi: moData?.moProfile || null,
+                similarMOCases: moData?.matchedHistoricalCases || [],
+                investigationGaps: gapsData?.gaps || [],
+                recommendedActions: gapsData?.recommendedActions || []
             }];
 
             // Step 4: Report Generation

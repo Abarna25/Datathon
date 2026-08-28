@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, FileText, Database, Compass, Clock, MapPin, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Loader2, FileText, Database, Compass, Clock, MapPin, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList, Zap, Fingerprint, Link as LinkIcon, BrainCircuit } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ConversationProvider } from '../context/ConversationContext';
 import api from '../services/api';
@@ -9,6 +10,10 @@ import styles from './InvestigationWorkspace.module.css';
 import FIRSummaryPanel from '../components/investigation/FIRSummaryPanel';
 import DecisionSupportPanel from '../components/investigation/DecisionSupportPanel';
 import TimelineIntelligencePanel from '../components/investigation/TimelineIntelligencePanel';
+import InvestigationLeadsPanel from '../components/investigation/InvestigationLeadsPanel';
+import MOProfilePanel from '../components/investigation/MOProfilePanel';
+import EvidenceChainView from '../components/investigation/EvidenceChainView';
+import SociologicalAssistant from '../components/sociological/SociologicalAssistant';
 import EvidenceSummaryCards from '../components/evidence/EvidenceSummaryCards';
 import EvidenceTimeline from '../components/evidence/EvidenceTimeline';
 import EvidenceCorrelationGraph from '../components/evidence/EvidenceCorrelationGraph';
@@ -19,17 +24,30 @@ import EntityCards from '../components/fir/EntityCards';
 import TimelineView from '../components/fir/TimelineView';
 
 const InvestigationWorkspace = () => {
-    const { activeCaseId, loadingCases, currentCase } = useAppContext();
+    const navigate = useNavigate();
+    const { caseId: paramCaseId } = useParams();
+    const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases } = useAppContext();
     const [activeTab, setActiveTab] = useState('overview');
+
+    // Sync URL param with activeCaseId or select default first case
+    useEffect(() => {
+        if (paramCaseId && paramCaseId !== activeCaseId && setActiveCaseId) {
+            setActiveCaseId(paramCaseId);
+        } else if (!activeCaseId && cases && cases.length > 0 && setActiveCaseId) {
+            setActiveCaseId(String(cases[0].id));
+        }
+    }, [paramCaseId, activeCaseId, cases, setActiveCaseId]);
+
+    const effectiveCaseId = paramCaseId || (activeCaseId !== 'all' ? activeCaseId : (cases && cases[0]?.id)) || '101';
     
     // For Evidence Intelligence data
     const [evidenceData, setEvidenceData] = useState(null);
     const [loadingEvidence, setLoadingEvidence] = useState(false);
 
     useEffect(() => {
-        if (activeTab === 'evidence' && activeCaseId && !evidenceData) {
+        if (activeTab === 'evidence' && effectiveCaseId && !evidenceData) {
             setLoadingEvidence(true);
-            api.get(`/evidence-intelligence/workspace?caseId=${activeCaseId}`)
+            api.get(`/evidence-intelligence/workspace?caseId=${effectiveCaseId}`)
                 .then(res => {
                     if (res.data.success) {
                         setEvidenceData(res.data.data);
@@ -38,31 +56,29 @@ const InvestigationWorkspace = () => {
                 .catch(console.error)
                 .finally(() => setLoadingEvidence(false));
         }
-    }, [activeTab, activeCaseId, evidenceData]);
+    }, [activeTab, effectiveCaseId, evidenceData]);
 
-    if (loadingCases || !activeCaseId) {
+    if (loadingCases && !currentCase) {
         return (
             <div className={styles.loadingState} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                {!activeCaseId && !loadingCases ? (
-                    <div style={{ color: 'var(--text-secondary)' }}>Please select a case from the global search bar to begin.</div>
-                ) : (
-                    <>
-                        <Loader2 size={36} className="spin" color="var(--accent-primary)" />
-                        <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Loading active case bundle...</p>
-                    </>
-                )}
+                <Loader2 size={36} className="spin" color="var(--accent-primary)" />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Loading active case bundle...</p>
             </div>
         );
     }
 
     const tabs = [
         { id: 'overview', label: 'Case Overview', icon: FileText },
+        { id: 'leads', label: 'Investigation Leads', icon: Zap },
+        { id: 'mo', label: 'MO Intelligence', icon: Fingerprint },
+        { id: 'chain', label: 'Evidence Chain', icon: LinkIcon },
         { id: 'fir', label: 'FIR Intelligence', icon: FileText },
         { id: 'evidence', label: 'Evidence Intelligence', icon: Database },
         { id: 'entities', label: 'Entities', icon: Users },
         { id: 'relationships', label: 'Relationship Explorer', icon: Network },
         { id: 'timeline', label: 'Investigation Timeline', icon: LayoutList },
         { id: 'timeline-intel', label: 'Timeline Intelligence', icon: Clock },
+        { id: 'sociological', label: 'Sociological Intelligence', icon: BrainCircuit },
         { id: 'similar', label: 'Similar Cases', icon: Share2 },
         { id: 'decision', label: 'Decision Support', icon: Compass },
         { id: 'search', label: 'Investigation Search', icon: Search },
@@ -170,18 +186,34 @@ const InvestigationWorkspace = () => {
                     </div>
                 )}
 
+                {activeTab === 'leads' && (
+                    <InvestigationLeadsPanel caseId={effectiveCaseId} />
+                )}
+
+                {activeTab === 'mo' && (
+                    <MOProfilePanel caseId={effectiveCaseId} />
+                )}
+
+                {activeTab === 'chain' && (
+                    <EvidenceChainView caseId={effectiveCaseId} />
+                )}
+
                 {activeTab === 'timeline-intel' && (
-                    <TimelineIntelligencePanel caseId={activeCaseId} />
+                    <TimelineIntelligencePanel caseId={effectiveCaseId} />
+                )}
+
+                {activeTab === 'sociological' && (
+                    <SociologicalAssistant caseId={effectiveCaseId} />
                 )}
 
                 {activeTab === 'similar' && (
                     <div style={{ padding: '10px' }}>
-                        <DecisionSupportPanel caseId={activeCaseId} defaultExpanded={true} />
+                        <DecisionSupportPanel caseId={effectiveCaseId} defaultExpanded={true} />
                     </div>
                 )}
 
                 {activeTab === 'decision' && (
-                    <DecisionSupportPanel caseId={activeCaseId} defaultExpanded={true} />
+                    <DecisionSupportPanel caseId={effectiveCaseId} defaultExpanded={true} />
                 )}
 
                 {activeTab === 'search' && (
@@ -192,8 +224,8 @@ const InvestigationWorkspace = () => {
 
                 {activeTab === 'copilot' && (
                     <div style={{ height: 'calc(100vh - 200px)', border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
-                        <ConversationProvider caseId={activeCaseId}>
-                            <InvestigationChat caseId={activeCaseId} />
+                        <ConversationProvider caseId={effectiveCaseId}>
+                            <InvestigationChat caseId={effectiveCaseId} />
                         </ConversationProvider>
                     </div>
                 )}
@@ -205,8 +237,11 @@ const InvestigationWorkspace = () => {
                         <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 24px' }}>
                             Generate a comprehensive court-ready report consolidating FIR details, evidence correlation, timeline intelligence, and AI decision support.
                         </p>
-                        <button style={{ padding: '10px 24px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                            Generate Report for Case {activeCaseId}
+                        <button 
+                            onClick={() => navigate('/reports')}
+                            style={{ padding: '10px 24px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            Generate Report for Case {effectiveCaseId}
                         </button>
                     </div>
                 )}

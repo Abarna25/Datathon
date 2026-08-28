@@ -93,6 +93,51 @@ const tables = {
     ],
     Inv_OccuranceTime: [
         'CaseMasterID', 'IncidentFromDate', 'IncidentToDate', 'InfoReceivedPSDate'
+    ],
+    // New Forensic Entities & User Persistence
+    Evidence: [
+        'EvidenceID', 'CaseMasterID', 'EvidenceType', 'Description', 'CollectedBy', 'CollectedDate',
+        'StorageLocation', 'FileHash', 'FileName', 'FileSize', 'ChainOfCustodyStatus', 'CreatedTime', 'UpdatedTime'
+    ],
+    CCTVRecord: [
+        'CCTVRecordID', 'CaseMasterID', 'CameraID', 'Location', 'RecordingFromDate', 'RecordingToDate',
+        'StorageReference', 'FileHash', 'Description', 'Status', 'Source', 'CreatedTime'
+    ],
+    CallDetailRecord: [
+        'CDRID', 'CaseMasterID', 'CallerPhone', 'ReceiverPhone', 'CallTimestamp', 'DurationSeconds',
+        'CallType', 'CellTowerLocation', 'IMEI', 'Source', 'CreatedTime'
+    ],
+    FinancialTransaction: [
+        'TransactionID', 'CaseMasterID', 'SourceAccount', 'DestinationAccount', 'BankName',
+        'TransactionDate', 'Amount', 'TransactionType', 'IsSuspicious', 'SuspiciousReason', 'Source', 'CreatedTime'
+    ],
+    ForensicReport: [
+        'ReportID', 'CaseMasterID', 'ForensicType', 'LaboratoryName', 'ExpertName', 'SubmittedDate',
+        'CompletedDate', 'FindingsSummary', 'ResultStatus', 'ReportFileHash', 'CreatedTime'
+    ],
+    Weapon: [
+        'WeaponID', 'CaseMasterID', 'WeaponType', 'MakeModel', 'CaliberSerialNo', 'RecoveredFrom',
+        'RecoveryLocation', 'RecoveryDate', 'BallisticsMatchStatus', 'CreatedTime'
+    ],
+    Vehicle: [
+        'VehicleID', 'CaseMasterID', 'RegistrationNo', 'VehicleType', 'Make', 'Model', 'Color',
+        'OwnerName', 'ChassisNo', 'EngineNo', 'SeizureStatus', 'CreatedTime'
+    ],
+    BiometricRecord: [
+        'BiometricID', 'CaseMasterID', 'AccusedMasterID', 'BiometricType', 'ReferenceID',
+        'MatchConfidence', 'MatchSource', 'VerifiedByExpert', 'CreatedTime'
+    ],
+    CourtHearing: [
+        'HearingID', 'CaseMasterID', 'CourtID', 'HearingDate', 'JudgeName', 'HearingStage',
+        'ProceedingsSummary', 'NextHearingDate', 'CourtOrder', 'CreatedTime'
+    ],
+    InterrogationReport: [
+        'InterrogationID', 'CaseMasterID', 'AccusedMasterID', 'InterrogatingOfficerID',
+        'InterrogationDate', 'KeyAdmissions', 'Summary', 'VerifiedStatus', 'CreatedTime'
+    ],
+    UserMaster: [
+        'UserID', 'Username', 'Email', 'PasswordHash', 'Salt', 'Iterations',
+        'Role', 'Department', 'Name', 'Status', 'CreatedAt', 'UpdatedAt'
     ]
 };
 

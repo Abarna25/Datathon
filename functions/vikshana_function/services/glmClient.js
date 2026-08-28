@@ -45,8 +45,8 @@ class GLMClient {
             maxTokens = 8192,
             tools = undefined,
             tool_choice = undefined,
-            retries = 3,
-            timeoutMs = 60000
+            retries = 1,
+            timeoutMs = 4000
         } = options;
 
         let currentApiKey = process.env.GLM_API_KEY || process.env.CATALYST_TOKEN;
@@ -61,7 +61,6 @@ class GLMClient {
         }
 
         if (!this.endpoint || !this.model || !currentApiKey) {
-            console.warn('[GLMClient] Missing GLM_ENDPOINT, GLM_MODEL, or GLM_API_KEY/CATALYST_TOKEN in .env.');
             throw new Error('[GLMClient] AI Copilot offline: missing GLM configuration in .env.');
         }
 
@@ -113,69 +112,27 @@ class GLMClient {
                 };
 
             } catch (error) {
-                // FALLBACK TO GEMINI IF ZOHO CATALYST KEY EXPIRED
-                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                    try {
-                        let geminiKey = process.env.GEMINI_API_KEY;
-                        try {
-                            const envContent = fs.readFileSync(path.join(__dirname, '../.env'), 'utf-8');
-                            const keyMatch = envContent.match(/GEMINI_API_KEY=(.*)/);
-                            if (keyMatch && keyMatch[1]) geminiKey = keyMatch[1].trim();
-                        } catch (e) {}
-
-                        if (geminiKey) {
-                            console.log('[GLMClient] Catalyst Auth Failed (401). Falling back to direct Gemini API.');
-                            
-                            // Convert messages to Gemini format
-                            const geminiMessages = messages.map(m => ({
-                                role: m.role === 'assistant' ? 'model' : 'user',
-                                parts: [{ text: m.content || " " }]
-                            }));
-                            
-                            let systemInstruction;
-                            if (geminiMessages.length > 0 && messages[0].role === 'system') {
-                                systemInstruction = { parts: [{ text: messages[0].content }] };
-                                geminiMessages.shift();
-                            }
-
-                            const payload = { contents: geminiMessages };
-                            if (systemInstruction) payload.systemInstruction = systemInstruction;
-
-                            const geminiRes = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, payload, { headers: { 'Content-Type': 'application/json' }});
-                            
-                            const text = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                            return {
-                                content: stripReasoning(text),
-                                tool_calls: null,
-                                finish_reason: 'stop'
-                            };
-                        }
-                    } catch (geminiError) {
-                        console.error('[GLMClient] Gemini fallback also failed:', geminiError.message);
-                    }
-                    
-                    console.log('[GLMClient] Catalyst Auth Failed. Returning clean analysis fallback.');
-                    throw new Error('[GLMClient] AI service offline. Using structured datastore analysis.');
-                }
-
                 attempt++;
                 lastError = error;
-                console.warn(`[GLMClient] Attempt ${attempt} failed:`, error.response?.data || error.message);
 
-                if (error.response?.status === 401) {
-                    console.error('[GLMClient] Authentication failed (HTTP 401 Invalid OAuth Token). Please update CATALYST_TOKEN or GLM_API_KEY in .env.');
-                    throw new Error('[GLMClient] AI Copilot offline: invalid or expired CATALYST_TOKEN (HTTP 401).');
+                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    throw new Error('[GLMClient] Authentication token expired or invalid (HTTP 401/403).');
                 }
 
-                if (attempt < retries) {
-                    await new Promise(res => setTimeout(res, 1000 * attempt));
+                if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+                    throw new Error('[GLMClient] Request timed out.');
+                }
+
+                if (attempt >= retries) {
+                    throw error;
                 }
             }
         }
 
-        throw new Error(`[GLMClient] AI Copilot offline: API call failed after ${retries} attempts (${lastError?.message}).`);
+        throw new Error(`[GLMClient] API call failed: ${lastError?.message}`);
     }
 }
+
 
 const client = new GLMClient();
 module.exports = client;

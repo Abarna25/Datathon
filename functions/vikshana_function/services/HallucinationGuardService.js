@@ -66,12 +66,13 @@ class HallucinationGuardService {
     }
 
     static getFallback(message) {
+        const baseMsg = message ? message.trim() : "Insufficient evidence in the available case records to verify this query.";
         return {
             success: true,
-            answer: (message || "There is an absence of evidence in the available case records.") + " Claims regarding entities like John Doe are not found.",
+            answer: baseMsg,
             evidenceStatus: "UNAVAILABLE",
             sources: [],
-            limitation: "The generated response contained unverified claims and was blocked by the Hallucination Guard."
+            limitation: "The generated response contained unverified claims or unsupported entities and was safely contained by the Hallucination Guard."
         };
     }
 }

@@ -28,7 +28,7 @@ class AttachmentController {
             res.status(201).json({ success: true, data: attachment });
         } catch (error) {
             console.error('Error in AttachmentController.upload:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Attachment upload failed', data: null });
         }
     }
 }

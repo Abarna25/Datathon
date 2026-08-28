@@ -1,24 +1,64 @@
 /**
  * authorize.middleware.js
- * Express Role-Based Access Control (RBAC) & Audit Logging Middleware for VIKSHANA.
+ * Express Role-Based Access Control (RBAC) & Cryptographic JWT Authentication for VIKSHANA.
  */
 
 const crypto = require('crypto');
-const JWT_SECRET = process.env.JWT_SECRET || 'vikshana-catalyst-secret-key-2026';
+
+/**
+ * Retrieves the cryptographically secure JWT Secret.
+ * Enforces fail-fast validation in runtime/production environments.
+ */
+function getJWTSecret() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.trim() === '') {
+        if (process.env.NODE_ENV === 'test') {
+            return 'vikshana-test-environment-jwt-secret-key-hs256';
+        }
+        throw new Error('[SECURITY FATAL] JWT_SECRET environment variable is missing or empty. Server cannot start securely without a configured JWT_SECRET.');
+    }
+    return secret.trim();
+}
 
 const AuditService = require('../services/AuditService');
 
+/**
+ * Cryptographically verifies an HMAC-SHA256 JWT.
+ * Validates header format, signature integrity via constant-time comparison, and token expiration.
+ */
 function verifyToken(token) {
     try {
-        if (!token) return null;
+        if (!token || typeof token !== 'string') return null;
         const parts = token.split('.');
         if (parts.length !== 3) return null;
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+        const [headerB64, payloadB64, sigB64] = parts;
+
+        // 1. Verify header
+        const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString('utf8'));
+        if (header.alg !== 'HS256' || header.typ !== 'JWT') return null;
+
+        // 2. Cryptographic signature check (timing-safe)
+        const secret = getJWTSecret();
+        const expectedSig = crypto.createHmac('sha256', secret).update(`${headerB64}.${payloadB64}`).digest('base64url');
+        const sigBuf = Buffer.from(sigB64);
+        const expectedSigBuf = Buffer.from(expectedSig);
+        if (sigBuf.length !== expectedSigBuf.length || !crypto.timingSafeEqual(sigBuf, expectedSigBuf)) {
+            return null;
+        }
+
+        // 3. Expiration check
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < now) {
+            return null; // Token expired
+        }
+
         return payload;
     } catch (e) {
         return null;
     }
 }
+
 
 function normRole(r) {
     const s = String(r || '').toLowerCase();
@@ -32,7 +72,6 @@ function normRole(r) {
 }
 
 function logAuditEvent(user, action, details, req, status = 'SUCCESS') {
-    // Fire and forget logging
     AuditService.logEvent(req, user, action, details, '', status).catch(err => {
         console.error('[Authorize] Failed to log event:', err);
     });
@@ -42,31 +81,40 @@ function authenticateToken(req, res, next) {
     const authHeader = req.headers['x-vikshana-auth'] || req.headers.authorization;
     let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : req.query?.token;
 
-    if (token) {
-        const decoded = verifyToken(token);
-        if (decoded) {
-            req.user = decoded;
-            return next();
-        }
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            error: 'Authentication required. Missing Bearer token in authorization header.',
+            code: 'UNAUTHENTICATED'
+        });
     }
 
-    // Default fallback context for local development so API testing passes smoothly
-    req.user = {
-        id: 'CATALYST_USR_001',
-        email: 'officer@vikshana.gov',
-        role: 'Officer',
-        name: 'Insp. R. Singh'
-    };
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(401).json({
+            success: false,
+            error: 'Invalid, forged, or expired authentication token.',
+            code: 'INVALID_TOKEN'
+        });
+    }
+
+    req.user = decoded;
     next();
 }
 
 function authorizeRole(...allowedRoles) {
     return (req, res, next) => {
-        const user = req.user || { role: 'Officer' };
-        const rawRole = user.role || 'Officer';
-        const userRoleNormalized = normRole(rawRole);
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required.',
+                code: 'UNAUTHENTICATED'
+            });
+        }
 
-        // Flatten allowed roles
+        const rawRole = user.role || 'Viewer';
+        const userRoleNormalized = normRole(rawRole);
         const rolesList = allowedRoles.flat();
 
         const isAllowed = rolesList.some((r) => {
@@ -95,5 +143,7 @@ function authorizeRole(...allowedRoles) {
 module.exports = {
     authenticateToken,
     authorizeRole,
+    verifyToken,
     logAuditEvent
 };
+

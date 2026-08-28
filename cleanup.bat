@@ -1,10 +1,8 @@
 @echo off
 echo Killing stuck node.exe processes...
-taskkill /F /IM node.exe
-echo Waiting for processes to die...
-timeout /t 2 /nobreak > NUL
-echo Removing .build directories...
-rmdir /s /q "\\?\%~dp0.build"
-rmdir /s /q "\\?\%~dp0.build_old"
+taskkill /F /IM node.exe > NUL 2>&1
+powershell -Command "Start-Sleep -Seconds 1; if (Test-Path '.build') { Remove-Item -Recurse -Force '.build' }; if (Test-Path '.build_old') { Remove-Item -Recurse -Force '.build_old' }"
 echo Done! You can now run catalyst serve again.
+
+
 

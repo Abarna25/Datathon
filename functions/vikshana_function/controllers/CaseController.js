@@ -38,7 +38,7 @@ class CaseController {
             res.status(200).json({ success: true, data: cases });
         } catch (error) {
             console.error('Error in CaseController.listCases:', error);
-            res.status(200).json({ success: false, error: 'Failed to list cases', data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to list cases', data: [] });
         }
     }
 
@@ -79,19 +79,10 @@ class CaseController {
             res.status(200).json({ success: true, data: bundle });
         } catch (error) {
             console.error('Error in CaseController.getFullBundle:', error);
-            res.status(200).json({ 
+            res.status(500).json({ 
                 success: false, 
-                error: 'Failed to load case bundle',
-                data: {
-                    caseId: req.params.caseId,
-                    caseNumber: `CASE-${req.params.caseId}`,
-                    category: 'Unknown',
-                    location: 'Unknown',
-                    date: '',
-                    policeStation: 'Unknown',
-                    firSummary: { crime: 'Unknown', date: '', policeStation: 'Unknown', victimsCount: 0, suspectsCount: 0, evidenceCount: 0, firText: '' },
-                    victims: [], suspects: [], witnesses: [], evidence: [], timeline: [], financialTransactions: [], phoneRecords: []
-                }
+                error: error.message || 'Failed to load case bundle',
+                data: null
             });
         }
     }
@@ -99,20 +90,76 @@ class CaseController {
     static async updateCase(req, res) {
         try {
             const { caseId } = req.params;
-            AuditService.logEvent(req, req.user, 'Updated Case', `CaseMaster:${caseId}`, caseId, 'SUCCESS');
-            res.status(200).json({ success: true, message: 'Case updated successfully' });
+            const payload = req.body || {};
+            
+            if (!caseId) {
+                return res.status(400).json({ success: false, error: 'Case ID parameter is required' });
+            }
+
+            let existing = await datastoreClient.getRowById(req, 'CaseMaster', caseId).catch(() => null);
+            if (!existing) {
+                const rows = await datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseMasterID: caseId }, { maxRows: 1 }).catch(() => []);
+                existing = rows[0] || null;
+            }
+
+            if (!existing) {
+                return res.status(404).json({ success: false, error: `Case #${caseId} not found in Datastore` });
+            }
+
+            // Clean mutation payload with allowed fields only
+            const allowedFields = ['BriefFacts', 'CaseCategoryID', 'CaseStatusID', 'PoliceStationID', 'CrimeNo', 'CaseNo', 'latitude', 'longitude'];
+            const updateData = {};
+            allowedFields.forEach(f => {
+                if (payload[f] !== undefined) updateData[f] = payload[f];
+            });
+
+            if (Object.keys(updateData).length === 0) {
+                return res.status(400).json({ success: false, error: 'No valid update fields provided' });
+            }
+
+            const targetRowId = existing.ROWID || caseId;
+            const updated = await datastoreClient.updateRow(req, 'CaseMaster', targetRowId, updateData);
+
+            await AuditService.logEvent(req, req.user, 'Updated Case', `CaseMaster:${caseId}`, caseId, 'SUCCESS');
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Case updated successfully in Catalyst Datastore',
+                data: { ...existing, ...updateData, ROWID: targetRowId }
+            });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            console.error('Error in CaseController.updateCase:', error);
+            await AuditService.logEvent(req, req.user, 'Failed Case Update', `CaseMaster:${req.params?.caseId}`, req.params?.caseId, 'FAILED');
+            return res.status(500).json({ success: false, error: error.message || 'Failed to update case record' });
         }
     }
 
     static async deleteRecord(req, res) {
         try {
             const { caseId, recordId } = req.params;
-            AuditService.logEvent(req, req.user, 'Deleted Record', `Record:${recordId}`, caseId, 'SUCCESS');
-            res.status(200).json({ success: true, message: 'Record deleted successfully' });
+            const table = req.query.table || 'CaseMaster';
+
+            if (!recordId) {
+                return res.status(400).json({ success: false, error: 'Record ID parameter is required' });
+            }
+
+            let existing = await datastoreClient.getRowById(req, table, recordId).catch(() => null);
+            if (!existing) {
+                const rows = await datastoreClient.getRowsWhere(req, table, { CaseMasterID: recordId }, { maxRows: 1 }).catch(() => []);
+                existing = rows[0] || null;
+            }
+
+            if (!existing) {
+                return res.status(404).json({ success: false, error: `Record #${recordId} not found in ${table}` });
+            }
+
+            const targetRowId = existing.ROWID || recordId;
+            await datastoreClient.deleteRow(req, table, targetRowId);
+
+            await AuditService.logEvent(req, req.user, 'Deleted Record', `${table}:${recordId}`, caseId, 'SUCCESS');
+            return res.status(200).json({ success: true, message: `Record deleted successfully from ${table}` });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            console.error('Error in CaseController.deleteRecord:', error);
+            return res.status(500).json({ success: false, error: error.message || 'Failed to delete record' });
         }
     }
 
@@ -162,7 +209,7 @@ class CaseController {
                 }
             });
 
-            // 3. Search Accused (= Suspect)
+            // 3. Search Accused
             (accused || []).forEach(a => {
                 const name = String(a.AccusedName || '').toLowerCase();
                 if (name.includes(lower)) {
@@ -170,28 +217,28 @@ class CaseController {
                         type: 'Accused',
                         id: String(a.CaseMasterID || ''),
                         title: `Accused: ${a.AccusedName}`,
-                        description: `Case ${a.CaseMasterID} | ID ${a.PersonID || a.AccusedMasterID}`
+                        description: `Case ${a.CaseMasterID} | Age ${a.AgeYear || 'N/A'}`
                     });
                 }
             });
 
-            // 4. Search ComplainantDetails (= Witness/Complainant)
-            (complainants || []).forEach(c => {
-                const name = String(c.ComplainantName || '').toLowerCase();
+            // 4. Search Complainants
+            (complainants || []).forEach(cp => {
+                const name = String(cp.ComplainantName || '').toLowerCase();
                 if (name.includes(lower)) {
                     results.push({
                         type: 'Complainant',
-                        id: String(c.CaseMasterID || ''),
-                        title: `Complainant: ${c.ComplainantName}`,
-                        description: `Case ${c.CaseMasterID} | Age ${c.AgeYear || 'N/A'}`
+                        id: String(cp.CaseMasterID || ''),
+                        title: `Complainant: ${cp.ComplainantName}`,
+                        description: `Case ${cp.CaseMasterID} | Age ${cp.AgeYear || 'N/A'}`
                     });
                 }
             });
 
-            res.status(200).json({ success: true, data: results.slice(0, 20) });
+            res.status(200).json({ success: true, data: results });
         } catch (error) {
-            console.error('Search error:', error);
-            res.status(200).json({ success: false, error: 'Search failed: ' + error.message, data: [] });
+            console.error('Error in CaseController.searchEverything:', error);
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
 }

@@ -7,14 +7,15 @@ const ResultRenderer = ({ data, generatedSql }) => {
   if (!data || data.length === 0) {
     return (
       <div style={{ 
-        background: 'rgba(19, 26, 42, 0.7)', 
-        border: '1px solid rgba(255,255,255,0.05)', 
-        padding: '40px', 
+        background: 'var(--bg-secondary)', 
+        border: '1px solid var(--border-color)', 
+        padding: '36px', 
         textAlign: 'center', 
-        color: '#94a3b8',
-        borderRadius: '16px'
+        color: 'var(--text-secondary)',
+        borderRadius: '16px',
+        boxShadow: 'var(--shadow-sm)'
       }}>
-        No results found for this query in the current case.
+        No records found matching this query in the Catalyst Datastore.
       </div>
     );
   }
@@ -31,133 +32,143 @@ const ResultRenderer = ({ data, generatedSql }) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `query_export_${Date.now()}.csv`;
+    a.download = `vikshana_query_export_${Date.now()}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
 
   return (
     <div style={{ 
-      background: 'rgba(19, 26, 42, 0.8)', 
-      borderRadius: '20px', 
-      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--bg-secondary)', 
+      borderRadius: '16px', 
+      border: '1px solid var(--border-color)',
       overflow: 'hidden',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-      backdropFilter: 'blur(12px)'
+      boxShadow: 'var(--shadow-sm)'
     }}>
       
       {/* Header Bar */}
       <div style={{ 
-        padding: '20px 24px', 
-        borderBottom: '1px solid rgba(255,255,255,0.08)', 
-        background: 'rgba(0,0,0,0.2)',
+        padding: '18px 24px', 
+        borderBottom: '1px solid var(--border-color)', 
+        background: 'var(--bg-secondary)',
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'flex-start'
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        gap: '16px'
       }}>
-        <div style={{ flex: 1, marginRight: '24px' }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#ffffff', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Table size={20} color="#3b82f6" />
-            Query Results <span style={{ color: '#64748b', fontSize: '14px', fontWeight: 'normal' }}>({data.length} records)</span>
+        <div style={{ flex: 1, minWidth: '280px' }}>
+          <h3 style={{ margin: '0 0 10px 0', color: 'var(--text-primary)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+            <Table size={18} color="var(--accent-primary)" />
+            Query Results <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 'normal' }}>({data.length} records)</span>
           </h3>
           <div style={{ 
             fontSize: '13px', 
-            color: '#a78bfa', 
+            color: '#5b21b6', 
             fontFamily: '"Fira Code", monospace', 
-            background: 'rgba(139, 92, 246, 0.08)', 
-            border: '1px solid rgba(139, 92, 246, 0.2)',
-            padding: '10px 14px', 
+            background: '#f5f3ff', 
+            border: '1px solid #ddd6fe',
+            padding: '8px 12px', 
             borderRadius: '8px', 
             display: 'flex',
-            gap: '12px',
+            gap: '10px',
             alignItems: 'center'
           }}>
-            <Code size={16} style={{ flexShrink: 0 }} />
-            <span style={{ wordBreak: 'break-all' }}>{generatedSql}</span>
+            <Code size={15} style={{ flexShrink: 0 }} color="#7c3aed" />
+            <span style={{ wordBreak: 'break-all', fontWeight: '500' }}>{generatedSql}</span>
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', gap: '10px', flexShrink: 0, alignItems: 'center' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-tertiary)', borderRadius: '8px', padding: '3px', border: '1px solid var(--border-color)' }}>
             <button
               onClick={() => setViewMode('table')}
               style={{
-                padding: '8px 12px',
-                background: viewMode === 'table' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: viewMode === 'table' ? '#ffffff' : '#64748b',
+                padding: '6px 12px',
+                background: viewMode === 'table' ? 'var(--bg-secondary)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--accent-primary)' : 'var(--text-secondary)',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.15s',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '13px',
-                fontWeight: '500'
+                fontSize: '12px',
+                fontWeight: viewMode === 'table' ? '600' : '500',
+                boxShadow: viewMode === 'table' ? 'var(--shadow-sm)' : 'none'
               }}
             >
-              <Table size={16} /> Table
+              <Table size={14} /> Table
             </button>
             <button
               onClick={() => setViewMode('json')}
               style={{
-                padding: '8px 12px',
-                background: viewMode === 'json' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: viewMode === 'json' ? '#ffffff' : '#64748b',
+                padding: '6px 12px',
+                background: viewMode === 'json' ? 'var(--bg-secondary)' : 'transparent',
+                color: viewMode === 'json' ? 'var(--accent-primary)' : 'var(--text-secondary)',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.15s',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '13px',
-                fontWeight: '500'
+                fontSize: '12px',
+                fontWeight: viewMode === 'json' ? '600' : '500',
+                boxShadow: viewMode === 'json' ? 'var(--shadow-sm)' : 'none'
               }}
             >
-              <FileJson size={16} /> JSON
+              <FileJson size={14} /> JSON
             </button>
           </div>
           
           <button
             onClick={exportCSV}
             style={{
-              padding: '8px 16px',
-              background: 'transparent',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '10px',
+              padding: '7px 14px',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px',
+              gap: '6px',
+              fontSize: '12px',
               fontWeight: '500',
-              transition: 'all 0.2s'
+              transition: 'all 0.15s ease',
+              boxShadow: 'var(--shadow-sm)'
             }}
-            onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-            onMouseOut={(e) => e.target.style.background = 'transparent'}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+              e.currentTarget.style.color = 'var(--accent-primary)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
           >
-            <Download size={16} />
-            Export
+            <Download size={14} />
+            Export CSV
           </button>
         </div>
       </div>
 
       {/* Data Viewer */}
-      <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
+      <div style={{ overflowX: 'auto', maxHeight: '550px', overflowY: 'auto' }}>
         {viewMode === 'table' ? (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-            <thead style={{ position: 'sticky', top: 0, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(8px)', zIndex: 1 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-tertiary)', zIndex: 1 }}>
               <tr>
                 {columns.map(col => (
                   <th key={col} style={{ 
-                    padding: '16px 24px', 
-                    color: '#94a3b8', 
+                    padding: '12px 18px', 
+                    color: 'var(--text-secondary)', 
                     fontWeight: '600', 
-                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    borderBottom: '1px solid var(--border-color)',
                     textTransform: 'uppercase',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     letterSpacing: '0.5px'
                   }}>
                     {col}
@@ -168,21 +179,22 @@ const ResultRenderer = ({ data, generatedSql }) => {
             <tbody>
               {data.map((row, i) => (
                 <tr key={i} style={{ 
-                  borderBottom: '1px solid rgba(255,255,255,0.04)', 
-                  background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
-                  transition: 'background 0.2s'
+                  borderBottom: '1px solid var(--border-color)', 
+                  background: i % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                  transition: 'background 0.15s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(59,130,246,0.05)'}
-                onMouseOut={(e) => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'}
+                onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-primary-light, #eff6ff)'}
+                onMouseOut={(e) => e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)'}
                 >
                   {columns.map(col => (
                     <td key={col} style={{ 
-                      padding: '16px 24px', 
-                      color: '#e2e8f0', 
+                      padding: '12px 18px', 
+                      color: 'var(--text-primary)', 
                       maxWidth: '300px', 
                       whiteSpace: 'nowrap', 
                       overflow: 'hidden', 
-                      textOverflow: 'ellipsis' 
+                      textOverflow: 'ellipsis',
+                      fontWeight: '400'
                     }} title={String(row[col])}>
                       {String(row[col] ?? '')}
                     </td>
@@ -192,8 +204,8 @@ const ResultRenderer = ({ data, generatedSql }) => {
             </tbody>
           </table>
         ) : (
-          <div style={{ padding: '24px', background: '#0a0b10' }}>
-            <pre style={{ margin: 0, color: '#60a5fa', fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: '"Fira Code", monospace' }}>
+          <div style={{ padding: '20px', background: 'var(--bg-tertiary)' }}>
+            <pre style={{ margin: 0, color: 'var(--text-primary)', fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: '"Fira Code", monospace' }}>
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>

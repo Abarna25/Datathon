@@ -59,6 +59,7 @@ class ForecastingController {
 
             res.status(200).json({
                 success: true,
+                methodology: 'Historical Spatial-Temporal Frequency Aggregation over registered Datastore cases (Not trained time-series predictive ML)',
                 data: {
                     weeklyPrediction,
                     monthlyPrediction,
@@ -68,7 +69,7 @@ class ForecastingController {
             });
         } catch (error) {
             console.error('Forecasting dashboard error:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
 
@@ -100,7 +101,7 @@ class ForecastingController {
             res.status(200).json({ success: true, count: geoCases.length, data: geoCases });
         } catch (error) {
             console.error('Forecasting getGeospatial error:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to retrieve geospatial data', data: [] });
         }
     }
 
@@ -149,7 +150,7 @@ class ForecastingController {
 
             res.status(200).json({ success: true, count: hotspots.length, data: hotspots });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to retrieve hotspots', data: [] });
         }
     }
 
@@ -197,7 +198,7 @@ class ForecastingController {
 
             res.status(200).json({ success: true, data: alerts });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to retrieve early warnings', data: [] });
         }
     }
 
@@ -236,7 +237,7 @@ class ForecastingController {
 
             res.status(200).json({ success: true, data });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message || 'Failed to generate explanation', data: null });
         }
     }
 }

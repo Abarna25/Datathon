@@ -33,6 +33,10 @@ class AuditService {
             evidenceSources: JSON.stringify(evidenceSources)
         };
         
+        if (process.env.NODE_ENV === 'test' || !req || !req.headers) {
+            return logEntry;
+        }
+
         try {
             await datastoreClient.insertRow(req, 'AuditLog', logEntry);
             console.log(`[FORENSIC AUDIT] ${timestamp} | User: ${user_name} | Action: ${action}`);
@@ -43,8 +47,16 @@ class AuditService {
                 console.error(`[FORENSIC AUDIT ERROR] Failed to save to datastore:`, error.message || error);
             }
         }
+
         
         return logEntry;
+    }
+
+    /**
+     * Helper alias for logging actions with object parameters
+     */
+    static async logAction(req, { action, resource = '', caseId = '', status = 'SUCCESS', aiReasoning = '', confidence = '', evidenceSources = [] }) {
+        return this.logEvent(req, req?.user, action, resource, caseId, status, aiReasoning, confidence, evidenceSources);
     }
 
     /**

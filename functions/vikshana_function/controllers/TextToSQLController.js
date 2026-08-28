@@ -19,7 +19,8 @@ class TextToSQLController {
             // Step 3: Execute query against Catalyst Data Store
             const results = await textToSQLService.executeSQL(req, sql);
 
-            // Step 4: Generate Explanation based on results
+            // Step 4: Generate intelligent direct answer & explanation based on results
+            const answer = await textToSQLService.generateAnswer(req, query, sql, results, caseId);
             const explanation = await textToSQLService.explainResults(query, sql, results);
 
             // Step 5: Log the execution via AuditService
@@ -36,10 +37,12 @@ class TextToSQLController {
                 success: true,
                 query: query,
                 sql: sql,
-                results: results,
+                answer: answer,
                 explanation: explanation,
+                results: results,
                 count: results.length
             });
+
 
         } catch (error) {
             console.error('[TextToSQLController] processQuery error:', error.message);
@@ -57,9 +60,10 @@ class TextToSQLController {
 
 
 
-res.status(200).json({ success: false, error: error.message || 'An error occurred during query processing' });
+            res.status(500).json({ success: false, error: error.message || 'An error occurred during query processing' });
         }
     }
 }
+
 
 module.exports = new TextToSQLController();

@@ -1,15 +1,16 @@
 const ContextBuilderService = require('./ContextBuilderService');
-const glmClient = require('./glmClient');
+const LLMService = require('./LLMService');
 const ContradictionDetectionService = require('./ContradictionDetectionService');
 
 class AdvancedIntelligenceService {
     static async getFullScan(req, caseId) {
+        let context = null;
         try {
             console.log(`[AdvancedIntelligenceService] Building context for Case ${caseId}...`);
-            // Fetch massive unified context
-            const context = await ContextBuilderService.buildFullCaseContext(req, caseId);
+            // Fetch unified case context
+            context = await ContextBuilderService.buildCaseContext(req, caseId);
             
-            if (!context || !context.caseDetails) {
+            if (!context || !context.case) {
                 throw new Error("Insufficient case data found.");
             }
 
@@ -28,7 +29,7 @@ REQUIRED JSON OUTPUT FORMAT (Strictly adhere to this):
     { "confidence": 72, "summary": "...", "supportingEvidence": ["..."], "weaknesses": ["..."], "recommendedAction": "..." }
   ],
   "contradictions": [
-    { "severity": "High", "description": "Witness 1 states 9PM, timeline shows 10:15PM", "recommendation": "..." }
+    { "severity": "High", "description": "...", "recommendation": "..." }
   ],
   "missingEvidence": {
     "score": 74,
@@ -90,34 +91,41 @@ CRITICAL RULES:
 4. If no contradictions exist, return an empty array for contradictions.
 `;
 
-            console.log(`[AdvancedIntelligenceService] Triggering GLM Unified Scan...`);
-            let rawJson = await glmClient.generateText(prompt, 0.2); // Low temp for structured data
+            console.log(`[AdvancedIntelligenceService] Triggering Dual-LLM Unified Scan...`);
+            const llmRes = await LLMService.generate([
+                { role: 'system', content: prompt },
+                { role: 'user', content: `Generate structured intelligence scan for Case #${caseId}` }
+            ], { temperature: 0.2 });
+
+            let rawJson = String(llmRes?.content || '').trim();
             
-            // Clean markdown if GLM wraps it
-            if (rawJson.startsWith('\`\`\`')) {
-                rawJson = rawJson.replace(/^\`\`\`json/, '').replace(/^\`\`\`/, '').replace(/\`\`\`$/, '').trim();
+            // Clean markdown wrapper if present
+            if (rawJson.startsWith('```')) {
+                rawJson = rawJson.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
             }
 
             const intelligenceData = JSON.parse(rawJson);
             
-            // Phase 1: Override LLM contradictions with deterministic real data
-            const contradictionResult = ContradictionDetectionService.detect(context);
-            intelligenceData.contradictions = contradictionResult.contradictions;
+            // Integrate deterministic contradiction analysis with AI findings
+            try {
+                const contradictionResult = ContradictionDetectionService.detect(context);
+                if (contradictionResult && contradictionResult.contradictions && contradictionResult.contradictions.length > 0) {
+                    intelligenceData.contradictions = contradictionResult.contradictions;
+                }
+            } catch (cdErr) {
+                console.warn('[AdvancedIntelligenceService] Contradiction detection notice:', cdErr.message);
+            }
 
             return intelligenceData;
         } catch (error) {
-            console.error('[AdvancedIntelligenceService] Error:', error);
-            // Even in fallback, try to run deterministic logic if context is available
+            console.error('[AdvancedIntelligenceService] Error:', error.message);
             let safeContradictions = [];
             try {
                 if (context) {
-                    safeContradictions = ContradictionDetectionService.detect(context).contradictions;
+                    safeContradictions = ContradictionDetectionService.detect(context).contradictions || [];
                 }
-            } catch (e) {
-                // Ignore
-            }
+            } catch (e) {}
 
-            // Throw or return minimal error state indicating unavailability.
             return {
               "hypotheses": [],
               "contradictions": safeContradictions,
@@ -125,22 +133,22 @@ CRITICAL RULES:
               "courtReadiness": { "overall": 0, "evidence": 0, "witness": 0, "legal": 0, "documentation": 0 },
               "crimeSignature": { "violence": 0, "planning": 0, "repeatPattern": 0, "financialMotive": 0, "organizedNetwork": 0 },
               "officerBrief": {
-                "title": "Data Unavailable",
+                "title": "Data Processing Notice",
                 "status": "Unavailable",
                 "highRisk": false,
-                "victimsCount": 0,
-                "suspectsCount": 0,
+                "victimsCount": (context?.victims || []).length,
+                "suspectsCount": (context?.suspects || []).length,
                 "evidenceCount": 0,
                 "pendingItems": [],
-                "recommendedAction": "Check datastore connectivity.",
-                "expectedDuration": "Unknown"
+                "recommendedAction": "AI service offline or context processing error.",
+                "expectedDuration": "N/A"
               },
               "interviewQuestions": { "Victim": [], "Suspect": [], "Witness": [] },
               "readinessRadar": [],
               "recommendations": [],
               "explainAI": {
-                "hypotheses": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI Generation failed." },
-                "courtReadiness": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI Generation failed." }
+                "hypotheses": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI scan unavailable." },
+                "courtReadiness": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI scan unavailable." }
               }
             };
         }

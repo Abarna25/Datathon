@@ -214,7 +214,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -269,7 +269,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -298,7 +298,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -327,7 +327,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(200).json({ 
@@ -395,7 +395,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -415,7 +415,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -439,7 +439,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });
@@ -514,7 +514,7 @@ class DecisionSupportController {
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {
-                return res.status(200).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
+                return res.status(503).json({ success: false, data_source: "catalyst_datastore", error: "Catalyst Data Store unavailable" });
             }
             if (error.message && error.message.includes('not found')) {
                 return res.status(404).json({ success: false, error: error.message });

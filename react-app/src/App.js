@@ -21,6 +21,8 @@ import RelationshipExplorer from './pages/RelationshipExplorer';
 import Reports from './pages/Reports';
 import AuditLogs from './pages/AuditLogs';
 import DataExplorer from './pages/DataExplorer';
+import CrimeForecasting from './components/forecasting/CrimeForecasting';
+import ForensicIntelligence from './pages/ForensicIntelligence';
 
 const DashboardLayout = ({ children }) => (
   <div style={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
@@ -74,12 +76,46 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/investigate/:caseId"
+                element={
+                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
+                    <DashboardLayout><InvestigationWorkspace /></DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cases/:caseId"
+                element={
+                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
+                    <DashboardLayout><InvestigationWorkspace /></DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
               
               <Route
                 path="/relationships"
                 element={
                   <ProtectedRoute allowedRoles={RELATIONSHIP_ROLES}>
                     <DashboardLayout><RelationshipExplorer /></DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/forecasting"
+                element={
+                  <ProtectedRoute allowedRoles={ANALYST_ROLES}>
+                    <DashboardLayout><CrimeForecasting /></DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/forensics"
+                element={
+                  <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
+                    <DashboardLayout><ForensicIntelligence /></DashboardLayout>
                   </ProtectedRoute>
                 }
               />
@@ -119,5 +155,6 @@ function App() {
     </AuthProvider>
   );
 }
+
 
 export default App;

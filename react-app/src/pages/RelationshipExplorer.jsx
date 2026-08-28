@@ -44,55 +44,27 @@ const RelationshipExplorer = () => {
         fetchNetwork();
     }, [fetchNetwork]);
 
-    // Data Processing & Hard Limits
+    // Data Processing & Genuine Evidence Nodes
     const { filteredNodes, filteredEdges, insights } = useMemo(() => {
         let rawN = [...(rawData.nodes || [])];
         let rawE = [...(rawData.edges || [])];
 
-        // 1. Enforce Hard Node Limits (Enterprise Requirements)
-        const typeLimits = {
-            case: 1, suspect: 3, victim: 3, witness: 3, 
-            evidence: 4, weapon: 2, vehicle: 2, phone: 3, 
-            location: 2, officer: 2, police: 0, lab: 0, court: 0 // Max 25
-        };
-        const counts = {};
-        const limitedNodes = [];
-        
-        rawN.forEach(n => {
-            const t = n.type || 'default';
-            if (!counts[t]) counts[t] = 0;
-            if (counts[t] < (typeLimits[t] || 99)) {
-                counts[t]++;
-                limitedNodes.push(n);
-            }
-        });
+        // 1. Clean nodes without fabrication
+        const limitedNodes = rawN.map(n => ({
+            ...n,
+            label: n.label || `Entity #${n.id}`,
+            type: n.type || 'default'
+        }));
 
-        // Map Edge Labels
-        const EDGE_LBLS = ['Owns', 'Witnessed', 'Investigated', 'Recovered', 'Called', 'DNA Match', 'CCTV Match'];
-        rawE = rawE.map((e, idx) => ({ ...e, label: EDGE_LBLS[idx % EDGE_LBLS.length] }));
-
-        // 2. Analytical Helpers for Empty Data State (< 5 entities)
-        if (limitedNodes.length > 0 && limitedNodes.length < 5) {
-            const analyticalNodes = [
-                { id: 'an1', type: 'analytical', label: 'Investigation Stage: Active', status: 'In Progress' },
-                { id: 'an2', type: 'analytical', label: 'Jurisdiction: Central', status: 'Confirmed' },
-                { id: 'an3', type: 'analytical', label: 'Evidence Completeness: Low', status: 'Needs Action' },
-                { id: 'an4', type: 'analytical', label: 'Risk Assessment: Medium', status: 'Monitoring' },
-                { id: 'an5', type: 'analytical', label: 'Court Readiness: 15%', status: 'Not Ready' }
-            ];
-            limitedNodes.push(...analyticalNodes);
-            
-            const rootCase = limitedNodes.find(n => n.type === 'case');
-            if (rootCase) {
-                analyticalNodes.forEach(an => {
-                    rawE.push({ id: `e-${rootCase.id}-${an.id}`, source: rootCase.id, target: an.id, label: 'AI METADATA' });
-                });
-            }
-        }
+        // 2. Keep authentic backend edge labels
+        const edgesWithLabels = rawE.map((e) => ({
+            ...e,
+            label: e.label || 'Associated'
+        }));
 
         // Apply Filters
         let nodes = limitedNodes;
-        let edges = rawE;
+        let edges = edgesWithLabels;
 
         if (activeFilter !== 'All') {
             const keepType = (n) => {
@@ -118,13 +90,14 @@ const RelationshipExplorer = () => {
         const stats = {
             total: nodes.length,
             connections: edges.length,
-            riskLevel: 'High',
+            riskLevel: nodes.some(n => n.type === 'suspect') ? 'Elevated' : 'Standard',
             clusters: new Set(nodes.map(n => n.cluster).filter(Boolean)).size,
             highRisk: nodes.filter(n => n.type === 'suspect').length
         };
 
         return { filteredNodes: nodes, filteredEdges: edges, insights: stats };
     }, [rawData, activeFilter]);
+
 
     if (!activeCaseId) return <div style={{ padding: 20, color: '#94a3b8' }}>No Case Selected.</div>;
     
@@ -250,9 +223,10 @@ const RelationshipExplorer = () => {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px' }}>
                                     <DetailRow label="Entity ID" value={selectedNode.id} />
                                     <DetailRow label="System Status" value={selectedNode.status || 'Active'} highlight="#16A34A" />
-                                    <DetailRow label="Risk Score" value={selectedNode.risk || Math.floor(Math.random() * 100) + '%'} highlight={selectedNode.risk === 'High' ? "#DC2626" : "#CA8A04"} />
-                                    <DetailRow label="AI Confidence" value={selectedNode.confidence || '94%'} highlight="#2563EB" />
+                                    <DetailRow label="Risk Assessment" value={selectedNode.risk || (selectedNode.type === 'suspect' ? 'Elevated (Accused)' : 'Standard')} highlight={selectedNode.type === 'suspect' ? "#DC2626" : "#2563EB"} />
+                                    <DetailRow label="Entity Role" value={selectedNode.type ? selectedNode.type.toUpperCase() : 'GENERAL'} highlight="#2563EB" />
                                     <DetailRow label="Connected Entities" value={filteredEdges.filter(e => (e.source.id || e.source) === selectedNode.id || (e.target.id || e.target) === selectedNode.id).length || 0} highlight="#9333EA" />
+
                                 </div>
                             </div>
 

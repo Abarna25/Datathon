@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Filter } from 'lucide-react';
+import { Clock, Filter, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const EvidenceTimeline = ({ evidence }) => {

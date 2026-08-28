@@ -9,7 +9,7 @@ class DevController {
             res.status(200).json({ success: true, data: results });
         } catch (error) {
             console.error('Error in DevController.seed:', error);
-            res.status(200).json({ success: false, data: [] });
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
 
@@ -18,7 +18,8 @@ class DevController {
             const results = await SeedService.seedUsers(req);
             res.status(200).json({ success: true, data: results });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            console.error('Error in DevController.seedTest:', error);
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
     
@@ -49,16 +50,18 @@ class DevController {
                     : 'All core Catalyst tables verified successfully.'
             });
         } catch (error) {
-            res.status(200).json({ success: false, data: [] });
+            console.error('Error in DevController.checkTables:', error);
+            res.status(500).json({ success: false, error: error.message, data: [] });
         }
     }
 
     static async listEmployees(req, res) {
         try {
-            const rows = await datastoreClient.getRows(req, 'Employee', { maxRows: 50 }).catch(() => []);
+            const rows = await datastoreClient.getRows(req, 'Employee', { maxRows: 50 });
             res.status(200).json({ success: true, data: rows });
         } catch (err) {
-            res.status(200).json({ success: false, data: [] });
+            console.error('Error in DevController.listEmployees:', err);
+            res.status(500).json({ success: false, error: err.message, data: [] });
         }
     }
 }

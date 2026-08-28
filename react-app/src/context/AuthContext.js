@@ -10,34 +10,43 @@ export const AuthProvider = ({ children }) => {
   // Restore persistent session on app load
   useEffect(() => {
     const restoreSession = async () => {
-      const token = localStorage.getItem('vikshana_auth_token');
-      const savedUser = localStorage.getItem('vikshana_user');
+      try {
+        const token = localStorage.getItem('vikshana_auth_token');
+        const savedUser = localStorage.getItem('vikshana_user');
 
-      if (token && savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-          const res = await api.get('/auth/session', {
-            headers: { 'X-Vikshana-Auth': `Bearer ${token}` }
-          });
-          if (res.data?.success && res.data.user) {
-            setUser(res.data.user);
-            localStorage.setItem('vikshana_user', JSON.stringify(res.data.user));
-          }
-        } catch (error) {
-          console.warn('[AuthContext] Session restore notice:', error.message);
-          // If token is invalid or expired, clear the local credentials to prevent loop errors
-          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            localStorage.removeItem('vikshana_auth_token');
+        if (token && savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            setUser(parsed);
+          } catch (e) {
             localStorage.removeItem('vikshana_user');
-            setUser(null);
+          }
+
+          try {
+            const res = await api.get('/auth/session', {
+              headers: { 'X-Vikshana-Auth': `Bearer ${token}` }
+            });
+            if (res.data?.success && res.data.user) {
+              setUser(res.data.user);
+              localStorage.setItem('vikshana_user', JSON.stringify(res.data.user));
+            }
+          } catch (error) {
+            console.warn('[AuthContext] Session restore notice:', error.message);
+            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+              localStorage.removeItem('vikshana_auth_token');
+              localStorage.removeItem('vikshana_user');
+              setUser(null);
+            }
           }
         }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     restoreSession();
   }, []);
+
 
     // Background REST Login (NO REDIRECTS)
     const login = async (email, password, rememberMe = true) => {
@@ -119,7 +128,8 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
+
 };

@@ -9,7 +9,7 @@ router.post('/synthesize-dictation', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in POST /convokraft/synthesize-dictation:', error);
-        res.status(200).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -20,7 +20,7 @@ router.post('/voice-command', async (req, res) => {
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         console.error('Error in POST /convokraft/voice-command:', error);
-        res.status(200).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

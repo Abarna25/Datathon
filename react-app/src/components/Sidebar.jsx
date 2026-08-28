@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Shield, LayoutDashboard, Search, Network, Compass,
-  FileText, ShieldAlert, UserCheck, Lock, Database, FileText as FileTextIcon, Hexagon
+  Shield, LayoutDashboard, Search, Network, TrendingUp,
+  FileText, ShieldAlert, UserCheck, Lock, Database
 } from 'lucide-react';
+
 import { useLanguage } from '../context/LanguageContext';
 import useAuth from '../hooks/useAuth';
 import { useAppContext } from '../context/AppContext';
@@ -30,11 +31,14 @@ const Sidebar = () => {
   const allItems = [
     { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'forensics', name: 'Forensic Intelligence Hub', icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
     { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
     { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'] },
+    { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'reports', name: t('nav.reports', 'Investigation Report'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
   ];
+
 
   const filteredMenuItems = allItems.filter(item => item.roles.includes(role));
 
@@ -105,7 +109,7 @@ const Sidebar = () => {
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           INVESTIGATION
         </div>
-        {filteredMenuItems.filter(i => i.id === 'investigate').map((item) => (
+        {filteredMenuItems.filter(i => ['investigate', 'forensics'].includes(i.id)).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -125,7 +129,8 @@ const Sidebar = () => {
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           INTELLIGENCE
         </div>
-        {filteredMenuItems.filter(i => ['search', 'relationships'].includes(i.id)).map((item) => (
+        {filteredMenuItems.filter(i => ['search', 'relationships', 'forecasting'].includes(i.id)).map((item) => (
+
           <NavLink
             key={item.path}
             to={item.path}
