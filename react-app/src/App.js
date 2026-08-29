@@ -24,6 +24,7 @@ import AuditLogs from './pages/AuditLogs';
 import DataExplorer from './pages/DataExplorer';
 import CrimeForecasting from './components/forecasting/CrimeForecasting';
 import ForensicIntelligence from './pages/ForensicIntelligence';
+import SentinelDashboard from './pages/SentinelDashboard';
 import GodModePage from './pages/GodModePage';
 import GodModeVideoOverlay from './components/godmode/GodModeVideoOverlay';
 
@@ -68,6 +69,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={ALL_ROLES}>
                       <DashboardLayout><Dashboard /></DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/sentinel"
+                  element={
+                    <ProtectedRoute allowedRoles={ALL_ROLES}>
+                      <DashboardLayout><SentinelDashboard /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />

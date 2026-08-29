@@ -4,14 +4,16 @@ import {
   Zap, ArrowLeft, Send, Shield, Fingerprint,
   Link as LinkIcon, Network, Share2, AlertCircle, CheckCircle2,
   HelpCircle, ChevronDown, ChevronRight, Layers, FileText, Lock,
-  Sparkles, Loader2
+  Sparkles, Loader2, ShieldAlert
 } from 'lucide-react';
 import { useGodMode } from '../../context/GodModeContext';
 import GodModeOrchestrator from '../../services/godModeOrchestrator';
 import styles from './GodModeChat.module.css';
 
 const QUICK_ACTIONS = [
-  { id: 'complete', label: '⚡ Run Complete Investigation', isHero: true },
+  { id: 'sentinel', label: '🛡️ Sentinel Priority Triage', isHero: true },
+  { id: 'foresight', label: '🔮 Foresight Recidivism Score', isHero: true },
+  { id: 'complete', label: '⚡ Run Complete Investigation', icon: Zap },
   { id: 'leads', label: 'Strongest Investigation Leads', icon: Zap },
   { id: 'mo', label: 'MO Intelligence', icon: Fingerprint },
   { id: 'chain', label: 'Evidence Chain', icon: LinkIcon },
@@ -20,6 +22,8 @@ const QUICK_ACTIONS = [
   { id: 'gaps', label: 'Investigation Gaps', icon: AlertCircle },
   { id: 'patterns', label: 'Emerging Patterns', icon: Layers }
 ];
+
+
 
 const GodModeChat = () => {
   const navigate = useNavigate();
@@ -178,6 +182,31 @@ Full analytical depth is unlocked. You can execute high-level multi-vector synth
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
+      } else if (actionId === 'sentinel') {
+        const sentinelData = await GodModeOrchestrator.getSentinelTriage(effectiveCaseId);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `sentinel-${Date.now()}`,
+            role: 'assistant',
+            type: 'sentinel',
+            data: sentinelData,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+      } else if (actionId === 'foresight') {
+        const targetSuspect = context?.entityName || 'Prakash Kulkarni';
+        const foresightData = await GodModeOrchestrator.getForesightAssessment(targetSuspect, effectiveCaseId);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `foresight-${Date.now()}`,
+            role: 'assistant',
+            type: 'foresight',
+            data: foresightData,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
       }
     } catch (err) {
       console.error('[GodMode] Action execution failed:', err);
@@ -215,8 +244,13 @@ Full analytical depth is unlocked. You can execute high-level multi-vector synth
     const routing = GodModeOrchestrator.classifyAndRouteQuery(queryText);
 
     try {
-      if (routing.type === 'COMPLETE_INVESTIGATION') {
+      if (routing.type === 'FORESIGHT_ASSESSMENT') {
+        await handleQuickAction('foresight');
+      } else if (routing.type === 'SENTINEL_TRIAGE') {
+        await handleQuickAction('sentinel');
+      } else if (routing.type === 'COMPLETE_INVESTIGATION') {
         await handleQuickAction('complete');
+
       } else if (routing.type === 'LEADS') {
         await handleQuickAction('leads');
       } else if (routing.type === 'MO') {
@@ -231,6 +265,7 @@ Full analytical depth is unlocked. You can execute high-level multi-vector synth
         await handleQuickAction('gaps');
       } else if (routing.type === 'EMERGING_PATTERNS') {
         await handleQuickAction('patterns');
+
       } else {
         // Run deep natural investigation lead query
         const leadsData = await GodModeOrchestrator.getInvestigationLeads(effectiveCaseId);
@@ -672,8 +707,134 @@ Full analytical depth is unlocked. You can execute high-level multi-vector synth
                     ))}
                   </div>
                 )}
+
+                {msg.type === 'sentinel' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid rgba(239, 68, 68, 0.3)', paddingBottom: '8px' }}>
+                      <h3 style={{ margin: 0, fontSize: '16px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800' }}>
+                        <ShieldAlert size={18} color="#ef4444" />
+                        VIKSHANA Sentinel Priority Triage
+                      </h3>
+                      <button
+                        onClick={() => navigate('/sentinel')}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444',
+                          color: '#ef4444', padding: '4px 10px', borderRadius: '4px',
+                          fontSize: '11px', fontWeight: '700', cursor: 'pointer'
+                        }}
+                      >
+                        OPEN FULL SENTINEL COMMAND CENTER →
+                      </button>
+                    </div>
+
+                    {msg.data?.topPriorityCases && msg.data.topPriorityCases.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                          Surveillance scan evaluated <strong>{msg.data.summary?.casesAnalyzed || 0} active dockets</strong>. Top priority cases requiring immediate intervention:
+                        </div>
+                        {msg.data.topPriorityCases.slice(0, 5).map((c, i) => (
+                          <div key={c.caseId} style={{
+                            padding: '10px 12px', borderRadius: '6px',
+                            background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderLeft: `4px solid ${c.severity === 'CRITICAL' ? '#ef4444' : '#f59e0b'}`
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>
+                                #{i + 1} {c.caseNumber} ({c.jurisdiction})
+                              </span>
+                              <span style={{ fontSize: '12px', fontWeight: '800', color: c.severity === 'CRITICAL' ? '#ef4444' : '#f59e0b' }}>
+                                Priority Score: {c.totalScore}/100
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }}>
+                              {c.title}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                              • Factors: {c.summaryReasons?.join('; ')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : msg.data?.scoreResult ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>
+                          {msg.data.scoreResult.caseNumber}: Priority Score {msg.data.scoreResult.totalScore}/100 ({msg.data.scoreResult.severity})
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#cbd5e1' }}>
+                          Reasons: {msg.data.scoreResult.summaryReasons?.join('; ')}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '13px', color: '#cbd5e1' }}>
+                        Sentinel triage completed. No critical bottlenecks detected.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Foresight Predictive Intelligence View */}
+                {msg.type === 'foresight' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Sparkles size={16} color="#818cf8" />
+                        <span style={{ fontSize: '14px', fontWeight: '800', color: '#fff' }}>
+                          VIKSHANA FORESIGHT • PREDICTIVE STATISTICAL ASSESSMENT
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px',
+                        background: msg.data?.statisticalScore >= 75 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                        color: msg.data?.statisticalScore >= 75 ? '#f87171' : '#fbbf24',
+                        border: `1px solid ${msg.data?.statisticalScore >= 75 ? '#ef4444' : '#f59e0b'}`
+                      }}>
+                        {msg.data?.tierLabel || 'Statistical Association'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '16px', background: 'rgba(15, 23, 42, 0.6)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ textAlign: 'center', minWidth: '110px', paddingRight: '12px', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div style={{ fontSize: '26px', fontWeight: '900', color: msg.data?.statisticalScore >= 75 ? '#f87171' : '#fbbf24', fontFamily: 'monospace' }}>
+                          {msg.data?.statisticalScore || 50}/100
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>
+                          Calibrated P: {((msg.data?.calibratedProbability || 0.5) * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                      <div style={{ flex: 1, fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                        <div><strong>Subject:</strong> {msg.data?.accusedName || 'Prakash Kulkarni'} (Case #{msg.data?.caseId || effectiveCaseId})</div>
+                        <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '4px' }}>
+                          <strong>Model:</strong> {msg.data?.modelMetadata?.modelName || 'Calibrated Random Forest'} (ROC-AUC: {msg.data?.modelMetadata?.rocAuc || 0.62})
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top Contributing Factors */}
+                    {msg.data?.topContributingFactors && msg.data.topContributingFactors.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Top Contributing Historical Factors (SHAP Attributions):
+                        </div>
+                        {msg.data.topContributingFactors.slice(0, 3).map((f, idx) => (
+                          <div key={idx} style={{
+                            fontSize: '11.5px', padding: '6px 10px', borderRadius: '6px',
+                            background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(255,255,255,0.05)',
+                            display: 'flex', justifyContent: 'space-between'
+                          }}>
+                            <span style={{ color: '#e2e8f0' }}>{f.label} (Value: {f.rawValue})</span>
+                            <span style={{ color: f.direction === 'INCREASING_ASSOCIATION' ? '#f87171' : '#34d399', fontWeight: '700', fontFamily: 'monospace' }}>
+                              {f.direction === 'INCREASING_ASSOCIATION' ? '+' : '-'}{f.impactScore}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
+
+
           </div>
         ))}
 

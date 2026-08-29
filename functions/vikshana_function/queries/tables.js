@@ -141,7 +141,31 @@ const tables = {
         'id', 'username', 'email', 'passwordHash', 'salt', 'iterations',
         'role', 'department', 'name', 'accountStatus', 'AccountStatus',
         'createdAt', 'updatedAt', 'passwordChangedAt', 'PasswordChangedAt'
+    ],
+    SentinelScanSummary: [
+        'scanId', 'timestamp', 'casesAnalyzed', 'criticalCount', 'highPriorityCount', 'mediumCount',
+        'totalActionsGenerated', 'topPriorityCases', 'engineHealth', 'executionDurationMs'
+    ],
+    SentinelActionItem: [
+        'actionId', 'caseId', 'caseNumber', 'priorityScore', 'severity', 'title', 'finding',
+        'recommendedAction', 'evidenceSources', 'drillDown', 'confidence', 'status', 'generatedAt',
+        'reviewedBy', 'reviewedAt', 'decisionReason'
+    ],
+    SentinelDecisionLog: [
+        'decisionId', 'actionId', 'caseId', 'officerId', 'officerName', 'role', 'decision',
+        'decisionReason', 'actionExecuted', 'timestamp', 'evidenceHash'
+    ],
+    ForesightAssessment: [
+        'assessmentId', 'accusedName', 'caseId', 'statisticalScore', 'calibratedProbability',
+        'tier', 'tierLabel', 'confidenceInterval', 'topContributingFactors', 'groundedEvidence',
+        'modelMetadata', 'decisionStatus', 'createdAt'
+    ],
+    ForesightDecisionLog: [
+        'decisionId', 'assessmentId', 'accusedName', 'caseId', 'decision',
+        'reviewer', 'reviewedAt', 'officerNotes', 'evidenceDigest', 'status'
     ]
 };
 
 module.exports = tables;
+
+

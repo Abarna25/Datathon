@@ -1,0 +1,168 @@
+{
+  "model_name": "VIKSHANA FORESIGHT (RandomForest)",
+  "model_version": "3.0.1",
+  "release_date": "2026-08-29",
+  "task": "Supervised Historical Pattern & Recidivism Association",
+  "algorithm": "Calibrated RandomForest with Platt Sigmoid Scaling",
+  "observation_window": "30 Days Post Reference Intake",
+  "training_dataset": {
+    "source": "Karnataka Police Datastore Historical Dockets",
+    "total_samples": 69841,
+    "training_samples": 47593,
+    "held_out_test_samples": 20940,
+    "temporal_range_train": "2021-01-01 to 2024-06-30",
+    "temporal_range_test": "2024-07-01 to 2025-12-01"
+  },
+  "performance_metrics": {
+    "Accuracy": 0.7716,
+    "Precision": 0.7709,
+    "Recall": 0.9717,
+    "F1_Score": 0.8597,
+    "ROC_AUC": 0.6228,
+    "PR_AUC": 0.7794,
+    "Brier_Score": 0.1778,
+    "Confusion_Matrix": [
+      [
+        1507,
+        4355
+      ],
+      [
+        427,
+        14651
+      ]
+    ]
+  },
+  "model_comparison": {
+    "LogisticRegression": {
+      "Accuracy": 0.7485,
+      "Precision": 0.7473,
+      "Recall": 0.9832,
+      "F1_Score": 0.8492,
+      "ROC_AUC": 0.6444,
+      "PR_AUC": 0.7973,
+      "Brier_Score": 0.1832,
+      "Confusion_Matrix": [
+        [
+          849,
+          5013
+        ],
+        [
+          253,
+          14825
+        ]
+      ]
+    },
+    "RandomForest": {
+      "Accuracy": 0.7716,
+      "Precision": 0.7709,
+      "Recall": 0.9717,
+      "F1_Score": 0.8597,
+      "ROC_AUC": 0.6233,
+      "PR_AUC": 0.7831,
+      "Brier_Score": 0.1783,
+      "Confusion_Matrix": [
+        [
+          1507,
+          4355
+        ],
+        [
+          427,
+          14651
+        ]
+      ]
+    },
+    "GradientBoosting": {
+      "Accuracy": 0.7205,
+      "Precision": 0.7688,
+      "Recall": 0.8749,
+      "F1_Score": 0.8184,
+      "ROC_AUC": 0.6124,
+      "PR_AUC": 0.7731,
+      "Brier_Score": 0.1949,
+      "Confusion_Matrix": [
+        [
+          1895,
+          3967
+        ],
+        [
+          1886,
+          13192
+        ]
+      ]
+    },
+    "HistGradientBoosting": {
+      "Accuracy": 0.7716,
+      "Precision": 0.7709,
+      "Recall": 0.9715,
+      "F1_Score": 0.8597,
+      "ROC_AUC": 0.6328,
+      "PR_AUC": 0.789,
+      "Brier_Score": 0.1772,
+      "Confusion_Matrix": [
+        [
+          1508,
+          4354
+        ],
+        [
+          429,
+          14649
+        ]
+      ]
+    }
+  },
+  "feature_importances": {
+    "mean_inter_case_days": 0.2953,
+    "prior_cases_last_90d": 0.101,
+    "prior_cases_last_180d": 0.1005,
+    "days_since_prev_case": 0.0972,
+    "prior_case_count": 0.0893,
+    "recurring_location_count": 0.083,
+    "cadence_acceleration": 0.0779,
+    "distinct_crime_heads": 0.0512,
+    "prior_heinous_ratio": 0.0467,
+    "prior_heinous_count": 0.0327,
+    "repeated_offence_type": 0.0094,
+    "current_case_heinous": 0.0063,
+    "gravity_escalation_flag": 0.005,
+    "mo_consistency_score": 0.0047
+  },
+  "subgroup_evaluation": {
+    "Heinous Offences (Grade 1)": {
+      "samples": 4208,
+      "accuracy": 0.7709,
+      "precision": 0.7689,
+      "recall": 0.9735,
+      "f1": 0.8592,
+      "roc_auc": 0.625
+    },
+    "Non-Heinous Offences (Grade 2)": {
+      "samples": 16732,
+      "accuracy": 0.7718,
+      "precision": 0.7714,
+      "recall": 0.9712,
+      "f1": 0.8598,
+      "roc_auc": 0.6222
+    }
+  },
+  "intended_use": [
+    "Decision support for investigating officers prioritizing docket follow-ups",
+    "Statistical association discovery between historical patterns and re-offense recency",
+    "Identifying time-series cadence shifts and gravity escalations across repeat offenders"
+  ],
+  "non_intended_use": [
+    "Automated arrest, charge, surveillance, or search warrant triggers (STRICTLY PROHIBITED)",
+    "Declaring an individual guilty, dangerous, or legally culpable",
+    "Sole basis for operational or custodial decisions without human corroboration"
+  ],
+  "known_limitations": [
+    "First-time offenders with zero prior history have lower statistical signal fidelity",
+    "Name-based identity resolution may have rare collision errors in common patronymics",
+    "Predictions reflect historical recorded police data patterns rather than unrecorded ground truth",
+    "Rare offence categories with under 50 historical cases have wider confidence bounds"
+  ],
+  "ethical_oversight": {
+    "human_in_the_loop_required": true,
+    "forensic_audit_standard": "SHA-256 Digest Immutably Logged",
+    "explanation_standard": "SHAP Attributions & Database Row Citations"
+  }
+}

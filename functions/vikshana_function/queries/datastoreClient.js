@@ -674,21 +674,22 @@ async function getRows(req, tableName, { maxRows = 50 } = {}) {
     loadDatasetFromCSV();
     const actualMaxRows = Math.min(Number(maxRows) || 50, 500);
 
+    if (!isProductionMode()) {
+        if (localStore[tableName]) {
+            return localStore[tableName].slice(0, actualMaxRows);
+        }
+        return [];
+    }
+
     try {
         const response = await getTable(req, tableName).getPagedRows({ maxRows: actualMaxRows });
         const rows = (response.data || []).map(unwrapRow);
         return rows;
     } catch (err) {
-        if (isProductionMode()) {
-            const e = wrapError(err, tableName);
-            e.status = 503;
-            e.code = 'DATASTORE_UNAVAILABLE';
-            throw e;
-        }
-        if (localStore[tableName]) {
-            return localStore[tableName].slice(0, actualMaxRows);
-        }
-        return [];
+        const e = wrapError(err, tableName);
+        e.status = 503;
+        e.code = 'DATASTORE_UNAVAILABLE';
+        throw e;
     }
 }
 
@@ -697,16 +698,7 @@ async function getRowById(req, tableName, id) {
     validateTable(tableName);
     loadDatasetFromCSV();
 
-    try {
-        const row = await getTable(req, tableName).getRow(id);
-        return unwrapRow(row);
-    } catch (err) {
-        if (isProductionMode()) {
-            const e = wrapError(err, tableName);
-            e.status = 503;
-            e.code = 'DATASTORE_UNAVAILABLE';
-            throw e;
-        }
+    if (!isProductionMode()) {
         if (localStore[tableName]) {
             const found = localStore[tableName].find(r => 
                 String(r.ROWID) === String(id) || 
@@ -720,6 +712,16 @@ async function getRowById(req, tableName, id) {
         }
         return null;
     }
+
+    try {
+        const row = await getTable(req, tableName).getRow(id);
+        return unwrapRow(row);
+    } catch (err) {
+        const e = wrapError(err, tableName);
+        e.status = 503;
+        e.code = 'DATASTORE_UNAVAILABLE';
+        throw e;
+    }
 }
 
 function escapeVal(v) {
@@ -727,22 +729,22 @@ function escapeVal(v) {
 }
 
 async function query(req, sql) {
+    if (!isProductionMode()) {
+        return executeLocalSQL(sql);
+    }
+
     try {
         validateZCQL(sql);
         const app = catalyst.initialize(req);
         const rows = await app.zcql().executeZCQLQuery(sql);
         return rows || [];
     } catch (err) {
-        if (isProductionMode()) {
-            const tableMatch = /FROM\s+([A-Za-z0-9_]+)/i.exec(sql);
-            const tableName = tableMatch ? tableMatch[1] : 'UnknownTable';
-            const e = wrapError(err, tableName);
-            e.status = 503;
-            e.code = 'DATASTORE_UNAVAILABLE';
-            throw e;
-        }
-        // Execute on local in-memory dataset with full SQL engine
-        return executeLocalSQL(sql);
+        const tableMatch = /FROM\s+([A-Za-z0-9_]+)/i.exec(sql);
+        const tableName = tableMatch ? tableMatch[1] : 'UnknownTable';
+        const e = wrapError(err, tableName);
+        e.status = 503;
+        e.code = 'DATASTORE_UNAVAILABLE';
+        throw e;
     }
 }
 
@@ -750,6 +752,24 @@ async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, ord
     validateTable(tableName);
     loadDatasetFromCSV();
     const actualMaxRows = Math.min(Number(maxRows) || 50, 500);
+
+    if (!isProductionMode()) {
+        if (localStore[tableName]) {
+            const list = [];
+            for (const row of localStore[tableName]) {
+                const matches = Object.entries(conditions).every(([k, v]) => {
+                    if (v === undefined || v === null || v === '') return true;
+                    return String(row[k]) === String(v);
+                });
+                if (matches) {
+                    list.push(row);
+                    if (list.length >= actualMaxRows && !orderBy) break;
+                }
+            }
+            return list;
+        }
+        return [];
+    }
 
     try {
         const columns = Object.keys(conditions);
@@ -765,24 +785,13 @@ async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, ord
         const rows = await query(req, sql);
         return rows.map((r) => r[tableName] || unwrapRow(r));
     } catch (err) {
-        if (isProductionMode()) {
-            const e = wrapError(err, tableName);
-            e.status = 503;
-            e.code = 'DATASTORE_UNAVAILABLE';
-            throw e;
-        }
-        if (localStore[tableName]) {
-            let list = localStore[tableName].filter(row => {
-                return Object.entries(conditions).every(([k, v]) => {
-                    if (v === undefined || v === null || v === '') return true;
-                    return String(row[k]) === String(v);
-                });
-            });
-            return list.slice(0, actualMaxRows);
-        }
-        return [];
+        const e = wrapError(err, tableName);
+        e.status = 503;
+        e.code = 'DATASTORE_UNAVAILABLE';
+        throw e;
     }
 }
+
 
 async function getRowWhere(req, tableName, conditions = {}) {
     try {

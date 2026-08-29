@@ -115,9 +115,40 @@ class ExplainableAIService {
                 };
             }
 
+            case 'foresight':
+            case 'predictive-intelligence': {
+                const ForesightMLService = require('./ForesightMLService');
+                const accusedName = insightId || 'Subject';
+                const assessment = await ForesightMLService.assessAccused(req, { accusedName, caseId });
+
+                const topFactors = (assessment.topContributingFactors || []).map(f => `${f.label}: ${f.rawValue} (${f.direction})`);
+                const evidenceList = (assessment.groundedEvidence || []).map(e => `[${e.type}] ${e.title}: ${e.detail}`);
+
+                return {
+                    insightType: 'FORESIGHT_PREDICTIVE_INTELLIGENCE',
+                    caseId: caseId || 'N/A',
+                    insightId: assessment.assessmentId,
+                    what: `Statistical Association Score: ${assessment.statisticalScore}/100 (${assessment.tierLabel})`,
+                    why: `Calibrated probability of subsequent recorded docket within 30-day window based on ${topFactors.slice(0, 3).join('; ')}.`,
+                    evidence: evidenceList.length > 0 ? evidenceList : ['Karnataka Police Historical Dockets (CaseMaster / Accused)'],
+                    confidence: assessment.calibratedProbability,
+                    confidenceJustification: `Supervised ML Model (${assessment.modelMetadata?.modelName}) validated out-of-time (ROC-AUC: ${assessment.modelMetadata?.rocAuc}, Brier: ${assessment.modelMetadata?.brierScore}).`,
+                    classification: 'STATISTICAL_PROBABILITY_ESTIMATE',
+                    isAIInferred: true,
+                    humanVerificationRequired: 'Review contributing historical records and confirm officer acknowledgement before initiating investigative inquiries.',
+                    traceableProvenance: {
+                        originatingService: 'ForesightMLService',
+                        modelVersion: assessment.modelMetadata?.modelVersion || '3.0.1',
+                        timestamp: new Date().toISOString()
+                    },
+                    executionTimeMs: Date.now() - startTime
+                };
+            }
+
             default:
                 return {
                     insightType: insightType || 'GENERAL_INTELLIGENCE',
+
                     caseId: caseId || 'N/A',
                     what: 'VIKSHANA 2.0 General Evidence-Based Decision Support Insight',
                     why: 'Synthesized deterministically from verified Catalyst Data Store records.',

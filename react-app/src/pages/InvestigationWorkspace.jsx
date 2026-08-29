@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2, FileText, Database, Compass, Clock, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList, Zap, Fingerprint, Link as LinkIcon, BrainCircuit } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Loader2, FileText, Database, Compass, Clock, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList, Zap, Fingerprint, Link as LinkIcon, BrainCircuit, Sparkles } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useGodMode } from '../context/GodModeContext';
 import { ConversationProvider } from '../context/ConversationContext';
@@ -15,6 +15,8 @@ import InvestigationLeadsPanel from '../components/investigation/InvestigationLe
 import MOProfilePanel from '../components/investigation/MOProfilePanel';
 import EvidenceChainView from '../components/investigation/EvidenceChainView';
 import SociologicalAssistant from '../components/sociological/SociologicalAssistant';
+import ForesightPanel from '../components/foresight/ForesightPanel';
+
 import EvidenceSummaryCards from '../components/evidence/EvidenceSummaryCards';
 import EvidenceTimeline from '../components/evidence/EvidenceTimeline';
 import EvidenceCorrelationGraph from '../components/evidence/EvidenceCorrelationGraph';
@@ -27,9 +29,18 @@ import TimelineView from '../components/fir/TimelineView';
 const InvestigationWorkspace = () => {
     const navigate = useNavigate();
     const { caseId: paramCaseId } = useParams();
+    const [searchParams] = useSearchParams();
     const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases } = useAppContext();
     const { activateGodMode } = useGodMode();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+
+    // Sync query param tab if changed
+    useEffect(() => {
+        const queryTab = searchParams.get('tab');
+        if (queryTab && queryTab !== activeTab) {
+            setActiveTab(queryTab);
+        }
+    }, [searchParams, activeTab]);
 
     // Sync URL param with activeCaseId or select default first case
     useEffect(() => {
@@ -71,6 +82,7 @@ const InvestigationWorkspace = () => {
 
     const tabs = [
         { id: 'overview', label: 'Case Overview', icon: FileText },
+        { id: 'foresight', label: '🔮 Foresight (Predictive ML)', icon: Sparkles },
         { id: 'leads', label: 'Investigation Leads', icon: Zap },
         { id: 'mo', label: 'MO Intelligence', icon: Fingerprint },
         { id: 'chain', label: 'Evidence Chain', icon: LinkIcon },
@@ -87,6 +99,7 @@ const InvestigationWorkspace = () => {
         { id: 'copilot', label: 'VIKSHANA Copilot', icon: Bot },
         { id: 'report', label: 'Investigation Report', icon: Layers }
     ];
+
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -164,6 +177,14 @@ const InvestigationWorkspace = () => {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'foresight' && (
+                    <ForesightPanel
+                        caseId={effectiveCaseId}
+                        suspects={currentCase?.suspects || []}
+                    />
+                )}
+
 
                 {activeTab === 'fir' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

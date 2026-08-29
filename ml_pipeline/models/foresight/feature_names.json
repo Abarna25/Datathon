@@ -1,0 +1,16 @@
+[
+  "prior_case_count",
+  "prior_cases_last_90d",
+  "prior_cases_last_180d",
+  "days_since_prev_case",
+  "current_case_heinous",
+  "prior_heinous_count",
+  "prior_heinous_ratio",
+  "gravity_escalation_flag",
+  "mean_inter_case_days",
+  "cadence_acceleration",
+  "distinct_crime_heads",
+  "repeated_offence_type",
+  "mo_consistency_score",
+  "recurring_location_count"
+]

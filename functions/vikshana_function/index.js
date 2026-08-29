@@ -143,7 +143,10 @@ app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Sup
 app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), evidenceIntelligenceRoutes);
 app.use('/advanced-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), advancedIntelligenceRoutes);
 app.use('/sociological', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), sociologicalRoutes);
-app.use('/intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), intelligenceRoutes);
+const sentinelRoutes = require('./routes/sentinel.routes');
+app.use('/sentinel', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), sentinelRoutes);
+const foresightRoutes = require('./routes/foresight.routes');
+app.use('/foresight', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), foresightRoutes);
 
 // Fallback for missing routes
 app.use((req, res) => {

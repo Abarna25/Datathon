@@ -161,6 +161,16 @@ def main():
             res = run_dbscan_hotspots(payload)
         elif action == 'forecast':
             res = run_time_series_forecast(payload)
+        elif action == 'foresight_assess':
+            from foresight_service import foresight_engine
+            res = foresight_engine.assess_accused(
+                payload.get('accusedName'),
+                payload.get('caseId'),
+                payload.get('features')
+            )
+        elif action == 'foresight_model_card':
+            from foresight_service import foresight_engine
+            res = {"status": "SUCCESS", "modelCard": foresight_engine.model_card}
         elif action == 'health':
             res = get_health()
         else:
@@ -169,6 +179,7 @@ def main():
         print(json.dumps(res))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
+
 
 if __name__ == "__main__":
     main()

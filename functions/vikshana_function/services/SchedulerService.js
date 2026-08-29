@@ -61,6 +61,33 @@ class SchedulerService {
             };
         }
     }
+
+    /**
+     * Scheduled Job: Executes Sentinel Autonomous Case Triage and updates priority queues.
+     */
+    static async runSentinelDailyScan(req) {
+        const SentinelOrchestratorService = require('./SentinelOrchestratorService');
+        const timestamp = new Date().toISOString();
+        try {
+            console.log('[SchedulerService] Starting Sentinel Autonomous Triage Scan...');
+            const scanResult = await SentinelOrchestratorService.scanActiveCases(req, { limit: 25 });
+            console.log(`[SchedulerService] Sentinel Scan Completed: ${scanResult.summary?.casesAnalyzed} cases analyzed, ${scanResult.summary?.criticalCount} critical.`);
+            return {
+                jobName: 'SentinelAutonomousTriageScan',
+                executedAt: timestamp,
+                summary: scanResult.summary,
+                status: 'COMPLETED'
+            };
+        } catch (error) {
+            console.error('[SchedulerService] Sentinel Scan Error:', error.message);
+            return {
+                jobName: 'SentinelAutonomousTriageScan',
+                executedAt: timestamp,
+                error: error.message,
+                status: 'FAILED'
+            };
+        }
+    }
 }
 
 module.exports = SchedulerService;

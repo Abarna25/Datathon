@@ -1,0 +1,78 @@
+{
+  "LogisticRegression": {
+    "Accuracy": 0.7485,
+    "Precision": 0.7473,
+    "Recall": 0.9832,
+    "F1_Score": 0.8492,
+    "ROC_AUC": 0.6444,
+    "PR_AUC": 0.7973,
+    "Brier_Score": 0.1832,
+    "Confusion_Matrix": [
+      [
+        849,
+        5013
+      ],
+      [
+        253,
+        14825
+      ]
+    ]
+  },
+  "RandomForest": {
+    "Accuracy": 0.7716,
+    "Precision": 0.7709,
+    "Recall": 0.9717,
+    "F1_Score": 0.8597,
+    "ROC_AUC": 0.6233,
+    "PR_AUC": 0.7831,
+    "Brier_Score": 0.1783,
+    "Confusion_Matrix": [
+      [
+        1507,
+        4355
+      ],
+      [
+        427,
+        14651
+      ]
+    ]
+  },
+  "GradientBoosting": {
+    "Accuracy": 0.7205,
+    "Precision": 0.7688,
+    "Recall": 0.8749,
+    "F1_Score": 0.8184,
+    "ROC_AUC": 0.6124,
+    "PR_AUC": 0.7731,
+    "Brier_Score": 0.1949,
+    "Confusion_Matrix": [
+      [
+        1895,
+        3967
+      ],
+      [
+        1886,
+        13192
+      ]
+    ]
+  },
+  "HistGradientBoosting": {
+    "Accuracy": 0.7716,
+    "Precision": 0.7709,
+    "Recall": 0.9715,
+    "F1_Score": 0.8597,
+    "ROC_AUC": 0.6328,
+    "PR_AUC": 0.789,
+    "Brier_Score": 0.1772,
+    "Confusion_Matrix": [
+      [
+        1508,
+        4354
+      ],
+      [
+        429,
+        14649
+      ]
+    ]
+  }
+}

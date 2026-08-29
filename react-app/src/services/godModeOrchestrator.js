@@ -268,11 +268,53 @@ export const GodModeOrchestrator = {
   },
 
   /**
+   * 9. Sentinel Autonomous Triage & Priority Cases
+   */
+  async getSentinelTriage(caseId = null) {
+    if (caseId) {
+      const res = await api.get(`/sentinel/cases/${caseId}/triage`);
+      return res.data?.data || res.data;
+    }
+    const res = await api.get('/sentinel/dashboard');
+    return res.data || { summary: {}, topPriorityCases: [], activeActions: [] };
+  },
+
+  /**
+   * 10. Trigger Sentinel Triage Scan
+   */
+  async triggerSentinelScan(limit = 100) {
+    const res = await api.post('/sentinel/scan', { limit });
+    return res.data || { summary: {}, topPriorityCases: [], activeActions: [] };
+  },
+
+  /**
+   * 11. Foresight Predictive Intelligence Assessment
+   */
+  async getForesightAssessment(accusedName, caseId = null) {
+    const res = await api.post('/foresight/assess', { accusedName, caseId });
+    return res.data;
+  },
+
+  /**
+   * 12. Foresight Certified Model Card
+   */
+  async getForesightModelCard() {
+    const res = await api.get('/foresight/model-card');
+    return res.data?.modelCard || res.data;
+  },
+
+  /**
    * Natural Language Intent Classifier & Router
    */
   classifyAndRouteQuery(query) {
     const q = query.toLowerCase().trim();
 
+    if (/foresight|predict|recidiv|statistical\s+score|model\s+card|limitations|future\s+outcome|assess\s+accused/i.test(q)) {
+      return { type: 'FORESIGHT_ASSESSMENT', actionName: 'VIKSHANA Foresight Predictive Intelligence' };
+    }
+    if (/sentinel|attention|triage|priority\s+cases|what\s+changed|needs\s+attention|urgent/i.test(q)) {
+      return { type: 'SENTINEL_TRIAGE', actionName: 'VIKSHANA Sentinel Autonomous Triage' };
+    }
     if (/complete(\s+case)?\s+investigation|run\s+all|god\s+mode|full\s+analysis|everything/i.test(q)) {
       return { type: 'COMPLETE_INVESTIGATION' };
     }
@@ -303,3 +345,5 @@ export const GodModeOrchestrator = {
 };
 
 export default GodModeOrchestrator;
+
+

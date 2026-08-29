@@ -30,6 +30,7 @@ const Sidebar = () => {
 
   const allItems = [
     { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
+    { id: 'sentinel', name: 'VIKSHANA Sentinel', icon: ShieldAlert, path: '/sentinel', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'], isFeatured: true },
     { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
     { id: 'forensics', name: 'Forensic Intelligence Hub', icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
     { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
@@ -105,10 +106,35 @@ const Sidebar = () => {
           </NavLink>
         ))}
 
+        {/* VIKSHANA SENTINEL (AUTONOMOUS TRIAGE) */}
+        {filteredMenuItems.filter(i => i.id === 'sentinel').map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
+              color: isActive ? '#fff' : '#fca5a5',
+              background: isActive ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(185, 28, 28, 0.35))' : 'rgba(239, 68, 68, 0.08)',
+              border: isActive ? '1px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.2)',
+              borderLeft: '4px solid #ef4444',
+              transition: 'all 0.2s ease', fontWeight: '700', fontSize: '13.5px', marginTop: '6px'
+            })}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <item.icon size={18} color="#ef4444" />
+              <span>{item.name}</span>
+            </div>
+            <span style={{ fontSize: '9px', fontWeight: '800', background: '#ef4444', color: '#fff', padding: '2px 5px', borderRadius: '4px' }}>
+              TRIAGE
+            </span>
+          </NavLink>
+        ))}
+
         {/* INVESTIGATION */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           INVESTIGATION
         </div>
+
         {filteredMenuItems.filter(i => ['investigate', 'forensics'].includes(i.id)).map((item) => (
           <NavLink
             key={item.path}
