@@ -692,6 +692,68 @@ async function getRows(req, tableName, { maxRows = 50 } = {}) {
     }
 }
 
+async function getAllRows(req, tableName) {
+    try {
+        validateTable(tableName);
+        const allRows = [];
+        let nextToken = null;
+        let pageCount = 0;
+
+        do {
+            const opts = { maxRows: 100 };
+            if (nextToken) opts.nextToken = nextToken;
+
+            const response = await getTable(req, tableName).getPagedRows(opts);
+            const rows = (response.data || []).map(unwrapRow);
+            allRows.push(...rows);
+            
+            nextToken = response.next_token;
+            pageCount++;
+        } while (nextToken && allRows.length < 100000); // safety cap at 100k to prevent OOM
+
+        console.log(`DATA_SOURCE=Catalyst | TABLE=${tableName} | ROW_COUNT=${allRows.length} | PAGES=${pageCount} | QUERY=getAllRows`);
+        return allRows;
+    } catch (err) {
+        console.error(`[datastoreClient] getAllRows error for ${tableName}:`, err.message || err);
+        return [];
+    }
+}
+
+/**
+ * Memory-safe streaming of large datasets using Catalyst pagination.
+ * Fetches page by page, calls the processor callback, and discards the page.
+ */
+async function streamRows(req, tableName, processorFn, { maxRowsPerChunk = 200 } = {}) {
+    try {
+        validateTable(tableName);
+        let nextToken = null;
+        let totalCount = 0;
+        let pageCount = 0;
+
+        do {
+            const opts = { maxRows: Math.min(Number(maxRowsPerChunk), 500) };
+            if (nextToken) opts.nextToken = nextToken;
+
+            const response = await getTable(req, tableName).getPagedRows(opts);
+            const rows = (response.data || []).map(unwrapRow);
+            
+            if (rows.length > 0) {
+                await processorFn(rows, pageCount);
+                totalCount += rows.length;
+            }
+            
+            nextToken = response.next_token;
+            pageCount++;
+        } while (nextToken);
+
+        console.log(`DATA_SOURCE=Catalyst | TABLE=${tableName} | ROW_COUNT=${totalCount} | PAGES=${pageCount} | QUERY=streamRows`);
+        return { status: 'SUCCESS', totalCount, pagesProcessed: pageCount };
+    } catch (err) {
+        console.error(`[datastoreClient DIAGNOSTICS] streamRows EXACT ERROR for ${tableName}:`, err.message || err);
+        throw wrapError(err, tableName);
+    }
+}
+
 async function getRowById(req, tableName, id) {
     if (!id) return null;
     validateTable(tableName);
@@ -746,11 +808,7 @@ async function query(req, sql) {
     }
 }
 
-async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, orderBy, order = 'DESC' } = {}) {
-    validateTable(tableName);
-    loadDatasetFromCSV();
-    const actualMaxRows = Math.min(Number(maxRows) || 50, 500);
-
+async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, offset = 0, orderBy, order = 'DESC' } = {}) {
     try {
         const columns = Object.keys(conditions);
         if (orderBy) columns.push(orderBy);
@@ -761,7 +819,18 @@ async function getRowsWhere(req, tableName, conditions = {}, { maxRows = 50, ord
             .map(([k, v]) => `${k} = '${escapeVal(v)}'`);
         const where = clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '';
         const orderClause = orderBy ? ` ORDER BY ${orderBy} ${order}` : '';
-        const sql = `SELECT * FROM ${tableName}${where}${orderClause} LIMIT ${actualMaxRows}`;
+        validateTable(tableName);
+        loadDatasetFromCSV();
+        const actualMaxRows = Math.min(Number(maxRows) || 50, 2000);
+        const actualOffset = Number(offset) || 0;
+        
+        // ZCQL standard limit clause format: LIMIT limit OFFSET offset
+        let limitClause = ` LIMIT ${actualMaxRows}`;
+        if (actualOffset > 0) {
+            limitClause += ` OFFSET ${actualOffset}`;
+        }
+        
+        const sql = `SELECT * FROM ${tableName}${where}${orderClause}${limitClause}`;
         const rows = await query(req, sql);
         return rows.map((r) => r[tableName] || unwrapRow(r));
     } catch (err) {
@@ -894,6 +963,8 @@ module.exports = {
     unwrapRow,
     query,
     getRows,
+    getAllRows,
+    streamRows,
     getRowById,
     getRowsWhere,
     getRowWhere,

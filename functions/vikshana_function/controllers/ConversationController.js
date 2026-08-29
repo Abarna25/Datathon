@@ -8,6 +8,7 @@ const SuggestionService = require('../services/SuggestionService');
 const LLMService = require('../services/LLMService');
 const crypto = require('crypto');
 const datastoreClient = require('../queries/datastoreClient');
+const { sanitizeData } = require('../middleware/fieldFilter.middleware');
 
 async function detectCaseIdFromQuery(req, queryText, defaultCaseId) {
     // Phase 14: Strict case scoping. Do not guess cases from text to prevent cross-case leakage.
@@ -160,9 +161,13 @@ class ConversationController {
                 recommendedActions: gapsData?.recommendedActions || []
             }];
 
+            // Step 3.5: RBAC Enforcement for Copilot
+            // Since streaming bypasses the global res.json field filter, we MUST sanitize the context BEFORE the LLM sees it.
+            const sanitizedLedger = sanitizeData(ledger, req.user?.role || 'Viewer');
+
             // Step 4: Report Generation
             if (streaming) LLMService.sendEvent(res, 'progress', { step: 'reporting', status: 'Generating final report...' });
-            const assistantText = await ReportAgent.generateReport(ledger, history, res, streaming);
+            const assistantText = await ReportAgent.generateReport(sanitizedLedger, history, res, streaming);
 
             // Generate suggestions
             const suggestions = await SuggestionService.generateFollowUps(assistantText, `Case #${detectedCaseId}`);

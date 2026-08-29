@@ -4,17 +4,18 @@ const investigationRecommendationService = require('../services/InvestigationRec
 const copilotService = require('../services/CopilotService');
 const ContextBuilderService = require('../services/ContextBuilderService');
 const AnomalyDetectionService = require('../services/AnomalyDetectionService');
-const ConfidenceEngineService = require('../services/ConfidenceEngineService');
 
 class EvidenceIntelligenceController {
     
     async getWorkspaceData(req, res) {
         try {
             const caseId = req.query.caseId || 'UNASSIGNED';
+            if (caseId === 'UNASSIGNED') {
+                return res.status(200).json({ success: true, data: { unified_evidence: { summary: { total_evidence: 0 }, evidence: [] }, correlations: [], gaps: [], recommendations: [] } });
+            }
             
             const context = await ContextBuilderService.buildCaseContext(req, caseId).catch(() => null);
             const anomalies = context ? AnomalyDetectionService.detectAnomalies(context) : [];
-            const evidenceStrength = context ? ConfidenceEngineService.calculateScore(context) : null;
 
             // Execute services in parallel for speed
             const [aggregated, correlations, analysis] = await Promise.all([
@@ -23,18 +24,13 @@ class EvidenceIntelligenceController {
                 investigationRecommendationService.generateRecommendationsAndGaps(req, caseId, context, anomalies)
             ]);
             
-            if (aggregated && aggregated.summary) {
-                aggregated.summary.anomalies = anomalies;
-                aggregated.summary.evidenceStrength = evidenceStrength;
-            }
-
             return res.status(200).json({
                 success: true,
                 data: {
                     unified_evidence: aggregated,
                     correlations: correlations,
-                    gaps: analysis.gaps || [],
-                    recommendations: analysis.recommendations || []
+                    readiness: analysis.readiness || null,
+                    gaps: analysis.gaps || []
                 }
             });
         } catch (error) {
@@ -45,15 +41,16 @@ class EvidenceIntelligenceController {
                 data: {
                     unified_evidence: {
                         summary: {
-                            total_items: 0,
-                            high_relevance: 0,
-                            critical_gaps: 0
+                            total_evidence: 0,
+                            linked_entities: 0,
+                            incomplete_records: 0,
+                            duplicate_records: 0
                         },
                         evidence: []
                     },
                     correlations: [],
-                    gaps: [{ missing_item: 'Data Unavailable', priority: 'Critical', reasoning: 'Evidence intelligence generation failed or is unavailable.' }],
-                    recommendations: []
+                    readiness: null,
+                    gaps: [{ gap: 'Data Unavailable', whyItMatters: 'Evidence intelligence generation failed or is unavailable.', recommendedAction: 'Check system status or case ID.', sourceTables: ['System'], confidence: 'HIGH' }]
                 }
             });
         }

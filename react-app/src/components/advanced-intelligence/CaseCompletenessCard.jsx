@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, FileCheck2, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
-import styles from './AdvancedIntelligence.module.css';
 
 const CaseCompletenessCard = ({ caseId }) => {
   const [data, setData] = useState(null);
@@ -36,7 +35,7 @@ const CaseCompletenessCard = ({ caseId }) => {
 
   if (loading) {
     return (
-      <div className={styles.card} style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
         <p style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>Calculating Case Completeness...</p>
       </div>
     );
@@ -44,9 +43,9 @@ const CaseCompletenessCard = ({ caseId }) => {
 
   if (error === 'DATASTORE_UNAVAILABLE') {
     return (
-      <div className={styles.card} style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className={styles.cardHeader} style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 16 }}>
-          <div className={styles.cardTitle}>
+      <div style={{ display: 'flex', flexDirection: 'column', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 16 }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FileCheck2 size={18} color="#94a3b8" /> Case Completeness
           </div>
         </div>
@@ -66,7 +65,7 @@ const CaseCompletenessCard = ({ caseId }) => {
 
   if (error || !data) {
     return (
-      <div className={styles.card} style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
         <p style={{ color: '#ef4444', fontSize: 13, fontWeight: 600 }}>Unable to retrieve case completeness data.</p>
       </div>
     );
@@ -81,9 +80,9 @@ const CaseCompletenessCard = ({ caseId }) => {
   else if (score >= 50) statusColor = '#f59e0b'; // Orange for PARTIALLY_COMPLETE
 
   return (
-    <div className={styles.card} style={{ display: 'flex', flexDirection: 'column' }}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardTitle}>
+    <div style={{ display: 'flex', flexDirection: 'column', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <FileCheck2 size={18} color={statusColor} /> Deterministic Case Completeness
         </div>
       </div>

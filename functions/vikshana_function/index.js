@@ -117,10 +117,9 @@ app.use('/audit', authorizeRole('Administrator', 'Supervisor'), auditRoutes);
 
 // Role Protected API Routes
 app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), dashboardRoutes);
-
-app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), investigateRoutes);
-app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), conversationRoutes);
-app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), caseRoutes);
+app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), investigateRoutes);
+app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), conversationRoutes);
+app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), caseRoutes);
 app.use('/decision', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), decisionRoutes);
 app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), offenderRoutes);
 app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), evidenceRoutes);

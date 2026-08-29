@@ -1,5 +1,6 @@
 const glmClient = require('./glmClient');
 const evidenceAggregatorService = require('./EvidenceAggregatorService');
+const patternDetectionService = require('./PatternDetectionService');
 const datastoreClient = require('../queries/datastoreClient');
 const HallucinationGuardService = require('./HallucinationGuardService');
 const { copilotSystemPrompt } = require('../prompts/copilotPrompt');
@@ -16,9 +17,33 @@ class CopilotService {
             evidenceContext = 'Data is aggregated. Counts: ' + JSON.stringify(unified.counts);
         }
 
+        // Fetch Intelligence context if asked for
+        let intelligenceContext = '';
+        const lowerPrompt = prompt.toLowerCase();
+        
+        if (lowerPrompt.includes('pattern') || lowerPrompt.includes('trend') || lowerPrompt.includes('hotspot') || lowerPrompt.includes('offender') || lowerPrompt.includes('increase')) {
+            const [trends, hotspots, emerging, offenders] = await Promise.all([
+                patternDetectionService.getTrendAnalysis(req).catch(() => ({})),
+                patternDetectionService.getHotspots(req).catch(() => []),
+                patternDetectionService.getEmergingPatterns(req).catch(() => []),
+                patternDetectionService.getRepeatOffenders(req).catch(() => [])
+            ]);
+            intelligenceContext += `\n\nGlobal Intelligence Data:\nTrends: ${JSON.stringify(trends)}\nHotspots: ${JSON.stringify(hotspots)}\nEmerging Patterns: ${JSON.stringify(emerging)}\nRepeat Offenders: ${JSON.stringify(offenders)}`;
+        }
+
+        if (lowerPrompt.includes('similar') || lowerPrompt.includes('compare') || lowerPrompt.includes('match') || lowerPrompt.includes('historical') || lowerPrompt.includes('recommend') || lowerPrompt.includes('investigate') || lowerPrompt.includes('gap') || lowerPrompt.includes('lead')) {
+            try {
+                const SimilarCaseService = require('./SimilarCaseService');
+                const similarData = await SimilarCaseService.findSimilarCases(req, caseId);
+                intelligenceContext += `\n\nCase Intelligence (Similar Historical Cases & Leads):\n${JSON.stringify(similarData)}`;
+            } catch (e) {
+                console.error("Failed to fetch similar case intelligence for Copilot", e);
+            }
+        }
+
         const messages = [
             { role: 'system', content: copilotSystemPrompt },
-            { role: 'user', content: `Evidence Ledger:\n${evidenceContext}\n\nUser Query:\n${prompt}` }
+            { role: 'user', content: `Evidence Ledger:\n${evidenceContext}${intelligenceContext}\n\nUser Query:\n${prompt}` }
         ];
 
         try {

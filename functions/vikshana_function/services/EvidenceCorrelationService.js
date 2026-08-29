@@ -28,6 +28,8 @@ class EvidenceCorrelationService {
                         relationship_type: "Arrest Executed",
                         correlation_score: 1.0,
                         reason: `Arrest record directly linked to Accused ID ${accIdStr}.`,
+                        status: 'CONFIRMED',
+                        provenance: 'Accused + ArrestSurrender',
                         supporting_records: [String(acc.id), String(arrest.id)]
                     });
                 }
@@ -43,6 +45,8 @@ class EvidenceCorrelationService {
                     relationship_type: "Co-occurrence in Incident",
                     correlation_score: 0.85,
                     reason: `Both entities are involved in the same primary incident.`,
+                    status: 'EVIDENCE-BACKED',
+                    provenance: 'Victim + Accused',
                     supporting_records: [String(v.id), String(a.id)]
                 });
             });
@@ -56,6 +60,8 @@ class EvidenceCorrelationService {
                 relationship_type: "Legal Implication",
                 correlation_score: 0.9,
                 reason: `Primary suspect faces these applied legal sections.`,
+                status: 'EVIDENCE-BACKED',
+                provenance: 'ActSectionAssociation',
                 supporting_records: sections.map(s => String(s.id))
             });
         }

@@ -104,13 +104,42 @@ const CopilotAssistantPanel = ({ caseId }) => {
         )}
       </div>
 
+      <div style={{ padding: '0 16px', display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {['Analyze Crime Pattern', 'Find Similar Cases', 'Check Investigation Gaps', 'Find Emerging Crimes', 'Analyze Hotspots', 'Find Repeat Offenders', 'Generate Investigation Brief'].map(action => (
+          <button 
+            key={action}
+            onClick={() => {
+              setInput(action);
+            }}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              padding: '6px 12px',
+              borderRadius: '16px',
+              color: '#e2e8f0',
+              fontSize: '12px',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontWeight: '500'
+            }}
+            onMouseOver={(e) => e.target.style.background = 'rgba(59,130,246,0.2)'}
+            onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            {action}
+          </button>
+        ))}
+      </div>
+
       <div style={{ padding: '16px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '8px' }}>
         <input 
           type="text" 
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask Copilot (e.g. 'Generate charge sheet' or 'List suspects')..."
+          onKeyDown={(e) => {
+             if (e.key === 'Enter') handleSend();
+          }}
+          placeholder="Ask Copilot (e.g. 'What is missing?' or 'Summarize case')..."
           disabled={isLoading}
           style={{ 
             flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', 

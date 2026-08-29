@@ -1,7 +1,8 @@
 /**
  * IntelligenceController.js
  * VIKSHANA 2.0 Core Intelligence Controller
- * Exposes the 7 Novel Intelligence Engines via clean, authenticated REST endpoints.
+ * Exposes the 7 Novel Intelligence Engines via clean, authenticated REST endpoints,
+ * along with the legacy pattern detection endpoints.
  */
 
 const InvestigationReasoningService = require('../services/InvestigationReasoningService');
@@ -11,6 +12,7 @@ const EmergingPatternService = require('../services/EmergingPatternService');
 const EvidenceChainService = require('../services/EvidenceChainService');
 const InvestigationGapService = require('../services/InvestigationGapService');
 const ExplainableAIService = require('../services/ExplainableAIService');
+const patternService = require('../services/PatternDetectionService');
 const AuditService = require('../services/AuditService');
 
 class IntelligenceController {
@@ -130,6 +132,68 @@ class IntelligenceController {
         } catch (error) {
             console.error('[IntelligenceController] explainInsight error:', error);
             return res.status(500).json({ success: false, error: error.message || 'Failed to generate XAI explanation' });
+        }
+    }
+
+    // Legacy Local Pattern Services
+    static async getPatterns(req, res) {
+        try {
+            const data = await patternService.getCrimeFrequencies(req);
+            await AuditService.logEvent(req, req.user, 'Accessed Global Intelligence', 'IntelligenceCenter', 'Global', 'SUCCESS');
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getPatterns error:', error);
+            return res.status(200).json({ success: true, data: { status: 'Error', message: 'Failed to retrieve patterns.' } });
+        }
+    }
+
+    static async getTrends(req, res) {
+        try {
+            const data = await patternService.getTrendAnalysis(req);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getTrends error:', error);
+            return res.status(200).json({ success: true, data: { status: 'Error', message: 'Failed to retrieve trends.' } });
+        }
+    }
+
+    static async getHotspots(req, res) {
+        try {
+            const data = await patternService.getHotspots(req);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getHotspots error:', error);
+            return res.status(200).json({ success: true, data: [] });
+        }
+    }
+
+    static async getEmerging(req, res) {
+        try {
+            const data = await patternService.getEmergingPatterns(req);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getEmerging error:', error);
+            return res.status(200).json({ success: true, data: [] });
+        }
+    }
+
+    static async getOffenders(req, res) {
+        try {
+            const data = await patternService.getRepeatOffenders(req);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getOffenders error:', error);
+            return res.status(200).json({ success: true, data: [] });
+        }
+    }
+
+    static async getGaps(req, res) {
+        try {
+            const data = await patternService.getInvestigationGaps(req);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('[IntelligenceController] getGaps error:', error);
+            return res.status(200).json({ success: true, data: { status: 'Error' } });
         }
     }
 }

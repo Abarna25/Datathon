@@ -94,7 +94,9 @@ const EvidenceCorrelationGraph = ({ correlations = [], evidence = [], caseId }) 
             links.push({
                 source: src,
                 target: tgt,
-                label: corr.reason || corr.relationship_type || 'Linked'
+                label: corr.reason || corr.relationship_type || 'Linked',
+                status: corr.status || 'EVIDENCE-BACKED',
+                provenance: corr.provenance || 'Datastore'
             });
         }
     });
@@ -139,6 +141,7 @@ const EvidenceCorrelationGraph = ({ correlations = [], evidence = [], caseId }) 
       highlightNodes.add(link.source);
       highlightNodes.add(link.target);
     }
+    setHoverNode(null); // Clear node hover when hovering a link
     updateHighlight();
   };
 
@@ -236,7 +239,11 @@ const EvidenceCorrelationGraph = ({ correlations = [], evidence = [], caseId }) 
             linkDirectionalArrowRelPos={1}
             onNodeHover={handleNodeHover}
             onLinkHover={handleLinkHover}
-            linkLabel="label"
+            linkLabel={(link) => `<div style="background: rgba(15,23,42,0.95); padding: 8px; border-radius: 4px; border: 1px solid #3b82f6; font-family: sans-serif; font-size: 12px;">
+              <div style="color: #3b82f6; font-weight: bold; margin-bottom: 4px;">${link.status}</div>
+              <div style="color: #fff; margin-bottom: 4px;">${link.label}</div>
+              <div style="color: #94a3b8; font-size: 10px;">Source: ${link.provenance}</div>
+            </div>`}
             cooldownTicks={100}
             onEngineStop={() => fgRef.current.zoomToFit(400, 50)}
           />

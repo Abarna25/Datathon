@@ -30,8 +30,7 @@ const Sidebar = () => {
 
   const allItems = [
     { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
-    { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'forensics', name: 'Forensic Intelligence Hub', icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
     { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'] },
     { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },

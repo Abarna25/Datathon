@@ -56,9 +56,16 @@ const MapView = ({ nodes, onNodeSelect }) => {
     // Strictly filter out nodes without actual coordinates.
     // DO NOT generate synthetic/random coordinates.
     const mapNodes = nodes.filter(node => node.lat != null && node.lng != null);
+    const hiddenCount = nodes.length - mapNodes.length;
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', zIndex: 1, animation: 'fadeIn 0.5s ease-out' }}>
+            {hiddenCount > 0 && (
+                <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 1000, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#FCA5A5', padding: '10px 16px', borderRadius: '8px', fontSize: '12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                    <span style={{ fontSize: '14px' }}>⚠️</span>
+                    <span><b>{hiddenCount}</b> {hiddenCount === 1 ? 'entity is' : 'entities are'} hidden because they lack GPS coordinates in the datastore.</span>
+                </div>
+            )}
             <MapContainer 
                 center={[12.2958, 76.6394]} 
                 zoom={12} 

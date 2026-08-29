@@ -4,7 +4,7 @@ const AuditService = require('../services/AuditService');
 class TextToSQLController {
     async processQuery(req, res) {
         try {
-            const { query, caseId, history } = req.body;
+            const { query, caseId, history, page = 1, pageSize = 100 } = req.body;
             
             // Check for empty / whitespace-only query
             if (!query || !String(query).trim()) {
@@ -71,18 +71,45 @@ class TextToSQLController {
             // Step 1: Classify intent + primary entity
             const classified = textToSQLService.classifyIntentAndEntity(rawQuery, caseId, history);
 
+            // Step 1.5: Attempt to route to Deterministic Intelligence Services
+            const routedResponse = await textToSQLService.routeQuery(req, rawQuery, caseId);
+            
+            if (routedResponse && routedResponse.handled) {
+                await AuditService.logEvent(req, req.user, 'Routed AI Query to Intelligence Service', `Text-to-SQL Engine`, caseId || '', 'SUCCESS');
+                
+                return res.status(200).json({
+                    success: true,
+                    query: rawQuery,
+                    sql: routedResponse.sqlEquivalent || 'N/A (Deterministic Service)',
+                    answer: routedResponse.explanation,
+                    explanation: routedResponse.explanation,
+                    trace: {
+                        intent: routedResponse.intent,
+                        primaryEntity: 'System Route',
+                        sql: 'N/A',
+                        confidence: '100% (Deterministic)'
+                    },
+                    results: routedResponse.results,
+                    count: routedResponse.results.length,
+                    page: 1,
+                    pageSize: 100
+                });
+            }
+
             // Step 2: Generate & Validate SQL
             const sql = await textToSQLService.generateSQL(rawQuery, caseId, history);
             textToSQLService.validateSQL(sql);
 
             // Step 3: Execute query against Catalyst Data Store / in-memory index
-            const results = await textToSQLService.executeSQL(req, sql);
+            const execResult = await textToSQLService.executeSQL(req, sql, page, pageSize);
+            const results = execResult.data;
+            const finalSql = execResult.finalSql;
             const duration = Date.now() - startTime;
 
             // Step 4: Generate intelligent direct answer & trace
-            const answer = await textToSQLService.generateAnswer(req, rawQuery, sql, results, caseId, classified);
-            const explanation = await textToSQLService.explainResults(rawQuery, sql, results);
-            const trace = textToSQLService.generateTrace(rawQuery, sql, results, classified, duration);
+            const answer = await textToSQLService.generateAnswer(req, rawQuery, finalSql, results, caseId, classified);
+            const explanation = await textToSQLService.explainResults(rawQuery, finalSql, results);
+            const trace = textToSQLService.generateTrace(rawQuery, finalSql, results, classified, duration);
 
             // Step 5: Log the execution via AuditService
             await AuditService.logEvent(
@@ -97,12 +124,14 @@ class TextToSQLController {
             res.status(200).json({
                 success: true,
                 query: rawQuery,
-                sql: sql,
+                sql: finalSql,
                 answer: answer,
                 explanation: explanation,
                 trace: trace,
                 results: results,
-                count: results.length
+                count: results.length,
+                page,
+                pageSize
             });
 
         } catch (error) {

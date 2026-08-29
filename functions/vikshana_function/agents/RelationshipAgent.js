@@ -4,9 +4,9 @@ class RelationshipAgent {
         const edges = [];
         
         // Helper to add nodes without duplicates
-        const addNode = (id, label, type, cluster) => {
+        const addNode = (id, label, type, cluster, extraData = {}) => {
             if (!nodes.find(n => n.id === id)) {
-                nodes.push({ id, label, type, cluster });
+                nodes.push({ id, label, type, cluster, ...extraData });
             }
         };
 
@@ -24,7 +24,10 @@ class RelationshipAgent {
         const cId = `case_${caseId}`;
         const mainCase = (rawData.cases || []).find(c => String(c.id) === String(caseId));
         if (mainCase) {
-            addNode(cId, `Case #${mainCase.crimeNo || caseId}`, 'case', 'Center');
+            addNode(cId, `Case #${mainCase.crimeNo || caseId}`, 'case', 'Center', {
+                lat: mainCase.lat ? parseFloat(mainCase.lat) : null,
+                lng: mainCase.lng ? parseFloat(mainCase.lng) : null
+            });
         }
 
         const activeSuspects = (rawData.suspects || []).filter(s => String(s.caseId) === String(caseId));
@@ -55,7 +58,10 @@ class RelationshipAgent {
                     
                     // Link case to this central suspect
                     if (currentCaseId !== String(caseId)) {
-                        addNode(caseNodeId, `Case #${c.crimeNo || c.id}`, 'case', 'Center');
+                        addNode(caseNodeId, `Case #${c.crimeNo || c.id}`, 'case', 'Center', {
+                            lat: c.lat ? parseFloat(c.lat) : null,
+                            lng: c.lng ? parseFloat(c.lng) : null
+                        });
                         addEdge(caseNodeId, suspectNodeId, 'Cross-Case Accused');
                         networkClusters++;
                     } else {

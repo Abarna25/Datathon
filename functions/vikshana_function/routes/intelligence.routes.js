@@ -24,4 +24,12 @@ router.get('/case/:caseId/gaps-and-actions', IntelligenceController.getGapsAndAc
 // 7. Explainable AI (XAI)
 router.get('/explain/:insightType/:caseId', IntelligenceController.explainInsight);
 
+// Legacy Pattern routes
+router.get('/patterns', IntelligenceController.getPatterns);
+router.get('/trends', IntelligenceController.getTrends);
+router.get('/hotspots', IntelligenceController.getHotspots);
+router.get('/emerging', IntelligenceController.getEmerging);
+router.get('/offenders', IntelligenceController.getOffenders);
+router.get('/gaps', IntelligenceController.getGaps);
+
 module.exports = router;

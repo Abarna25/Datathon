@@ -32,7 +32,9 @@ class RelationshipService {
                     crimeNo: r.CrimeNo,
                     briefFacts: r.BriefFacts,
                     category: r.CaseCategoryID,
-                    officerId: r.PolicePersonID
+                    officerId: r.PolicePersonID,
+                    lat: r.latitude,
+                    lng: r.longitude
                 })),
                 victims: (victims || []).map(r => ({
                     id: r.VictimMasterID,
