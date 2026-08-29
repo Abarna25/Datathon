@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2, FileText, Database, Compass, Clock, MapPin, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList, Zap, Fingerprint, Link as LinkIcon, BrainCircuit } from 'lucide-react';
+import { Loader2, FileText, Database, Compass, Clock, Search, Bot, Layers, Network, ChevronRight, Users, Share2, LayoutList, Zap, Fingerprint, Link as LinkIcon, BrainCircuit } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useGodMode } from '../context/GodModeContext';
 import { ConversationProvider } from '../context/ConversationContext';
 import api from '../services/api';
 import styles from './InvestigationWorkspace.module.css';
@@ -27,6 +28,7 @@ const InvestigationWorkspace = () => {
     const navigate = useNavigate();
     const { caseId: paramCaseId } = useParams();
     const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases } = useAppContext();
+    const { activateGodMode } = useGodMode();
     const [activeTab, setActiveTab] = useState('overview');
 
     // Sync URL param with activeCaseId or select default first case
@@ -90,12 +92,41 @@ const InvestigationWorkspace = () => {
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             {/* Header / Tabs */}
             <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '24px' }}>
                     <Search size={20} color="var(--accent-primary)" />
                     <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Investigation Workspace</h2>
                     <ChevronRight size={14} color="var(--text-secondary)" />
                     <span style={{ fontSize: '14px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Case {currentCase?.caseNumber || activeCaseId}</span>
                 </div>
+
+                <button
+                    id="workspace-god-mode-btn"
+                    onClick={() => activateGodMode({
+                        source: 'investigation-workspace',
+                        query: `Case ${currentCase?.caseNumber || effectiveCaseId}`,
+                        caseId: effectiveCaseId,
+                        entityType: null,
+                        entityId: null,
+                        entityName: null
+                    })}
+                    title="Activate Deep Investigation Mode"
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px',
+                        background: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        fontWeight: '700',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        boxShadow: '0 0 10px rgba(37,99,235,0.4)',
+                        marginRight: '16px',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    <Zap size={14} color="#fbbf24" fill="#fbbf24" />
+                    <span>⚡ GOD MODE</span>
+                </button>
                 
                 <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
                     {tabs.map(tab => (

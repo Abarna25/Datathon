@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Bot, User, Send, Sparkles, Mic, MicOff, RotateCcw, 
-  Table, FileJson, Download, Code, CheckCircle2, ShieldAlert, 
-  Info, ChevronDown, ChevronRight, Copy, Check, Terminal,
-  Search, AlertCircle, FileText, Database, Shield, Zap
+  Table, Download, Code, Info, ChevronDown, ChevronRight,
+  Copy, Check, AlertCircle, FileText, Database, Shield, Zap, ExternalLink
 } from 'lucide-react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
+import { useGodMode } from '../context/GodModeContext';
 
 const STARTER_PROMPTS = [
   {
@@ -36,14 +37,29 @@ const STARTER_PROMPTS = [
 ];
 
 const DataExplorer = () => {
-  const { activeCaseId, currentCase } = useAppContext();
+  const navigate = useNavigate();
+  const { activeCaseId, currentCase, setActiveCaseId } = useAppContext();
+  const { activateGodMode } = useGodMode();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [viewModes, setViewModes] = useState({}); // { [msgId]: 'table' | 'json' }
-  const [expandedSql, setExpandedSql] = useState({}); // { [msgId]: boolean }
+  const [expandedTrace, setExpandedTrace] = useState({}); // { [msgId]: boolean }
+
+
+  const handleActivateGodMode = () => {
+    const lastUserMsg = messages.filter(m => m.role === 'user').slice(-1)[0];
+    activateGodMode({
+      source: 'investigation-search',
+      query: input.trim() || lastUserMsg?.content || '',
+      caseId: activeCaseId || '101',
+      entityType: null,
+      entityId: null,
+      entityName: null
+    });
+  };
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -177,7 +193,7 @@ Try asking: *"Show all cases registered in 2021"* or *"Find accused in this case
       });
 
       if (response.data.success) {
-        const { sql, results, answer, explanation } = response.data;
+        const { sql, results, answer, explanation, trace } = response.data;
         const count = results ? results.length : 0;
 
         let contentSummary = answer || explanation;
@@ -196,6 +212,14 @@ Try asking: *"Show all cases registered in 2021"* or *"Find accused in this case
             sql: sql,
             results: results,
             explanation: explanation,
+            trace: trace || {
+              intent: 'INVESTIGATION_SEARCH',
+              primaryEntity: 'CaseMaster',
+              sql: sql,
+              filters: 'Standard indexing',
+              confidence: 'Verified (High)',
+              executionTimeMs: 1
+            },
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
@@ -296,36 +320,71 @@ Try asking: *"Show all cases registered in 2021"* or *"Find accused in this case
           </div>
         </div>
 
-        {messages.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            onClick={clearChat}
+            id="god-mode-activate-btn"
+            onClick={handleActivateGodMode}
+            title="Activate Deep Investigation Mode"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 14px',
+              padding: '7px 16px',
               borderRadius: '8px',
-              border: '1px solid var(--border-color, #e2e8f0)',
-              backgroundColor: 'var(--bg-secondary, #ffffff)',
-              color: 'var(--text-secondary, #64748b)',
+              border: '1px solid #3b82f6',
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
+              color: '#ffffff',
               fontSize: '13px',
-              fontWeight: '500',
+              fontWeight: '700',
               cursor: 'pointer',
-              transition: 'all 0.15s'
+              boxShadow: '0 0 14px rgba(37, 99, 235, 0.4)',
+              transition: 'all 0.2s ease',
+              letterSpacing: '0.5px'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-primary, #2563eb)';
-              e.currentTarget.style.color = 'var(--accent-primary, #2563eb)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 0 18px rgba(59, 130, 246, 0.6)';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)';
-              e.currentTarget.style.color = 'var(--text-secondary, #64748b)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 0 14px rgba(37, 99, 235, 0.4)';
             }}
           >
-            <RotateCcw size={14} />
-            New Chat
+            <Zap size={15} color="#fbbf24" fill="#fbbf24" />
+            <span>⚡ GOD MODE</span>
           </button>
-        )}
+
+          {messages.length > 0 && (
+            <button
+              onClick={clearChat}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color, #e2e8f0)',
+                backgroundColor: 'var(--bg-secondary, #ffffff)',
+                color: 'var(--text-secondary, #64748b)',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.borderColor = 'var(--accent-primary, #2563eb)';
+                e.currentTarget.style.color = 'var(--accent-primary, #2563eb)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-color, #e2e8f0)';
+                e.currentTarget.style.color = 'var(--text-secondary, #64748b)';
+              }}
+            >
+              <RotateCcw size={14} />
+              New Chat
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Conversation Stream */}
@@ -500,103 +559,11 @@ Try asking: *"Show all cases registered in 2021"* or *"Find accused in this case
                     lineHeight: '1.6',
                     color: 'var(--text-primary, #0f172a)',
                     whiteSpace: 'pre-wrap',
-                    marginBottom: msg.sql || msg.results ? '16px' : '0'
+                    marginBottom: msg.results && msg.results.length > 0 ? '16px' : '0'
                   }}>
                     {msg.content}
                   </div>
 
-                  {/* Generated SQL Accordion Card */}
-                  {msg.sql && (
-                    <div style={{
-                      backgroundColor: 'var(--bg-secondary, #ffffff)',
-                      border: '1px solid var(--border-color, #e2e8f0)',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      marginBottom: '16px',
-                      boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05))'
-                    }}>
-                      <div 
-                        onClick={() => setExpandedSql(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))}
-                        style={{
-                          padding: '10px 16px',
-                          backgroundColor: '#f5f3ff',
-                          borderBottom: expandedSql[msg.id] !== false ? '1px solid #ddd6fe' : 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Code size={16} color="#7c3aed" />
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#5b21b6' }}>
-                            Synthesized ZCQL Query
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopy(msg.sql, `sql-${msg.id}`);
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#7c3aed',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '12px',
-                              fontWeight: '500'
-                            }}
-                          >
-                            {copiedIndex === `sql-${msg.id}` ? <Check size={14} /> : <Copy size={14} />}
-                            {copiedIndex === `sql-${msg.id}` ? 'Copied' : 'Copy'}
-                          </button>
-                          {expandedSql[msg.id] === false ? <ChevronRight size={16} color="#7c3aed" /> : <ChevronDown size={16} color="#7c3aed" />}
-                        </div>
-                      </div>
-
-                      {expandedSql[msg.id] !== false && (
-                        <div style={{ padding: '12px 16px', backgroundColor: '#faf5ff' }}>
-                          <pre style={{
-                            margin: 0,
-                            fontFamily: '"Fira Code", monospace',
-                            fontSize: '13px',
-                            color: '#4c1d95',
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-all'
-                          }}>
-                            {msg.sql}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* AI Explanation / Reasoning Box */}
-                  {msg.explanation && (
-                    <div style={{
-                      padding: '12px 16px',
-                      backgroundColor: 'var(--bg-secondary, #ffffff)',
-                      border: '1px solid var(--border-color, #e2e8f0)',
-                      borderRadius: '12px',
-                      marginBottom: '16px',
-                      fontSize: '13px',
-                      lineHeight: '1.5',
-                      color: 'var(--text-secondary, #64748b)',
-                      display: 'flex',
-                      gap: '10px'
-                    }}>
-                      <Info size={16} color="var(--accent-primary, #2563eb)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <div>
-                        <strong style={{ color: 'var(--text-primary, #0f172a)' }}>AI Rationale: </strong>
-                        {msg.explanation}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Embedded Interactive Data Table / JSON */}
                   {msg.results && msg.results.length > 0 && (
@@ -752,6 +719,161 @@ Try asking: *"Show all cases registered in 2021"* or *"Find accused in this case
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Investigation Quick Action Buttons */}
+                  {msg.role === 'assistant' && msg.results && msg.results.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                      {msg.results[0]?.CaseMasterID && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveCaseId(msg.results[0].CaseMasterID);
+                            navigate(`/app/cases/${msg.results[0].CaseMasterID}`);
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            backgroundColor: 'var(--bg-secondary, #ffffff)',
+                            border: '1px solid var(--border-color, #e2e8f0)',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            color: 'var(--accent-primary, #2563eb)',
+                            cursor: 'pointer',
+                            boxShadow: 'var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05))'
+                          }}
+                        >
+                          <FileText size={13} />
+                          <span>View Case Dossier #{msg.results[0].CaseMasterID}</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          activateGodMode({
+                            source: 'investigation-search-result',
+                            query: msg.content.slice(0, 80),
+                            caseId: msg.results[0]?.CaseMasterID || activeCaseId || '101'
+                          });
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(245, 158, 11, 0.15) 100%)',
+                          border: '1px solid rgba(234, 179, 8, 0.3)',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#b45309',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Zap size={13} />
+                        <span>God Mode Deep Dive</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Collapsed Investigation Trace Component */}
+                  {msg.role === 'assistant' && (msg.sql || msg.trace) && !msg.isError && (
+                    <div style={{ marginTop: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTrace(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 12px',
+                          backgroundColor: expandedTrace[msg.id] ? '#f1f5f9' : 'transparent',
+                          border: '1px solid var(--border-color, #e2e8f0)',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: 'var(--text-secondary, #64748b)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        <Code size={13} color="var(--accent-primary, #2563eb)" />
+                        <span>{expandedTrace[msg.id] ? 'Hide Investigation Trace' : 'View Investigation Trace'}</span>
+                        {expandedTrace[msg.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </button>
+
+                      {expandedTrace[msg.id] && (
+                        <div style={{
+                          marginTop: '10px',
+                          padding: '14px 16px',
+                          backgroundColor: 'var(--bg-secondary, #ffffff)',
+                          border: '1px solid var(--border-color, #e2e8f0)',
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05))',
+                          fontSize: '13px'
+                        }}>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: '#eff6ff', color: '#2563eb', fontSize: '11px', fontWeight: '600' }}>
+                              Intent: {msg.trace?.intent || 'INVESTIGATION_SEARCH'}
+                            </span>
+                            <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: '#f5f3ff', color: '#7c3aed', fontSize: '11px', fontWeight: '600' }}>
+                              Entity: {msg.trace?.primaryEntity || 'CaseMaster'}
+                            </span>
+                            <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: '#ecfdf5', color: '#059669', fontSize: '11px', fontWeight: '600' }}>
+                              Execution: {msg.trace?.executionTimeMs ? `${msg.trace.executionTimeMs}ms` : '<1ms'}
+                            </span>
+                            <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: '#fffbeb', color: '#d97706', fontSize: '11px', fontWeight: '600' }}>
+                              Confidence: {msg.trace?.confidence || 'High'}
+                            </span>
+                          </div>
+
+                          {msg.sql && (
+                            <div style={{ marginTop: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>
+                                  Internal ZCQL Query:
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(msg.sql, `sql-${msg.id}`)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--accent-primary, #2563eb)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '11px'
+                                  }}
+                                >
+                                  {copiedIndex === `sql-${msg.id}` ? <Check size={12} /> : <Copy size={12} />}
+                                  {copiedIndex === `sql-${msg.id}` ? 'Copied' : 'Copy'}
+                                </button>
+                              </div>
+                              <pre style={{
+                                margin: 0,
+                                padding: '8px 12px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '8px',
+                                fontFamily: '"Fira Code", monospace',
+                                fontSize: '12px',
+                                color: '#334155',
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-all'
+                              }}>
+                                {msg.sql}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

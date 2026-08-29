@@ -27,7 +27,11 @@ const RelationshipExplorer = () => {
         }
         setLoading(true);
         try {
-            const response = await api.get('/relationships', { params: { caseId: activeCaseId } });
+            const endpoint = viewMode === 'temporal' 
+                ? `/intelligence/case/${activeCaseId}/temporal-network` 
+                : '/relationships';
+            const params = viewMode === 'temporal' ? {} : { caseId: activeCaseId };
+            const response = await api.get(endpoint, { params });
             if (response.data && response.data.success && response.data.data) {
                 setRawData(response.data.data);
             }
@@ -36,7 +40,7 @@ const RelationshipExplorer = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeCaseId]);
+    }, [activeCaseId, viewMode]);
 
     useEffect(() => {
         // Destroy current graph data immediately on case change to prevent merging
@@ -59,7 +63,7 @@ const RelationshipExplorer = () => {
         // 2. Keep authentic backend edge labels
         const edgesWithLabels = rawE.map((e) => ({
             ...e,
-            label: e.label || 'Associated'
+            label: e.label || (e.relationshipType ? e.relationshipType.replace(/_/g, ' ') : 'Associated')
         }));
 
         // Apply Filters
@@ -72,7 +76,7 @@ const RelationshipExplorer = () => {
                 const t = n.type || '';
                 switch (activeFilter) {
                     case 'People': return ['suspect', 'victim', 'witness', 'officer', 'police'].includes(t);
-                    case 'Evidence': return ['evidence', 'weapon'].includes(t);
+                    case 'Evidence': return ['evidence', 'weapon', 'physical_evidence'].includes(t);
                     case 'Vehicles': return t === 'vehicle';
                     case 'Phones': return t === 'phone';
                     case 'Financial': return t === 'financial';
@@ -91,7 +95,7 @@ const RelationshipExplorer = () => {
             total: nodes.length,
             connections: edges.length,
             riskLevel: nodes.some(n => n.type === 'suspect') ? 'Elevated' : 'Standard',
-            clusters: new Set(nodes.map(n => n.cluster).filter(Boolean)).size,
+            clusters: new Set(nodes.map(n => n.cluster).filter(Boolean)).size || 1,
             highRisk: nodes.filter(n => n.type === 'suspect').length
         };
 
@@ -125,8 +129,11 @@ const RelationshipExplorer = () => {
             </div>
 
             <AIAssistantPanel 
-                title="AI Network Summary" 
-                content={`I have analyzed a network of **${insights.total} entities** and **${insights.connections} connections**. There are **${insights.clusters} distinct communities**. Pay close attention to the **${insights.highRisk} high-risk** suspects bridging these clusters.`}
+                title={viewMode === 'temporal' ? "Temporal Multi-Hop Network Summary" : "AI Network Summary"} 
+                content={viewMode === 'temporal' 
+                    ? `Displaying time-bounded multi-hop graph across Person ➔ Case ➔ Location ➔ Evidence. All connections are backed by verified database records with strict temporal provenance.`
+                    : `I have analyzed a network of **${insights.total} entities** and **${insights.connections} connections**. There are **${insights.clusters} distinct communities**. Pay close attention to the **${insights.highRisk} high-risk** suspects bridging these clusters.`
+                }
                 delay={600}
             />
 
@@ -150,18 +157,24 @@ const RelationshipExplorer = () => {
                             </div>
                             
                             {/* View Toggle */}
-                            <div style={{ display: 'flex', background: '#1E293B', borderRadius: '8px', padding: '4px', marginTop: '12px' }}>
+                            <div style={{ display: 'flex', background: '#1E293B', borderRadius: '8px', padding: '4px', marginTop: '12px', gap: '4px' }}>
                                 <button 
                                     onClick={() => setViewMode('topology')}
-                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '6px', borderRadius: '6px', background: viewMode === 'topology' ? '#2563EB' : 'transparent', color: viewMode === 'topology' ? '#FFFFFF' : '#94A3B8', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600', transition: 'all 0.2s' }}
+                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 8px', borderRadius: '6px', background: viewMode === 'topology' ? '#2563EB' : 'transparent', color: viewMode === 'topology' ? '#FFFFFF' : '#94A3B8', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', transition: 'all 0.2s' }}
                                 >
-                                    <Network size={14} /> Topology
+                                    <Network size={13} /> Topology
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('temporal')}
+                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 8px', borderRadius: '6px', background: viewMode === 'temporal' ? '#8B5CF6' : 'transparent', color: viewMode === 'temporal' ? '#FFFFFF' : '#94A3B8', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', transition: 'all 0.2s' }}
+                                >
+                                    <Clock size={13} /> Temporal
                                 </button>
                                 <button 
                                     onClick={() => setViewMode('map')}
-                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '6px', borderRadius: '6px', background: viewMode === 'map' ? '#2563EB' : 'transparent', color: viewMode === 'map' ? '#FFFFFF' : '#94A3B8', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600', transition: 'all 0.2s' }}
+                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 8px', borderRadius: '6px', background: viewMode === 'map' ? '#2563EB' : 'transparent', color: viewMode === 'map' ? '#FFFFFF' : '#94A3B8', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', transition: 'all 0.2s' }}
                                 >
-                                    <MapIcon size={14} /> Geospatial
+                                    <MapIcon size={13} /> Geospatial
                                 </button>
                             </div>
                         </div>
@@ -176,8 +189,8 @@ const RelationshipExplorer = () => {
                         </div>
                     </div>
 
-                    {viewMode === 'topology' ? (
-                        <GraphView key={`graph-${activeCaseId}`} nodes={filteredNodes} edges={filteredEdges} searchQuery={searchQuery} onNodeSelect={setSelectedNode} />
+                    {viewMode === 'topology' || viewMode === 'temporal' ? (
+                        <GraphView key={`graph-${activeCaseId}-${viewMode}`} nodes={filteredNodes} edges={filteredEdges} searchQuery={searchQuery} onNodeSelect={setSelectedNode} />
                     ) : (
                         <MapView key={`map-${activeCaseId}`} nodes={filteredNodes} onNodeSelect={setSelectedNode} />
                     )}

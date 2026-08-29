@@ -10,6 +10,7 @@ const InvestigationLeadsPanel = ({ caseId }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedLead, setSelectedLead] = useState(null);
+    const [xaiModalData, setXaiModalData] = useState(null);
 
     useEffect(() => {
         if (!caseId) return;
@@ -191,9 +192,113 @@ const InvestigationLeadsPanel = ({ caseId }) => {
                                 {selectedLead.recommendedVerification}
                             </div>
                         </div>
+
+                        {/* XAI Explanation Trigger Button */}
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const res = await api.get(`/intelligence/explain/lead/${caseId}?insightId=${selectedLead.leadId}`);
+                                    if (res.data?.success) {
+                                        setXaiModalData(res.data.data);
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to fetch XAI explanation', e);
+                                }
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                padding: '10px 16px',
+                                background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2))',
+                                border: '1px solid rgba(139,92,246,0.4)',
+                                borderRadius: '8px',
+                                color: '#a78bfa',
+                                fontWeight: '700',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Sparkles size={16} /> Inspect Explainable AI (XAI) Contract
+                        </button>
                     </div>
                 )}
             </div>
+
+            {/* XAI Modal Drawer */}
+            {xaiModalData && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+                    zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+                }}>
+                    <div className="glass-panel" style={{
+                        maxWidth: '650px', width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                        padding: '28px', borderRadius: '16px', border: '1px solid rgba(139,92,246,0.4)',
+                        display: 'flex', flexDirection: 'column', gap: '16px', background: '#0f172a'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#a78bfa' }}>
+                                <Sparkles size={20} />
+                                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800' }}>Explainable AI (XAI) Framework Contract</h3>
+                            </div>
+                            <button onClick={() => setXaiModalData(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#3b82f6', textTransform: 'uppercase' }}>1. WHAT (Investigative Finding)</div>
+                                <div style={{ fontSize: '13.5px', color: 'var(--text-primary)', marginTop: '4px' }}>{xaiModalData.what}</div>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#8b5cf6', textTransform: 'uppercase' }}>2. WHY (Algorithmic Justification)</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>{xaiModalData.why}</div>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>3. SUPPORTING EVIDENCE RECORDS</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                                    {xaiModalData.evidence?.map((ev, idx) => (
+                                        <span key={idx} style={{ padding: '3px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.15)', color: '#10b981', fontSize: '11px', fontWeight: '600' }}>
+                                            {ev}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
+                                <div>
+                                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase' }}>4. NUMERICAL CONFIDENCE</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#f59e0b', marginTop: '2px' }}>
+                                        {typeof xaiModalData.confidence === 'number' ? `${(xaiModalData.confidence * 100).toFixed(0)}%` : xaiModalData.confidence}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{xaiModalData.confidenceJustification}</div>
+                                </div>
+
+                                <div>
+                                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#06b6d4', textTransform: 'uppercase' }}>5. INFERENCE CLASSIFICATION</div>
+                                    <div style={{ fontSize: '13px', fontWeight: '700', color: xaiModalData.isAIInferred ? '#f59e0b' : '#10b981', marginTop: '2px' }}>
+                                        {xaiModalData.classification}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{xaiModalData.isAIInferred ? 'AI Interpretation' : 'Deterministic Ground Truth'}</div>
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase' }}>6. MANDATORY HUMAN INVESTIGATOR VERIFICATION</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px' }}>{xaiModalData.humanVerificationRequired}</div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setXaiModalData(null)} style={{ padding: '8px 18px', borderRadius: '8px', background: 'var(--accent-primary)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Close Explanation</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

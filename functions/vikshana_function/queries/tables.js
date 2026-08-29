@@ -137,7 +137,10 @@ const tables = {
     ],
     UserMaster: [
         'UserID', 'Username', 'Email', 'PasswordHash', 'Salt', 'Iterations',
-        'Role', 'Department', 'Name', 'Status', 'CreatedAt', 'UpdatedAt'
+        'Role', 'Department', 'Name', 'Status', 'CreatedAt', 'UpdatedAt',
+        'id', 'username', 'email', 'passwordHash', 'salt', 'iterations',
+        'role', 'department', 'name', 'accountStatus', 'AccountStatus',
+        'createdAt', 'updatedAt', 'passwordChangedAt', 'PasswordChangedAt'
     ]
 };
 

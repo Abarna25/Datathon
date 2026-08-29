@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Fingerprint, Shield, Clock, Crosshair, Truck, Lock, 
-    Share2, AlertTriangle, Loader2, CheckCircle2, ChevronRight, Info
+    Share2, AlertTriangle, Loader2, CheckCircle2, ChevronRight, Info, Sparkles
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -9,6 +9,7 @@ const MOProfilePanel = ({ caseId }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [xaiModalData, setXaiModalData] = useState(null);
 
     useEffect(() => {
         if (!caseId) return;
@@ -134,6 +135,36 @@ const MOProfilePanel = ({ caseId }) => {
                                 <div style={{ marginTop: 'auto', padding: '8px', borderRadius: '6px', background: 'rgba(59,130,246,0.06)', fontSize: '11px', color: 'var(--accent-primary)' }}>
                                     <strong>Pattern Explanation:</strong> {match.explanation}
                                 </div>
+
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const res = await api.get(`/intelligence/explain/mo/${caseId}`);
+                                            if (res.data?.success) {
+                                                setXaiModalData(res.data.data);
+                                            }
+                                        } catch (e) {
+                                            console.error('Failed to fetch XAI MO explanation', e);
+                                        }
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        padding: '6px 12px',
+                                        background: 'rgba(139,92,246,0.15)',
+                                        border: '1px solid rgba(139,92,246,0.3)',
+                                        borderRadius: '6px',
+                                        color: '#a78bfa',
+                                        fontSize: '11.5px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        marginTop: '6px'
+                                    }}
+                                >
+                                    <Sparkles size={13} /> View XAI Attribution
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -143,6 +174,79 @@ const MOProfilePanel = ({ caseId }) => {
                     </div>
                 )}
             </div>
+
+            {/* XAI Modal Drawer */}
+            {xaiModalData && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+                    zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+                }}>
+                    <div className="glass-panel" style={{
+                        maxWidth: '650px', width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                        padding: '28px', borderRadius: '16px', border: '1px solid rgba(139,92,246,0.4)',
+                        display: 'flex', flexDirection: 'column', gap: '16px', background: '#0f172a'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#a78bfa' }}>
+                                <Sparkles size={20} />
+                                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800' }}>Explainable AI (XAI) — MO Similarity Breakdown</h3>
+                            </div>
+                            <button onClick={() => setXaiModalData(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#3b82f6', textTransform: 'uppercase' }}>1. WHAT (MO Correlation)</div>
+                                <div style={{ fontSize: '13.5px', color: 'var(--text-primary)', marginTop: '4px' }}>{xaiModalData.what}</div>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#8b5cf6', textTransform: 'uppercase' }}>2. WHY (Signature Matching)</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>{xaiModalData.why}</div>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>3. MATCHED EVIDENCE & CRIME NOS</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                                    {xaiModalData.evidence?.map((ev, idx) => (
+                                        <span key={idx} style={{ padding: '3px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.15)', color: '#10b981', fontSize: '11px', fontWeight: '600' }}>
+                                            {ev}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
+                                <div>
+                                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase' }}>4. WEIGHTED JACCARD SCORE</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#f59e0b', marginTop: '2px' }}>
+                                        {typeof xaiModalData.confidence === 'number' ? `${(xaiModalData.confidence * 100).toFixed(0)}%` : xaiModalData.confidence}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{xaiModalData.confidenceJustification}</div>
+                                </div>
+
+                                <div>
+                                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#06b6d4', textTransform: 'uppercase' }}>5. CLASSIFICATION</div>
+                                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#10b981', marginTop: '2px' }}>
+                                        {xaiModalData.classification}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Deterministic Signature Matching</div>
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase' }}>6. MANDATORY HUMAN VERIFICATION</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px' }}>{xaiModalData.humanVerificationRequired}</div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setXaiModalData(null)} style={{ padding: '8px 18px', borderRadius: '8px', background: 'var(--accent-primary)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
