@@ -4,6 +4,8 @@
  * Executes DBSCAN spatial clustering and Ridge Regression time-series forecasting.
  */
 
+const { spawn } = require('child_process');
+const path = require('path');
 const fs = require('fs');
 
 function getScriptPath() {

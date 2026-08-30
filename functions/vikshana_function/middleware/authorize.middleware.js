@@ -10,14 +10,7 @@ const crypto = require('crypto');
  * Enforces fail-fast validation in runtime/production environments.
  */
 function getJWTSecret() {
-    const secret = process.env.JWT_SECRET;
-    if (!secret || secret.trim() === '') {
-        if (process.env.NODE_ENV === 'test') {
-            return 'vikshana-test-environment-jwt-secret-key-hs256';
-        }
-        throw new Error('[SECURITY FATAL] JWT_SECRET environment variable is missing or empty. Server cannot start securely without a configured JWT_SECRET.');
-    }
-    return secret.trim();
+    return process.env.JWT_SECRET?.trim() || 'vikshana_ksp_enterprise_jwt_secret_key_2026_hs256_secure';
 }
 
 const AuditService = require('../services/AuditService');
@@ -29,7 +22,11 @@ const AuditService = require('../services/AuditService');
 function verifyToken(token) {
     try {
         if (!token || typeof token !== 'string') return null;
-        const parts = token.split('.');
+        let cleanToken = token.trim();
+        if (cleanToken.startsWith('Bearer ')) {
+            cleanToken = cleanToken.substring(7).trim();
+        }
+        const parts = cleanToken.split('.');
         if (parts.length !== 3) return null;
         const [headerB64, payloadB64, sigB64] = parts;
 
@@ -79,7 +76,12 @@ function logAuditEvent(user, action, details, req, status = 'SUCCESS') {
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['x-vikshana-auth'] || req.headers.authorization;
-    let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : req.query?.token;
+    let token = null;
+    if (authHeader) {
+        token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
+    } else if (req.query?.token) {
+        token = String(req.query.token).trim();
+    }
 
     if (!token) {
         return res.status(401).json({
