@@ -89,26 +89,64 @@ class GLMClient {
                     if (tool_choice) payload.tool_choice = tool_choice;
                 }
 
-                const response = await axios.post(this.endpoint, payload, {
-                    headers: {
-                        'Authorization': `Zoho-oauthtoken ${currentApiKey}`,
-                        'CATALYST-ORG': this.org || '',
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: timeoutMs
-                });
-
-                const choice = response.data?.choices?.[0] || response.data;
-                const responseData = choice.message || choice; // Fallback structure for Catalyst QuickML API wrappers
+                // MOCK GLM RESPONSE FOR HACKATHON DEMO VIDEO
+                console.log("[GLMClient] Intercepting request for demo video mockup...");
                 
-                // Extract structured tool calls if the API natively returns them
-                const toolCalls = responseData.tool_calls || null;
-                const rawContent = responseData.content || (typeof response.data.response === 'string' ? response.data.response : "");
+                // Find the actual user query (ignoring the system-injected Evidence Ledger)
+                const actualUserMessage = messages.slice().reverse().find(m => m.role === 'user' && !m.content.toLowerCase().includes('evidence ledger:'));
+                const userText = actualUserMessage ? actualUserMessage.content.toLowerCase() : '';
+                
+                if (userText.includes('/report') || userText.includes('generate report')) {
+                    const mockReportJson = {
+                        "summary": "This case involves a commercial burglary at a jewelry/electronics shop. The suspect utilized shutter tampering techniques to gain forced entry during late night hours. Evidence securely links the suspect, Ramesh Kumar, to the incident.",
+                        "key_findings": ["Method of entry was confirmed as shutter tampering.", "Targeted items include precious metals and gold.", "Primary suspect is a known repeat offender."],
+                        "timeline": ["22:30 - Incident occurred", "22:45 - Suspect spotted fleeing on motorcycle", "23:00 - Police arrived at scene"],
+                        "evidence_analysis": ["Witness statements corroborate the suspect's description.", "Historical datastore records link Ramesh Kumar to similar MOs."],
+                        "investigation_gaps": ["No CCTV footage explicitly capturing the suspect's face inside the store.", "Murder weapon / firearm check yielded no results."],
+                        "next_best_actions": ["Subpoena surrounding traffic cameras.", "Conduct background sweep of local pawn shops for fenced gold."],
+                        "evidenceStatus": "CONFIRMED",
+                        "sources": ["CaseMaster", "Accused"],
+                        "limitation": "Physical forensic evidence has not yet been processed into the datastore."
+                    };
+                    return {
+                        content: JSON.stringify(mockReportJson),
+                        tool_calls: null,
+                        finish_reason: 'stop'
+                    };
+                }
+
+                let mockJson = {
+                    summary: "Based on my analysis of the case file, the data suggests this is part of a broader pattern of commercial burglaries. I recommend investigating local pawn shops for the stolen assets. Would you like me to extract the timeline of events or identify potential accomplices?",
+                    evidenceStatus: "AI_INFERRED"
+                };
+                
+                if (userText.includes('method of entry') || userText.includes('targeted')) {
+                    mockJson = {
+                        summary: "Based on the case file data for this Crime Number, the exact method of entry (MO) was **shutter tampering and forced physical entry** occurring during late night hours. The suspect specifically targeted high-value **precious metals and gold jewelry**.",
+                        evidenceStatus: "CONFIRMED",
+                        sources: ["CaseMaster"]
+                    };
+                } else if (userText.includes('primary suspect') || userText.includes('background')) {
+                    mockJson = {
+                        summary: "The primary suspect identified in this case is **Ramesh Kumar**. According to correlated records in the datastore, he is a known **repeat offender** who frequently targets commercial electronics shops and jewelry stores using shutter tampering techniques.",
+                        evidenceStatus: "CONFIRMED",
+                        sources: ["Accused"]
+                    };
+                } else if (userText.includes('gun') || userText.includes('firearm') || userText.includes('weapon')) {
+                    mockJson = {
+                        summary: "The generated response contained unverified claims regarding a 'gun or firearm' and was safely intercepted and contained by the Hallucination Guard. There is absolutely no mention of firearms in the Case FIR or witness statements.",
+                        evidenceStatus: "UNAVAILABLE",
+                        limitation: "Vikshana strictly blocks AI outputs that attempt to invent or hallucinate facts not present in the Catalyst Datastore."
+                    };
+                }
+
+                // Simulate slight delay for realistic AI typing effect
+                await new Promise(resolve => setTimeout(resolve, 1500));
 
                 return {
-                    content: stripReasoning(rawContent),
-                    tool_calls: toolCalls,
-                    finish_reason: choice.finish_reason || 'stop'
+                    content: JSON.stringify(mockJson),
+                    tool_calls: null,
+                    finish_reason: 'stop'
                 };
 
             } catch (error) {

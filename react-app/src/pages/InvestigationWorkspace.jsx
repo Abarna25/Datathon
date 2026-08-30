@@ -92,7 +92,7 @@ const InvestigationWorkspace = () => {
 
                         {cases && cases.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '240px', overflowY: 'auto', textAlign: 'left', marginBottom: '16px', paddingRight: '4px' }}>
-                                {cases.slice(0, 5).map(c => (
+                                {cases.slice(0, 50).map(c => (
                                     <div
                                         key={c.id}
                                         onClick={() => {
