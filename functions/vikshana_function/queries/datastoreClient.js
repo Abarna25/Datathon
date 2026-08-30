@@ -996,5 +996,3 @@ module.exports = {
     localStore,
     loadDatasetFromCSV
 };
-
-
