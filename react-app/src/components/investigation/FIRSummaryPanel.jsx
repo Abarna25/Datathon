@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FileText, MapPin, Calendar, User, Users, Target, Database, ChevronDown, ChevronUp } from 'lucide-react';
 
 const FIRSummaryPanel = ({ bundle }) => {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   if (!bundle) return null;
   const fir = bundle.firSummary || {};
@@ -40,8 +40,8 @@ const FIRSummaryPanel = ({ bundle }) => {
       </div>
 
       {!collapsed && (
-        <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ marginTop: '10px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '8px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Crime Type</span>
               <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600' }}>{fir.crime || bundle.category || '—'}</span>

@@ -16,8 +16,8 @@ class AdvancedIntelligenceService {
 
             const prompt = `
 You are the Principal AI Detective for the VIKSHANA Enterprise Investigation Platform.
-Your task is to analyze the following case context and return a highly structured JSON response encompassing 10 distinct intelligence facets.
-NEVER HALLUCINATE. If data is insufficient, use mathematical derivation based on context clues or explicitly state "Insufficient evidence".
+Your task is to analyze the following case context and return a highly structured JSON response encompassing distinct intelligence facets.
+NEVER HALLUCINATE. Use ONLY available evidence. Do not invent scores or math.
 
 CASE CONTEXT:
 ${JSON.stringify(context, null, 2)}
@@ -25,30 +25,14 @@ ${JSON.stringify(context, null, 2)}
 REQUIRED JSON OUTPUT FORMAT (Strictly adhere to this):
 {
   "hypotheses": [
-    { "confidence": 85, "summary": "...", "supportingEvidence": ["..."], "weaknesses": ["..."], "recommendedAction": "..." },
-    { "confidence": 72, "summary": "...", "supportingEvidence": ["..."], "weaknesses": ["..."], "recommendedAction": "..." }
+    { "summary": "...", "supportingEvidence": ["..."], "weaknesses": ["..."], "recommendedAction": "..." }
   ],
   "contradictions": [
     { "severity": "High", "description": "...", "recommendation": "..." }
   ],
   "missingEvidence": {
-    "score": 74,
     "missingItems": ["DNA", "CCTV", "Call Records"],
     "priority": "HIGH"
-  },
-  "courtReadiness": {
-    "overall": 84,
-    "evidence": 91,
-    "witness": 74,
-    "legal": 88,
-    "documentation": 93
-  },
-  "crimeSignature": {
-    "violence": 4,
-    "planning": 5,
-    "repeatPattern": 3,
-    "financialMotive": 2,
-    "organizedNetwork": 4
   },
   "officerBrief": {
     "title": "Morning Briefing",
@@ -66,29 +50,18 @@ REQUIRED JSON OUTPUT FORMAT (Strictly adhere to this):
     "Suspect": ["Why was your phone...", "..."],
     "Witness": ["Can anyone verify...", "..."]
   },
-  "readinessRadar": [
-    { "subject": "Evidence", "A": 85, "fullMark": 100 },
-    { "subject": "Witnesses", "A": 65, "fullMark": 100 },
-    { "subject": "Timeline", "A": 90, "fullMark": 100 },
-    { "subject": "Documentation", "A": 75, "fullMark": 100 },
-    { "subject": "Legal", "A": 88, "fullMark": 100 },
-    { "subject": "Forensics", "A": 60, "fullMark": 100 }
-  ],
   "recommendations": [
-    { "priority": 1, "action": "Collect CCTV", "confidence": 95, "why": "CCTV expires in 48 hours." },
-    { "priority": 2, "action": "Arrest Suspect", "confidence": 91, "why": "Flight risk indicated." }
+    { "priority": 1, "action": "Collect CCTV", "why": "CCTV expires in 48 hours." }
   ],
   "explainAI": {
-    "hypotheses": { "confidence": 88, "evidenceUsed": ["Timeline", "Victim Statement"], "reasoning": "..." },
-    "courtReadiness": { "confidence": 92, "evidenceUsed": ["Charge Sheet", "Forensics"], "reasoning": "..." }
+    "hypotheses": { "evidenceUsed": ["Timeline", "Victim Statement"], "reasoning": "..." }
   }
 }
 
 CRITICAL RULES:
 1. Output valid JSON ONLY. No markdown wrapping.
-2. Do not use dummy names like 'John Doe'. Use actual names from context.
-3. Derive 1-5 scale mathematically for crimeSignature.
-4. If no contradictions exist, return an empty array for contradictions.
+2. Do not hallucinate generic names. Use actual names from context.
+3. If no contradictions exist, return an empty array for contradictions.
 `;
 
             console.log(`[AdvancedIntelligenceService] Triggering Dual-LLM Unified Scan...`);
@@ -129,9 +102,7 @@ CRITICAL RULES:
             return {
               "hypotheses": [],
               "contradictions": safeContradictions,
-              "missingEvidence": { "score": 0, "missingItems": [], "priority": "UNKNOWN" },
-              "courtReadiness": { "overall": 0, "evidence": 0, "witness": 0, "legal": 0, "documentation": 0 },
-              "crimeSignature": { "violence": 0, "planning": 0, "repeatPattern": 0, "financialMotive": 0, "organizedNetwork": 0 },
+              "missingEvidence": { "missingItems": [], "priority": "UNKNOWN" },
               "officerBrief": {
                 "title": "Data Processing Notice",
                 "status": "Unavailable",
@@ -144,11 +115,9 @@ CRITICAL RULES:
                 "expectedDuration": "N/A"
               },
               "interviewQuestions": { "Victim": [], "Suspect": [], "Witness": [] },
-              "readinessRadar": [],
               "recommendations": [],
               "explainAI": {
-                "hypotheses": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI scan unavailable." },
-                "courtReadiness": { "confidence": 0, "evidenceUsed": [], "reasoning": "AI scan unavailable." }
+                "hypotheses": { "evidenceUsed": [], "reasoning": "AI scan unavailable." }
               }
             };
         }

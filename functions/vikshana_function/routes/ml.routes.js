@@ -44,6 +44,14 @@ router.post('/translate', async (req, res) => {
         res.status(200).json({ success: true, data: { translations } });
     } catch (error) {
         console.error('Error in POST /ml/translate:', error.message);
+        if (error.code === 'TRANSLATION_UNAVAILABLE') {
+            return res.status(200).json({
+                success: false,
+                code: "TRANSLATION_UNAVAILABLE",
+                sourceLanguage: error.sourceLanguage || "en",
+                targetLanguage: error.targetLanguage || "kn"
+            });
+        }
         res.status(500).json({ success: false, error: error.message });
     }
 });

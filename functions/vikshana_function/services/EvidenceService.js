@@ -2,8 +2,14 @@ const datastoreClient = require('../queries/datastoreClient');
 const EvidenceAgent = require('../agents/EvidenceAgent');
 
 class EvidenceService {
-    static async getEvidence(req) {
+    static async getEvidence(req, caseId) {
         try {
+            if (!caseId) {
+                caseId = req.query?.caseId || req.params?.caseId || 'UNASSIGNED';
+            }
+            if (caseId === 'UNASSIGNED' || !caseId) {
+                return { cases: [], accused: [], arrests: [], victims: [], chargesheeted: [] };
+            }
             const [
                 cases,
                 accused,
@@ -11,11 +17,11 @@ class EvidenceService {
                 victims,
                 chargesheeted
             ] = await Promise.all([
-                datastoreClient.getRows(req, 'CaseMaster', { maxRows: 20 }).catch(() => []),
-                datastoreClient.getRows(req, 'Accused', { maxRows: 50 }).catch(() => []),
-                datastoreClient.getRows(req, 'ArrestSurrender', { maxRows: 50 }).catch(() => []),
-                datastoreClient.getRows(req, 'Victim', { maxRows: 50 }).catch(() => []),
-                datastoreClient.getRows(req, 'ChargesheetDetails', { maxRows: 50 }).catch(() => [])
+                datastoreClient.getRowsWhere(req, 'CaseMaster', { CaseMasterID: caseId }, { maxRows: 1 }).catch(() => []),
+                datastoreClient.getRowsWhere(req, 'Accused', { CaseMasterID: caseId }, { maxRows: 50 }).catch(() => []),
+                datastoreClient.getRowsWhere(req, 'ArrestSurrender', { CaseMasterID: caseId }, { maxRows: 50 }).catch(() => []),
+                datastoreClient.getRowsWhere(req, 'Victim', { CaseMasterID: caseId }, { maxRows: 50 }).catch(() => []),
+                datastoreClient.getRowsWhere(req, 'ChargesheetDetails', { CaseMasterID: caseId }, { maxRows: 50 }).catch(() => [])
             ]);
 
             const rawData = {

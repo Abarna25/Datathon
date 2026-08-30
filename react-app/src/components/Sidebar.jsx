@@ -34,8 +34,8 @@ const Sidebar = () => {
     { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
     { id: 'forensics', name: 'Forensic Intelligence Hub', icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
     { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
-    { id: 'relationships', name: t('nav.relationshipExplorer', 'Relationship Explorer'), icon: Network, path: '/relationships', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'] },
-    { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
+    { id: 'sociological', name: 'Sociological Insights', icon: Network, path: '/sociological', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
     { id: 'reports', name: t('nav.reports', 'Investigation Report'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
     { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
   ];
@@ -102,7 +102,7 @@ const Sidebar = () => {
               transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
             })}
           >
-            <item.icon size={18} /><span>{item.name}</span>
+            <item.icon size={18} /><span>{role === 'Analyst' ? 'Trends & Hotspots' : item.name}</span>
           </NavLink>
         ))}
 
@@ -131,11 +131,12 @@ const Sidebar = () => {
         ))}
 
         {/* INVESTIGATION */}
-        <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          INVESTIGATION
+        <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {role === 'Investigator' || role === 'Officer' ? 'Case Workspace' : 
+           role === 'Analyst' ? 'Intelligence Hub' : 
+           role === 'Supervisor' ? 'Command Overview' : 'Primary Actions'}
         </div>
-
-        {filteredMenuItems.filter(i => ['investigate', 'forensics'].includes(i.id)).map((item) => (
+        {filteredMenuItems.filter(i => ['investigate', 'forensics', 'search'].includes(i.id)).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -151,12 +152,11 @@ const Sidebar = () => {
           </NavLink>
         ))}
 
-        {/* INTELLIGENCE */}
+        {/* INTELLIGENCE & FORECASTING */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           INTELLIGENCE
         </div>
-        {filteredMenuItems.filter(i => ['search', 'relationships', 'forecasting'].includes(i.id)).map((item) => (
-
+        {filteredMenuItems.filter(i => ['sociological', 'forecasting'].includes(i.id)).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -174,7 +174,7 @@ const Sidebar = () => {
 
         {/* REPORTING & OTHERS */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          REPORTING
+          {role === 'Administrator' ? 'Admin & Reporting' : 'Reporting & Logs'}
         </div>
         {filteredMenuItems.filter(i => ['reports', 'audit-logs'].includes(i.id)).map((item) => (
           <NavLink

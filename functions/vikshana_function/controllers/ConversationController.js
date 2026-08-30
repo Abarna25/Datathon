@@ -8,6 +8,7 @@ const SuggestionService = require('../services/SuggestionService');
 const LLMService = require('../services/LLMService');
 const crypto = require('crypto');
 const datastoreClient = require('../queries/datastoreClient');
+const { sanitizeData } = require('../middleware/fieldFilter.middleware');
 
 async function detectCaseIdFromQuery(req, queryText, defaultCaseId) {
     // Phase 14: Strict case scoping. Do not guess cases from text to prevent cross-case leakage.
@@ -160,23 +161,31 @@ class ConversationController {
                 recommendedActions: gapsData?.recommendedActions || []
             }];
 
+            // Step 3.5: RBAC Enforcement for Copilot
+            // Since streaming bypasses the global res.json field filter, we MUST sanitize the context BEFORE the LLM sees it.
+            const sanitizedLedger = sanitizeData(ledger, req.user?.role || 'Viewer');
+
             // Step 4: Report Generation
             if (streaming) LLMService.sendEvent(res, 'progress', { step: 'reporting', status: 'Generating final report...' });
-            const assistantText = await ReportAgent.generateReport(ledger, history, res, streaming);
+            const assistantText = await ReportAgent.generateReport(sanitizedLedger, history, res, streaming);
 
             // Generate suggestions
             const suggestions = await SuggestionService.generateFollowUps(assistantText, `Case #${detectedCaseId}`);
 
-            // Save assistant message with ledger as citations
+            const uiCitations = [
+                { type: 'Case', label: `Case File #${detectedCaseId}`, details: { name: 'Verified Case Context' } }
+            ];
+
+            // Save assistant message with citations
             const assistantMessage = await ConversationService.appendMessage(req, conversation.id, {
                 role: 'assistant',
                 content: assistantText,
-                citations: ledger, // Pass the structured ledger to the UI as citations
+                citations: uiCitations, // Pass the formatted citation
                 suggestions
             });
 
             if (streaming) {
-                LLMService.sendEvent(res, 'citations', { citations: ledger });
+                LLMService.sendEvent(res, 'citations', { citations: uiCitations });
                 LLMService.sendEvent(res, 'suggestions', { suggestions });
                 LLMService.sendEvent(res, 'done', { messageId: assistantMessage.id, userMessageId: userMessage.id });
                 LLMService.endStream(res);

@@ -1,4 +1,6 @@
 const datastoreClient = require('../queries/datastoreClient');
+const crypto = require('crypto');
+const LLMService = require('./LLMService');
 
 class ConversationService {
     static async listConversations(req, { caseId, officerId }) {
@@ -118,7 +120,7 @@ class ConversationService {
 
     static async appendMessage(req, conversationId, { role, content, citations = [], attachmentIds = [], suggestions = [], tokenUsage = null }) {
         const message = {
-            id: `MSG-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+            id: `MSG-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
             conversationId,
             role,
             content,

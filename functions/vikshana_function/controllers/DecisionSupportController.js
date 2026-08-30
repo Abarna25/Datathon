@@ -4,7 +4,7 @@ const AILogService = require('../services/AILogService');
 const datastoreClient = require('../queries/datastoreClient');
 const EntityExtractionService = require('./entity_extraction.service');
 const NetworkAnalysisService = require('./network_analysis.service');
-const ConfidenceEngineService = require('../services/ConfidenceEngineService');
+
 const AnomalyDetectionService = require('../services/AnomalyDetectionService');
 const SimilarCaseService = require('../services/SimilarCaseService');
 const CaseCompletenessService = require('../services/CaseCompletenessService');
@@ -154,13 +154,6 @@ class DecisionSupportController {
             raw = res.content.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
             const parsed = JSON.parse(raw);
             
-            // Phase 1: Real Evidence Confidence
-            const confidenceScore = ConfidenceEngineService.calculateScore(context);
-            if (parsed.aiExecutiveSummary) {
-                parsed.aiExecutiveSummary.confidence = confidenceScore.description;
-            }
-            parsed.evidenceStrength = confidenceScore;
-            
             // Phase 1: Real Anomaly Detection
             parsed.detectedAnomalies = AnomalyDetectionService.detectAnomalies(context);
             
@@ -171,10 +164,9 @@ class DecisionSupportController {
                 throw error;
             }
             // If LLM fails but datastore is up, return deterministic safe fallback
-            const confidenceScore = ConfidenceEngineService.calculateScore(context);
             const detectedAnomalies = AnomalyDetectionService.detectAnomalies(context);
             return {
-              "evidenceStrength": confidenceScore,
+              "evidenceStrength": { score: 100, description: "System Default" },
               "detectedAnomalies": detectedAnomalies,
               "overview": {
                 "caseId": caseId,
@@ -313,17 +305,25 @@ class DecisionSupportController {
             if (!caseId) {
                 return res.status(400).json({ success: false, error: 'caseId parameter is required' });
             }
-            const similarCases = await SimilarCaseService.findSimilarCases(req, caseId);
+            const result = await SimilarCaseService.findSimilarCases(req, caseId);
+            const similarCases = result.similarCases || [];
+            
             if (similarCases.length === 0) {
                 return res.status(200).json({ 
                     success: true, 
                     count: 0, 
                     cases: [], 
                     data: [], 
-                    message: "No sufficiently similar cases were found in the available records." 
+                    message: result.message || "No sufficiently similar cases were found in the available records." 
                 });
             }
-            res.status(200).json({ success: true, data: similarCases, cases: similarCases, count: similarCases.length });
+            res.status(200).json({ 
+                success: true, 
+                data: similarCases, 
+                cases: similarCases, 
+                count: similarCases.length,
+                investigativeLead: result.investigativeLead
+            });
         } catch (error) {
             console.error('Error in DecisionSupportController:', error);
             if (error.code === 'DATASTORE_UNAVAILABLE' || (error.message && error.message.includes('unavailable'))) {

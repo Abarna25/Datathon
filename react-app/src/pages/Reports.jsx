@@ -55,9 +55,14 @@ const Reports = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Generated AI Report</h2>
-          <button onClick={() => setActiveReport(null)} style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
-            Back to List
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => window.print()} style={{ background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Download size={16} /> Download PDF
+            </button>
+            <button onClick={() => setActiveReport(null)} style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
+              Back to List
+            </button>
+          </div>
         </div>
         <div className="glass-panel" style={{ padding: '24px', whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', lineHeight: '1.6', overflowY: 'auto', flex: 1 }}>
           {activeReport.markdown}

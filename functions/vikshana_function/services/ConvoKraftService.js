@@ -123,20 +123,12 @@ class ConvoKraftService {
                 action: 'OPEN_EVIDENCE_CHAIN',
                 intent: 'QUERY_EVIDENCE_CHAIN',
                 targetCaseId: detectedCaseId,
-                spokenResponse: `Opening multi-modal evidence chain and SHA-256 integrity records for Case #${detectedCaseId}.`,
+                spokenResponse: `Opening Evidence Intelligence records for Case #${detectedCaseId}.`,
                 route: `/investigate?caseId=${detectedCaseId}&tab=evidence`
             };
         }
 
-        if (lower.includes('emerging') || lower.includes('hotspot') || lower.includes('surge') || lower.includes('forecast')) {
-            return {
-                action: 'OPEN_EMERGING_PATTERNS',
-                intent: 'QUERY_EMERGING_PATTERNS',
-                targetCaseId: detectedCaseId,
-                spokenResponse: 'Opening precinct crime surge detections and predictive hotspot forecasts.',
-                route: '/forecasting'
-            };
-        }
+
 
         return {
             action: 'COPILOT_NATURAL_QUERY',

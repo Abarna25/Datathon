@@ -1,5 +1,5 @@
 let globalToken = 'test-token';
-const API = 'http://localhost:3000/server/vikshana_function';
+const API = 'http://127.0.0.1:3000/server/vikshana_function';
 const getHeaders = () => ({ 'X-Vikshana-Auth': `Bearer ${globalToken}`, 'Content-Type': 'application/json' });
 
 async function verifyEndpoint(name, path, validateFn) {

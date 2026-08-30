@@ -30,6 +30,10 @@ const NODE_STYLE = {
     location: { color: '#92400e', icon: '📍', label: 'LOCATION' }, // Brown
     court: { color: '#4f46e5', icon: '🏛️', label: 'COURT' },
     analytical: { color: '#475569', icon: '🧠', label: 'AI ANALYSIS' },
+    account: { color: '#10b981', icon: '💳', label: 'ACCOUNT' },
+    organization: { color: '#6366f1', icon: '🏢', label: 'ORGANIZATION' },
+    document: { color: '#8b5cf6', icon: '📄', label: 'DOCUMENT' },
+    event: { color: '#f43f5e', icon: '⚡', label: 'EVENT' },
     default: { color: '#64748b', icon: '❓', label: 'ENTITY' }
 };
 
@@ -183,7 +187,7 @@ const nodeTypes = {
     investigationNode: CustomInvestigationNode,
 };
 
-const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect }) => {
+const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect, onEdgeSelect }) => {
     const [rfNodes, setNodes, onNodesChange] = useNodesState([]);
     const [rfEdges, setEdges, onEdgesChange] = useEdgesState([]);
     const { fitView, setCenter } = useReactFlow();
@@ -207,6 +211,7 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
                 source: src,
                 target: tgt,
                 label: label,
+                data: { supportingEvidence: e.supportingEvidence },
                 type: 'bezier', // Smooth curved edges
                 animated: false,
                 style: { stroke: 'rgba(148, 163, 184, 0.4)', strokeWidth: 1.5, opacity: 1 },
@@ -309,8 +314,15 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
         
     }, [nodes, rfNodes, getConnectedPath, onNodeSelect, setNodes, setEdges]);
     
+    const onEdgeClick = useCallback((event, edge) => {
+        if (onEdgeSelect) {
+            onEdgeSelect(edge);
+        }
+    }, [onEdgeSelect]);
+    
     const onPaneClick = useCallback(() => {
         if (onNodeSelect) onNodeSelect(null);
+        if (onEdgeSelect) onEdgeSelect(null);
         
         setNodes(nds => nds.map(n => {
             n.data = { ...n.data, isFaded: false };
@@ -368,6 +380,7 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onNodeClick={onNodeClick}
+                onEdgeClick={onEdgeClick}
                 onNodeDoubleClick={handleNodeDoubleClick}
                 onPaneClick={onPaneClick}
                 nodeTypes={nodeTypes}

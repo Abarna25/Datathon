@@ -201,7 +201,11 @@ class QuickMLService {
 
             // Explicit indicator when translation could not be performed
             console.warn(`[QuickMLService] TRANSLATION_UNAVAILABLE for language pair ${srcLang} -> ${tgtLang}`);
-            return text;
+            const error = new Error("TRANSLATION_UNAVAILABLE");
+            error.code = "TRANSLATION_UNAVAILABLE";
+            error.sourceLanguage = srcLang;
+            error.targetLanguage = tgtLang;
+            throw error;
         };
 
         const results = await Promise.all(textArray.map(t => translateSingle(t)));

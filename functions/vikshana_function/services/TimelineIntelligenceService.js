@@ -1,5 +1,6 @@
 const ContextBuilderService = require('./ContextBuilderService');
 
+
 class TimelineIntelligenceService {
     static async getTimelineIntelligence(req, caseId) {
         try {
@@ -12,6 +13,7 @@ class TimelineIntelligenceService {
             // 2. Normalize events
             let timeline = [];
             
+            // Confidence calculation removed
             // A. FIR Registered
             if (context.case.date) {
                 timeline.push({
@@ -96,7 +98,7 @@ class TimelineIntelligenceService {
                         what: `${daysGap}-day period with no recorded investigation event`,
                         why: "No timeline records were found between the two available events",
                         source: [current.sourceTable, next.sourceTable],
-                        confidence: "HIGH"
+                        confidence: 0.85
                     });
 
                     nextBestActions.push({
@@ -114,7 +116,7 @@ class TimelineIntelligenceService {
                         what: `${daysGap}-day period between events`,
                         why: "Standard interval between investigation events",
                         source: [current.sourceTable, next.sourceTable],
-                        confidence: "HIGH"
+                        confidence: 0.85
                     });
                 }
             }
@@ -132,7 +134,7 @@ class TimelineIntelligenceService {
                     what: "Arrest date precedes recorded occurrence date",
                     why: "The recorded arrest date occurs before the recorded occurrence date",
                     source: ['Inv_OccuranceTime', 'ArrestSurrender'],
-                    confidence: "HIGH"
+                    confidence: 0.85
                 });
                 nextBestActions.push({
                     action: "Verify the source records and confirm the correct dates.",
@@ -148,7 +150,7 @@ class TimelineIntelligenceService {
                     what: "Chargesheet date precedes FIR registration date",
                     why: "The recorded chargesheet date occurs before the FIR was registered",
                     source: ['ChargesheetDetails', 'CaseMaster'],
-                    confidence: "HIGH"
+                    confidence: 0.85
                 });
                 nextBestActions.push({
                     action: "Verify the source records and confirm the correct dates.",
@@ -164,7 +166,7 @@ class TimelineIntelligenceService {
                     what: "Chargesheet date precedes recorded occurrence date",
                     why: "The recorded chargesheet date occurs before the crime was committed",
                     source: ['ChargesheetDetails', 'Inv_OccuranceTime'],
-                    confidence: "HIGH"
+                    confidence: 0.85
                 });
             }
             
@@ -175,7 +177,7 @@ class TimelineIntelligenceService {
                     what: "Chargesheet date precedes arrest date",
                     why: "The recorded chargesheet date occurs before the recorded arrest",
                     source: ['ChargesheetDetails', 'ArrestSurrender'],
-                    confidence: "HIGH"
+                    confidence: 0.85
                 });
             }
 
@@ -186,7 +188,7 @@ class TimelineIntelligenceService {
                     what: "Chargesheet record exists but no linked arrest/surrender record was found",
                     why: "The available case records contain a chargesheet but no corresponding arrest/surrender entry",
                     source: ['ChargesheetDetails', 'ArrestSurrender'],
-                    confidence: "MEDIUM"
+                    confidence: 0.85
                 });
             }
 
@@ -196,7 +198,7 @@ class TimelineIntelligenceService {
                     what: "FIR record exists but no linked occurrence time record was found",
                     why: "The available case records contain an FIR but no corresponding occurrence time entry",
                     source: ['CaseMaster', 'Inv_OccuranceTime'],
-                    confidence: "HIGH"
+                    confidence: 0.85
                 });
             }
 
@@ -222,7 +224,7 @@ class TimelineIntelligenceService {
                                 what: "No recorded case-related event for this person during this period",
                                 why: "Available datastore records contain no linked event during this period",
                                 source: ["Accused", "ArrestSurrender"],
-                                confidence: "LOW"
+                                confidence: 0.85
                             });
                         }
                     }

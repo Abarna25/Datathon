@@ -391,6 +391,14 @@ const translations = {
       noData: "ಯಾವುದೇ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
       languageName: "ಕನ್ನಡ",
       activeRole: "ತನಿಖಾಧಿಕಾರಿ",
+    },
+
+    // ── Framework 4 & 8 ────────────────────────────────────────────
+    intelligence: {
+      sociologicalTitle: "ಸಮಾಜಶಾಸ್ತ್ರೀಯ ಒಳನೋಟಗಳು",
+      sociologicalDesc: "ದಾಖಲಾದ ಅಪರಾಧಗಳ ಜನಸಂಖ್ಯಾಶಾಸ್ತ್ರೀಯ ವಿಶ್ಲೇಷಣೆ.",
+      forecastingTitle: "ಅಪರಾಧ ಮುನ್ಸೂಚನೆ ಮತ್ತು ಮುನ್ನೆಚ್ಚರಿಕೆ",
+      forecastingDesc: "ಐತಿಹಾಸಿಕ ಪ್ರವೃತ್ತಿ ಮತ್ತು ಮುನ್ಸೂಚನೆ ವಿಶ್ಲೇಷಣೆ.",
     }
   }
 };

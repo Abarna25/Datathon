@@ -1,4 +1,6 @@
 const datastoreClient = require('../queries/datastoreClient');
+const SociologicalIntelligenceService = require('./SociologicalIntelligenceService');
+const CrimeForecastService = require('./CrimeForecastService');
 
 class ToolExecutor {
     /**
@@ -37,6 +39,12 @@ class ToolExecutor {
                         break;
                     case 'timeline_analysis':
                         results[toolName] = await this._timelineAnalysis(req, caseIds);
+                        break;
+                    case 'sociological_analysis':
+                        results[toolName] = await SociologicalIntelligenceService.getDemographics(req);
+                        break;
+                    case 'crime_forecast':
+                        results[toolName] = await CrimeForecastService.getForecast(req);
                         break;
                     default:
                         console.warn(`[ToolExecutor] Unknown tool requested: ${toolName}`);

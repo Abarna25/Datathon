@@ -66,6 +66,8 @@ class EmergingPatternService {
             const baselineAvg = Math.max(3, Math.round(totalCases / Math.max(1, sortedStations.length)));
             const surgePercent = Math.round(((topCount - baselineAvg) / baselineAvg) * 100);
 
+            let confidenceScore = Math.min(0.98, 0.70 + (totalCases / 50000) * 0.15 + (surgePercent / 100) * 0.10);
+            
             patterns.push({
                 patternId: `PAT-${String(patternId++).padStart(2, '0')}`,
                 title: `Emerging Cluster: ${topCat}`,
@@ -77,7 +79,7 @@ class EmergingPatternService {
                 percentageChange: `+${Math.max(25, surgePercent)}% surge`,
                 peakTimeWindow: peakTime,
                 detectionBasis: `Incident density in ${topStation} exceeds jurisdiction baseline by ${Math.max(25, surgePercent)}%.`,
-                confidence: 0.88,
+                confidence: Number(confidenceScore.toFixed(2)),
                 classification: 'EVIDENCE_BACKED',
                 recommendedIntervention: `Deploy high-visibility preventative patrols in ${topStation} during ${peakTime}. Review recent ${topCat} dossiers.`,
                 detectedAt: new Date().toISOString()
@@ -88,6 +90,7 @@ class EmergingPatternService {
         const peakHourCount = timeBucketMap[peakTime];
         const peakTimeShare = Math.round((peakHourCount / Math.max(1, totalCases)) * 100);
         if (peakTimeShare >= 35) {
+            let conf2 = Math.min(0.97, 0.75 + (peakTimeShare / 100) * 0.15 + (totalCases / 50000) * 0.07);
             patterns.push({
                 patternId: `PAT-${String(patternId++).padStart(2, '0')}`,
                 title: `Temporal Concentration: ${peakTime}`,
@@ -99,7 +102,7 @@ class EmergingPatternService {
                 percentageChange: `+${peakTimeShare - 25}% temporal shift`,
                 peakTimeWindow: peakTime,
                 detectionBasis: `${peakTimeShare}% of registered crime occurrences cluster tightly within ${peakTime}.`,
-                confidence: 0.92,
+                confidence: Number(conf2.toFixed(2)),
                 classification: 'CONFIRMED',
                 recommendedIntervention: `Shift officer deployment schedules to concentrate 60% of active patrol capacity during ${peakTime}.`,
                 detectedAt: new Date().toISOString()
@@ -110,6 +113,9 @@ class EmergingPatternService {
         if (sortedCategories.length > 1) {
             const secCat = sortedCategories[1][0];
             const secCount = sortedCategories[1][1];
+            const secShare = (secCount / Math.max(1, totalCases));
+            let conf3 = Math.min(0.95, 0.65 + secShare * 0.2 + (totalCases / 50000) * 0.10);
+
             patterns.push({
                 patternId: `PAT-${String(patternId++).padStart(2, '0')}`,
                 title: `Secondary Risk Trajectory: ${secCat}`,
@@ -120,8 +126,8 @@ class EmergingPatternService {
                 currentVelocity: `${secCount} incidents`,
                 percentageChange: '+18% trend increase',
                 peakTimeWindow: 'Late Night (22:00 - 04:00)',
-                detectionBasis: `Secondary offense category represents ${Math.round((secCount / totalCases) * 100)}% of total case volume.`,
-                confidence: 0.81,
+                detectionBasis: `Secondary offense category represents ${Math.round(secShare * 100)}% of total case volume.`,
+                confidence: Number(conf3.toFixed(2)),
                 classification: 'EVIDENCE_BACKED',
                 recommendedIntervention: `Maintain intelligence monitoring on repeat offenders associated with ${secCat}.`,
                 detectedAt: new Date().toISOString()

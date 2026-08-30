@@ -1,124 +1,216 @@
 const datastoreClient = require('../queries/datastoreClient');
 const ContextBuilderService = require('./ContextBuilderService');
+const InvestigationRecommendationService = require('./InvestigationRecommendationService');
 
 class SimilarCaseService {
     static async findSimilarCases(req, activeCaseId) {
-        // 1. Fetch the active case and its details
+        // 1. Fetch active case via ContextBuilderService to get full case data
         const context = await ContextBuilderService.buildCaseContext(req, activeCaseId);
-        if (!context || !context.case) return [];
+        if (!context || !context.case) return { status: 'Error', message: 'Current case could not be retrieved.', similarCases: [] };
 
         const activeCase = context.case;
-        const activeFacts = (activeCase.briefFacts || '').toLowerCase();
-        const activeCategory = activeCase.category || '';
-        const activeLocation = activeCase.jurisdiction || '';
+        const activeCategory = activeCase.CaseCategoryID || '';
+        const activeLocation = activeCase.PoliceStationID || '';
+        const activeFacts = (activeCase.BriefFacts || '').toLowerCase();
         
-        // Extract basic temporal data (Year-Month) from CrimeRegisteredDate
-        let activeDate = activeCase.CrimeRegisteredDate || '';
-        let activeMonthYear = activeDate ? activeDate.substring(0, 7) : '';
+        let activeMonthYear = '';
+        if (activeCase.CrimeRegisteredDate) {
+            activeMonthYear = String(activeCase.CrimeRegisteredDate).substring(0, 7); // YYYY-MM
+        }
 
-        // Extract suspects
-        const activeSuspectNames = new Set((context.suspects || []).map(s => s.name.toLowerCase()));
+        // Fetch active sections
+        const activeSections = await datastoreClient.getRowsByCase(req, 'ActSectionAssociation', activeCaseId);
+        const activeSectionIds = new Set(activeSections.map(s => s.ActSectionID).filter(Boolean));
+
+        // 2. Fetch Candidates efficiently using ZCQL filtering
+        let candidates = [];
+        const conditions = {};
         
-        // Basic stop words
-        const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'and', 'a', 'an', 'in', 'of', 'to', 'with', 'for', 'was', 'by', 'that', 'this', 'from']);
+        if (activeCategory) {
+            conditions.CaseCategoryID = activeCategory;
+            candidates = await datastoreClient.getRowsWhere(req, 'CaseMaster', conditions, { maxRows: 300 }).catch(() => []);
+        } 
         
+        // If still insufficient, add by Location
+        if (candidates.length < 10 && activeLocation) {
+            const locCandidates = await datastoreClient.getRowsWhere(req, 'CaseMaster', { PoliceStationID: activeLocation }, { maxRows: 300 }).catch(() => []);
+            candidates.push(...locCandidates);
+        }
+
+        // Fallback to recent 300 if no strong signals
+        if (candidates.length === 0) {
+            candidates = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 300 }).catch(() => []);
+        }
+
+        // Deduplicate candidates
+        const uniqueCandidates = [];
+        const seen = new Set();
+        for (const c of candidates) {
+            const cid = String(c.CaseMasterID || c.ROWID);
+            if (cid !== String(activeCaseId) && !seen.has(cid)) {
+                seen.add(cid);
+                uniqueCandidates.push(c);
+            }
+        }
+
+        if (uniqueCandidates.length === 0) {
+            return {
+                status: 'No Match',
+                message: 'No sufficiently similar historical cases were identified in the available dataset.',
+                similarCases: [],
+                investigativeLead: null
+            };
+        }
+
+        // Fetch auxiliary data for candidates (sections, chargesheets, arrests)
+        // We will fetch up to 300 sections, chargesheets, and arrests to match against candidates
+        const allCandidateSections = await datastoreClient.getRows(req, 'ActSectionAssociation', { maxRows: 500 }).catch(() => []);
+        const allCandidateChargesheets = await datastoreClient.getRows(req, 'ChargesheetDetails', { maxRows: 500 }).catch(() => []);
+        const allCandidateArrests = await datastoreClient.getRows(req, 'ArrestSurrender', { maxRows: 500 }).catch(() => []);
+        
+        // Helper to extract words
         const getKeywords = (text) => {
-            return new Set(text.match(/\b\w+\b/g)?.filter(w => !stopWords.has(w) && w.length > 3) || []);
+            if (!text) return new Set();
+            return new Set(text.match(/\b\w+\b/g)?.filter(w => w.length > 3) || []);
         };
-
         const activeKeywords = getKeywords(activeFacts);
-        
-        // 2. Fetch all other cases and accused for cross-referencing
-        const allCases = await datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => []);
-        const allAccused = await datastoreClient.getRows(req, 'Accused', { maxRows: 500 }).catch(() => []);
-        const allChargesheets = await datastoreClient.getRows(req, 'ChargesheetDetails', { maxRows: 500 }).catch(() => []);
-        
-        const similarities = [];
 
-        for (const candidate of allCases) {
+        const scoredCases = [];
+
+        // 3. Score candidates
+        for (const candidate of uniqueCandidates) {
             const candidateId = String(candidate.CaseMasterID || candidate.ROWID);
-            if (candidateId === String(activeCaseId)) continue;
-            
             let score = 0;
-            const matchDetails = {};
+            const reasons = [];
+            const dataUsed = new Set(['CaseMaster']);
 
-            // A. Crime Type (Category) Similarity
-            if (candidate.CaseCategoryID && activeCategory && String(candidate.CaseCategoryID) === String(activeCategory)) {
+            // A. Crime Category (40%)
+            if (activeCategory && String(candidate.CaseCategoryID) === String(activeCategory)) {
+                score += 40;
+                reasons.push('Crime Category');
+            }
+
+            // B. Location (25%)
+            if (activeLocation && String(candidate.PoliceStationID) === String(activeLocation)) {
                 score += 25;
-                matchDetails.crimeType = `Matching crime category: Category ${candidate.CaseCategoryID}`;
+                reasons.push('Police Station');
             }
 
-            // B. Modus Operandi (MO) Similarity via BriefFacts overlap
-            const candidateFacts = (candidate.BriefFacts || '').toLowerCase();
-            const candidateKeywords = getKeywords(candidateFacts);
+            // C. Legal Sections (20%)
+            const cSections = allCandidateSections.filter(s => String(s.CaseMasterID) === candidateId);
+            if (cSections.length > 0) dataUsed.add('ActSectionAssociation');
             
-            let intersection = 0;
-            const sharedKeywords = [];
-            for (const word of activeKeywords) {
-                if (candidateKeywords.has(word)) {
-                    intersection++;
-                    sharedKeywords.push(word);
+            let sharedSection = false;
+            for (const s of cSections) {
+                if (s.ActSectionID && activeSectionIds.has(s.ActSectionID)) {
+                    sharedSection = true;
+                    break;
                 }
             }
-            
-            if (intersection >= 3) {
-                score += (Math.min(5, intersection) * 5); 
-                matchDetails.mo = `Matching MO: Shared keywords (${sharedKeywords.slice(0, 3).join(', ')})`;
-            }
-
-            // C. Location Similarity
-            if (candidate.PoliceStationID && activeLocation && String(candidate.PoliceStationID) === String(activeLocation)) {
+            if (sharedSection) {
                 score += 20;
-                matchDetails.location = `Location similarity: Same jurisdiction (Station ${candidate.PoliceStationID})`;
-            }
-            
-            // D. Temporal Similarity
-            if (candidate.CrimeRegisteredDate) {
-                const candidateMonthYear = candidate.CrimeRegisteredDate.substring(0, 7);
-                if (activeMonthYear && candidateMonthYear === activeMonthYear) {
-                    score += 15;
-                    matchDetails.temporal = `Temporal similarity: Both occurred in ${activeMonthYear}`;
-                }
-            }
-            
-            // E. Shared Entities (Accused)
-            const candidateAccused = allAccused.filter(a => String(a.CaseMasterID) === candidateId);
-            const sharedNames = [];
-            for (const accused of candidateAccused) {
-                const name = (accused.AccusedName || '').toLowerCase();
-                if (name && activeSuspectNames.has(name)) {
-                    sharedNames.push(accused.AccusedName);
-                }
-            }
-            if (sharedNames.length > 0) {
-                score += 30; // High weight for shared suspect
-                matchDetails.sharedEntities = `Shared entities: Suspect ${sharedNames.join(', ')}`;
-            }
-            
-            // F. Shared Evidence (e.g. both have chargesheets filed)
-            // Ideally this checks evidence logs, but we use ChargesheetDetails as a proxy for procedural similarity
-            const activeHasCS = allChargesheets.some(cs => String(cs.CaseMasterID) === String(activeCaseId));
-            const candidateHasCS = allChargesheets.some(cs => String(cs.CaseMasterID) === candidateId);
-            if (activeHasCS && candidateHasCS) {
-                score += 5;
-                matchDetails.sharedEvidence = `Shared evidence profile: Chargesheet formalized`;
+                reasons.push('Legal Section');
             }
 
-            // Must have at least a moderate score to be considered
-            if (score > 30) {
-                similarities.push({
+            // D. Temporal Proximity (15%)
+            if (activeMonthYear && candidate.CrimeRegisteredDate) {
+                const candidateMonthYear = String(candidate.CrimeRegisteredDate).substring(0, 7);
+                if (candidateMonthYear === activeMonthYear) {
+                    score += 15;
+                    reasons.push('Temporal Proximity');
+                }
+            }
+
+            let maxPossible = 0;
+            if (activeCategory) maxPossible += 40;
+            if (activeLocation) maxPossible += 25;
+            if (activeSectionIds.size > 0) maxPossible += 20;
+            if (activeMonthYear) maxPossible += 15;
+            
+            if (maxPossible === 0) maxPossible = 100;
+            
+            let normalizedScore = Math.round((score / maxPossible) * 100);
+            if (normalizedScore > 99) normalizedScore = 99; // Cap at 99%
+
+            if (normalizedScore >= 35) { // Require at least 35% normalized match
+                // Extract Outcomes
+                const cChargesheets = allCandidateChargesheets.filter(cs => String(cs.CaseMasterID) === candidateId);
+                const cArrests = allCandidateArrests.filter(a => String(a.CaseMasterID) === candidateId);
+                
+                const outcomes = [];
+                if (cChargesheets.length > 0) {
+                    outcomes.push('Chargesheet Filed');
+                    dataUsed.add('ChargesheetDetails');
+                }
+                if (cArrests.length > 0) {
+                    outcomes.push('Arrest Executed');
+                    dataUsed.add('ArrestSurrender');
+                }
+                if (outcomes.length === 0) outcomes.push('Outcome data unavailable in current datastore.');
+
+                let explanation = `${normalizedScore}% similarity because both cases share ${reasons.join(', ')}.`;
+                if (reasons.length === 0) explanation = `${normalizedScore}% similarity based on secondary factors.`;
+
+                const matchDetails = {};
+                if (reasons.includes('Crime Category')) matchDetails.crimeType = `Category ID: ${activeCategory}`;
+                if (reasons.includes('Police Station')) matchDetails.location = `Station: ${activeLocation}`;
+                if (reasons.includes('Legal Section')) matchDetails.mo = `Shared Legal Sections (Modus Operandi)`;
+                if (reasons.includes('Temporal Proximity')) matchDetails.temporal = `Month/Year: ${activeMonthYear}`;
+
+                scoredCases.push({
                     caseId: candidateId,
-                    title: (candidate.BriefFacts || '').slice(0, 60) + '...',
-                    similarityScore: Math.min(99, score),
-                    matchDetails: matchDetails
+                    crimeType: candidate.CaseCategoryID || candidate.CrimeMajorHeadID || 'Unknown',
+                    date: candidate.CrimeRegisteredDate || 'Unknown',
+                    location: candidate.PoliceStationID ? `PS ${candidate.PoliceStationID}` : 'Unknown',
+                    similarityScore: normalizedScore,
+                    matchedAttributes: reasons,
+                    matchDetails: matchDetails,
+                    explanation,
+                    dataUsed: Array.from(dataUsed).join(' + '),
+                    outcomes: outcomes,
+                    rawCandidate: candidate
                 });
             }
         }
 
-        // Sort by score descending
-        similarities.sort((a, b) => b.similarityScore - a.similarityScore);
+        scoredCases.sort((a, b) => b.similarityScore - a.similarityScore);
+        const topCases = scoredCases.slice(0, 5);
+
+        if (topCases.length === 0) {
+            return {
+                status: 'Weak Match',
+                message: 'No strong historical match identified. The available cases share limited attributes.',
+                similarCases: [],
+                investigativeLead: null
+            };
+        }
+
+        // 4. Generate Investigative Lead & Gap
+        // Reuse InvestigationRecommendationService
+        const intelligence = await InvestigationRecommendationService.generateRecommendationsAndGaps(req, activeCaseId);
+        const topGap = intelligence.gaps?.[0]; // Best recommendation
         
-        return similarities.slice(0, 3); // Return top 3
+        let leadText = `${topCases.length} historically similar cases share significant attributes with this investigation. `;
+        if (topCases[0] && topCases[0].matchedAttributes && topCases[0].matchedAttributes.includes('Police Station')) {
+            leadText += `They share the same police station and crime category. `;
+        }
+        
+        let nextBestAction = `Review these historical cases for recurring suspects, locations and investigation patterns.`;
+        if (topGap) {
+            nextBestAction = topGap.recommendedAction;
+        }
+
+        return {
+            status: 'Success',
+            similarCases: topCases,
+            investigativeLead: {
+                observation: leadText.trim(),
+                nextBestAction: nextBestAction,
+                identifiedGap: topGap ? topGap.gap : 'None identified',
+                whyItMatters: "Identifying similar cases allows investigators to leverage established evidence patterns and historical precedent.",
+                source: "CaseMaster (Similarity Engine)"
+            }
+        };
     }
 }
 

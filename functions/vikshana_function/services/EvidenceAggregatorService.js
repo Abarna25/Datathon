@@ -88,19 +88,46 @@ class EvidenceAggregatorService {
             return { isAggregated: true, counts };
         }
 
+        // Compute new metrics
         const totalCount = unified.length;
-        const typesCount = new Set(unified.map(u => u.type)).size;
-        const completeness = Math.min(100, Math.round((typesCount / 5) * 100));
+        
+        let linkedEntitiesCount = 0;
+        let incompleteRecordsCount = 0;
+        let duplicateRecordsCount = 0;
+
+        const seenSignatures = new Set();
+
+        unified.forEach(u => {
+            // Check for linked entities (has a person relationship)
+            if (u.type === 'Person' || u.type === 'Victim' || u.source === 'ArrestSurrender') {
+                linkedEntitiesCount++;
+            }
+
+            // Check for incomplete metadata
+            if ((u.source === 'ArrestSurrender' && !u.date) || 
+                (u.source === 'ChargesheetDetails' && !u.date) ||
+                (u.source === 'Accused' && u.description.includes('N/A')) ||
+                (u.source === 'Victim' && u.description.includes('N/A'))) {
+                incompleteRecordsCount++;
+            }
+
+            // Check for duplicates
+            const signature = `${u.source}_${u.title}_${u.date}`;
+            if (seenSignatures.has(signature)) {
+                duplicateRecordsCount++;
+            }
+            seenSignatures.add(signature);
+        });
 
         await AuditService.logEvent(req, req.user, 'Accessed Evidence Workspace', 'EvidenceIntelligence', caseId, 'SUCCESS');
 
         return {
             caseId,
             summary: {
-                totalCount,
-                typesCount,
-                completeness,
-                quality: completeness > 75 ? 'High' : completeness > 40 ? 'Medium' : 'Low'
+                total_evidence: totalCount,
+                linked_entities: linkedEntitiesCount,
+                incomplete_records: incompleteRecordsCount,
+                duplicate_records: duplicateRecordsCount
             },
             evidence: unified
         };

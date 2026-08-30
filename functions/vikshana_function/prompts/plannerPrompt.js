@@ -10,6 +10,8 @@ Available Tools:
 - search_arrests: Find arrest records.
 - relationship_analysis: Traverse the entity graph to find hidden links between people, vehicles, and cases.
 - timeline_analysis: Build a chronological view of events.
+- sociological_analysis: Analyze demographic (age, gender, occupation) and temporal distribution of crimes.
+- crime_forecast: Analyze historical baseline, trends, moving averages, and predict future anomalies.
 
 You must reply in strictly valid JSON format matching this schema exactly:
 {

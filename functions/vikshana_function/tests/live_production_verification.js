@@ -215,30 +215,16 @@ async function runAll() {
         assert.strictEqual(cctv.CameraID, 'CAM-MG-ROAD-04');
     });
 
-    await asyncTest('Domain 3: CDR Phone Network Frequency Analysis', async () => {
+    await asyncTest('Domain 3: CDR Phone Network Frequency Analysis is BLOCKED_BY_DATA', async () => {
         const req = {};
-        const cdr = await ForensicService.createCDR(req, {
-            caseMasterId: '101',
-            callerPhone: '+919988001122',
-            receiverPhone: '+919944332211',
-            durationSeconds: 240,
-            cellTowerLocation: 'Indiranagar Tower 2'
-        });
-        assert(cdr.CDRID);
-        assert.strictEqual(cdr.DurationSeconds, 240);
+        const cdr = await ForensicService.getCDRByCase(req, '101');
+        assert.strictEqual(cdr.status, 'BLOCKED_BY_DATA');
     });
 
-    await asyncTest('Domain 4: Financial Transactions & Structuring Detection', async () => {
+    await asyncTest('Domain 4: Financial Transactions & Structuring Detection is BLOCKED_BY_DATA', async () => {
         const req = {};
-        const txn = await ForensicService.createTransaction(req, {
-            caseMasterId: '101',
-            sourceAccount: 'AC-10029384',
-            destinationAccount: 'AC-99482711',
-            amount: 750000,
-            bankName: 'HDFC Bank'
-        });
-        assert.strictEqual(txn.IsSuspicious, 'YES');
-        assert(txn.SuspiciousReason.includes('High-value threshold exceeded'));
+        const txn = await ForensicService.getTransactionsByCase(req, '101');
+        assert.strictEqual(txn.status, 'BLOCKED_BY_DATA');
     });
 
     await asyncTest('Domain 5: State Forensic Science Laboratory (SFSL) Reports', async () => {

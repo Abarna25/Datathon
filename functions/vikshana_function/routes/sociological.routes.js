@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const SociologicalAssistantController = require('../controllers/SociologicalAssistantController');
+const SociologicalIntelligenceController = require('../controllers/SociologicalIntelligenceController');
 
-// POST /sociological/ask - Socioeconomic crime analysis and policy recommendations
-router.post('/ask', SociologicalAssistantController.ask);
+router.get('/overview', SociologicalIntelligenceController.getOverview);
+router.get('/demographics', SociologicalIntelligenceController.getDemographics);
 
 module.exports = router;

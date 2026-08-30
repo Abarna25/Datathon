@@ -3,7 +3,6 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { GodModeProvider } from './context/GodModeContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import AutoTranslator from './components/AutoTranslator';
 
@@ -18,15 +17,15 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import InvestigationWorkspace from './pages/InvestigationWorkspace';
-import RelationshipExplorer from './pages/RelationshipExplorer';
+
 import Reports from './pages/Reports';
 import AuditLogs from './pages/AuditLogs';
 import DataExplorer from './pages/DataExplorer';
-import CrimeForecasting from './components/forecasting/CrimeForecasting';
+
 import ForensicIntelligence from './pages/ForensicIntelligence';
 import SentinelDashboard from './pages/SentinelDashboard';
-import GodModePage from './pages/GodModePage';
-import GodModeVideoOverlay from './components/godmode/GodModeVideoOverlay';
+import SociologicalInsights from './pages/SociologicalInsights';
+import CrimeForecasting from './pages/CrimeForecasting';
 
 const DashboardLayout = ({ children }) => (
   <div style={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
@@ -41,19 +40,16 @@ const DashboardLayout = ({ children }) => (
 
 function App() {
   const ALL_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Viewer', 'Officer'];
-  const INVESTIGATOR_ROLES = ['Administrator', 'Investigator', 'Supervisor', 'Officer'];
-  const ANALYST_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'];
+  const INVESTIGATOR_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'];
   const RELATIONSHIP_ROLES = ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'];
   const AUDIT_ROLES = ['Administrator', 'Supervisor'];
 
   return (
     <AuthProvider>
       <AppProvider>
-        <GodModeProvider>
           <LanguageProvider>
             <AutoTranslator />
             <Router>
-              <GodModeVideoOverlay />
               <Routes>
                 {/* Public Auth Routes */}
                 <Route path="/auth/login" element={<Login />} />
@@ -108,24 +104,6 @@ function App() {
                 />
                 
                 <Route
-                  path="/relationships"
-                  element={
-                    <ProtectedRoute allowedRoles={RELATIONSHIP_ROLES}>
-                      <DashboardLayout><RelationshipExplorer /></DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/forecasting"
-                  element={
-                    <ProtectedRoute allowedRoles={ANALYST_ROLES}>
-                      <DashboardLayout><CrimeForecasting /></DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
                   path="/forensics"
                   element={
                     <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
@@ -161,21 +139,29 @@ function App() {
                   }
                 />
 
-                {/* ⚡ GOD MODE DEEP INVESTIGATION ROUTE */}
                 <Route
-                  path="/god-mode"
+                  path="/sociological"
                   element={
-                    <ProtectedRoute allowedRoles={INVESTIGATOR_ROLES}>
-                      <GodModePage />
+                    <ProtectedRoute allowedRoles={ALL_ROLES}>
+                      <DashboardLayout><SociologicalInsights /></DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
-                
+
+                <Route
+                  path="/forecasting"
+                  element={
+                    <ProtectedRoute allowedRoles={ALL_ROLES}>
+                      <DashboardLayout><CrimeForecasting /></DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+
+
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Router>
           </LanguageProvider>
-        </GodModeProvider>
       </AppProvider>
     </AuthProvider>
   );

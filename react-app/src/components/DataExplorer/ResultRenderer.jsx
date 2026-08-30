@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Table, Download, FileJson, Code } from 'lucide-react';
 
-const ResultRenderer = ({ data, generatedSql }) => {
+const ResultRenderer = ({ data, generatedSql, page = 1, pageSize = 100, onPageChange }) => {
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'json'
 
   if (!data || data.length === 0) {
@@ -62,21 +62,23 @@ const ResultRenderer = ({ data, generatedSql }) => {
             <Table size={18} color="var(--accent-primary)" />
             Query Results <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 'normal' }}>({data.length} records)</span>
           </h3>
-          <div style={{ 
-            fontSize: '13px', 
-            color: '#5b21b6', 
-            fontFamily: '"Fira Code", monospace', 
-            background: '#f5f3ff', 
-            border: '1px solid #ddd6fe',
-            padding: '8px 12px', 
-            borderRadius: '8px', 
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}>
-            <Code size={15} style={{ flexShrink: 0 }} color="#7c3aed" />
-            <span style={{ wordBreak: 'break-all', fontWeight: '500' }}>{generatedSql}</span>
-          </div>
+          {generatedSql && (
+            <div style={{ 
+              fontSize: '13px', 
+              color: 'var(--accent-primary)', 
+              fontFamily: '"Fira Code", monospace', 
+              background: 'var(--bg-tertiary)', 
+              border: '1px solid var(--border-color)',
+              padding: '8px 12px', 
+              borderRadius: '8px', 
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center'
+            }}>
+              <Code size={15} style={{ flexShrink: 0 }} color="var(--accent-primary)" />
+              <span style={{ wordBreak: 'break-all', fontWeight: '500' }}>{generatedSql}</span>
+            </div>
+          )}
         </div>
         
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0, alignItems: 'center' }}>
@@ -211,6 +213,60 @@ const ResultRenderer = ({ data, generatedSql }) => {
           </div>
         )}
       </div>
+
+      {/* Pagination Footer */}
+      {onPageChange && (
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(0,0,0,0.2)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div style={{ color: '#94a3b8', fontSize: '13px' }}>
+            Showing page {page} <span style={{ opacity: 0.6 }}>(up to {pageSize} records per page)</span>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              style={{
+                padding: '6px 12px',
+                background: page <= 1 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                color: page <= 1 ? '#475569' : '#e2e8f0',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              Previous
+            </button>
+            <div style={{ padding: '6px 12px', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}>
+              {page}
+            </div>
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={data.length < pageSize} // naive check, if less than page size, it's the last page
+              style={{
+                padding: '6px 12px',
+                background: data.length < pageSize ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                color: data.length < pageSize ? '#475569' : '#e2e8f0',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                cursor: data.length < pageSize ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
