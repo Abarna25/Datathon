@@ -10,12 +10,10 @@ import sentinelService from '../services/sentinelService';
 import SentinelActionCard from '../components/sentinel/SentinelActionCard';
 import SentinelPriorityBreakdown from '../components/sentinel/SentinelPriorityBreakdown';
 import { useAppContext } from '../context/AppContext';
-import { useGodMode } from '../context/GodModeContext';
 
 export default function SentinelDashboard() {
   const navigate = useNavigate();
   const { setActiveCaseId } = useAppContext();
-  const { activateGodMode } = useGodMode();
 
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -135,14 +133,17 @@ export default function SentinelDashboard() {
           </p>
         </div>
 
-        {/* Scan Trigger & God Mode Buttons */}
+        {/* Scan Trigger & Copilot Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
-            onClick={() => activateGodMode({
-              source: 'sentinel',
-              query: 'Show cases needing attention today and explain priority breakdown',
-              caseId: selectedCaseTriage?.caseId || '101'
-            })}
+            onClick={() => {
+              if (selectedCaseTriage?.caseId) {
+                setActiveCaseId(String(selectedCaseTriage.caseId));
+                navigate(`/investigate/${selectedCaseTriage.caseId}?tab=copilot`);
+              } else {
+                navigate('/investigate?tab=copilot');
+              }
+            }}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px',
               background: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)', border: '1px solid #3b82f6',
@@ -150,7 +151,7 @@ export default function SentinelDashboard() {
             }}
           >
             <Zap size={14} color="#fbbf24" fill="#fbbf24" />
-            <span>GOD MODE QUERY</span>
+            <span>COPILOT INVESTIGATION</span>
           </button>
 
           <button
