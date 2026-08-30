@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
-    Loader2, FileText, Database, Compass, Clock, MapPin, Search, Bot, 
-    Layers, Network, ChevronRight, ChevronLeft, Users, Share2, LayoutList, 
-    Zap, Fingerprint, Link as LinkIcon, BrainCircuit, Sparkles 
+    Loader2, FileText, Database, Compass, Clock, Search, Bot, 
+    Layers, Network, ChevronRight, Share2, 
+    Zap, Fingerprint, Link as LinkIcon, Sparkles 
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ConversationProvider } from '../context/ConversationContext';
@@ -26,7 +26,6 @@ import EvidenceGapAnalysis from '../components/evidence/EvidenceGapAnalysis';
 import InvestigationChat from '../components/chat/InvestigationChat';
 import EvidenceIntegrityView from '../components/investigation/EvidenceIntegrityView';
 
-import EntityCards from '../components/fir/EntityCards';
 import VictimPanel from '../components/fir/VictimPanel';
 import AccusedPanel from '../components/fir/AccusedPanel';
 import CaseCompletenessCard from '../components/advanced-intelligence/CaseCompletenessCard';
@@ -55,12 +54,6 @@ const InvestigationWorkspace = () => {
             setActiveCaseId(String(cases[0].id));
         }
     }, [paramCaseId, activeCaseId, cases, setActiveCaseId]);
-
-    const scrollTabs = (direction) => {
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
-        }
-    };
     
     // For Evidence Intelligence data
     const [evidenceData, setEvidenceData] = useState(null);

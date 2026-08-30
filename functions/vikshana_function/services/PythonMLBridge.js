@@ -4,10 +4,23 @@
  * Executes DBSCAN spatial clustering and Ridge Regression time-series forecasting.
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+const fs = require('fs');
 
-const SCRIPT_PATH = path.resolve(__dirname, '../../../ml_pipeline/ml_service.py');
+function getScriptPath() {
+    const candidates = [
+        path.resolve(process.cwd(), 'ml_pipeline/ml_service.py'),
+        path.resolve(__dirname, '../../../ml_pipeline/ml_service.py'),
+        path.resolve(__dirname, '../../../../ml_pipeline/ml_service.py'),
+        path.resolve(__dirname, '../../ml_pipeline/ml_service.py'),
+        'C:/project/VIKS/Vikshana/ml_pipeline/ml_service.py'
+    ];
+    for (const p of candidates) {
+        if (fs.existsSync(p)) return p;
+    }
+    return candidates[0];
+}
+
+const SCRIPT_PATH = getScriptPath();
 
 class PythonMLBridge {
     /**
@@ -15,7 +28,8 @@ class PythonMLBridge {
      */
     static async executePythonML(payload) {
         return new Promise((resolve) => {
-            const pyProcess = spawn('python', [SCRIPT_PATH], {
+            const scriptPath = getScriptPath();
+            const pyProcess = spawn('python', [scriptPath], {
                 windowsHide: true,
                 timeout: 10000 // 10s timeout
             });

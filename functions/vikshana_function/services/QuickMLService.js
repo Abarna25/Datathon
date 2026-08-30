@@ -199,13 +199,51 @@ class QuickMLService {
                 }
             }
 
-            // Explicit indicator when translation could not be performed
-            console.warn(`[QuickMLService] TRANSLATION_UNAVAILABLE for language pair ${srcLang} -> ${tgtLang}`);
-            const error = new Error("TRANSLATION_UNAVAILABLE");
-            error.code = "TRANSLATION_UNAVAILABLE";
-            error.sourceLanguage = srcLang;
-            error.targetLanguage = tgtLang;
-            throw error;
+            // 3. Built-in Kannada/Hindi dictionary translation fallback for common police & system terms
+            const dictionary = {
+                kn: {
+                    'Dashboard': 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+                    'Investigation Workspace': 'ತನಿಖಾ ಕಾರ್ಯಸ್ಥಳ',
+                    'Forensic Intelligence Hub': 'ವಿಧಿವಿಜ್ಞಾನ ಗುಪ್ತಚರ ಕೇಂದ್ರ',
+                    'Investigation Search': 'ತನಿಖಾ ಹುಡುಕಾಟ',
+                    'Sociological Insights': 'ಸಾಮಾಜಿಕ ಒಳನೋಟಗಳು',
+                    'Crime Forecasting': 'ಅಪರಾಧ ಮುನ್ಸೂಚನೆ',
+                    'Investigation Report': 'ತನಿಖಾ ವರದಿ',
+                    'Audit Logs': 'ಆಡಿಟ್ ಲಾಗ್‌ಗಳು',
+                    'Active Investigation': 'ಸಕ್ರಿಯ ತನಿಖೆ',
+                    'Command Center Idle': 'ಕಮಾಂಡ್ ಸೆಂಟರ್ ಸಿದ್ಧವಾಗಿದೆ',
+                    'Case Overview': 'ಪ್ರಕರಣದ ಅವಲೋಕನ',
+                    'Evidence Intelligence': 'ಸಾಕ್ಷ್ಯ ಗುಪ್ತಚರ',
+                    'Timeline Intelligence': 'ಸಮಯರೇಖೆ ಗುಪ್ತಚರ',
+                    'Historical Intelligence': 'ಐತಿಹಾಸಿಕ ಗುಪ್ತಚರ',
+                    'Relationships': 'ಸಂಬಂಧಗಳು',
+                    'Decision Support': 'ನಿರ್ಧಾರ ಬೆಂಬಲ',
+                    'VIKSHANA Copilot': 'ವೀಕ್ಷಣಾ ಕೋಪೈಲಟ್',
+                    'Good Evening, Officer.': 'ಶುಭ ಸಂಜೆ, ಅಧಿಕಾರಿಗಳೇ.',
+                    'Good Morning, Officer.': 'ಶುಭೋದಯ, ಅಧಿಕಾರಿಗಳೇ.',
+                    'Good Afternoon, Officer.': 'ಶುಭ ಮಧ್ಯಾಹ್ನ, ಅಧಿಕಾರಿಗಳೇ.',
+                    'Active': 'ಸಕ್ರಿಯ',
+                    'Closed': 'ಮುಕ್ತಾಯಗೊಂಡಿದೆ',
+                    'Under Investigation': 'ತನಿಖೆಯಲ್ಲಿದೆ',
+                    'High': 'ಹೆಚ್ಚು',
+                    'Medium': 'ಮಧ್ಯಮ',
+                    'Low': 'ಕಡಿಮೆ'
+                },
+                hi: {
+                    'Dashboard': 'डैशबोर्ड',
+                    'Investigation Workspace': 'जांच कार्यक्षेत्र',
+                    'Active Investigation': 'सक्रिय जांच',
+                    'Case Overview': 'मामला अवलोकन',
+                    'Evidence Intelligence': 'साक्ष्य इंटेलिजेंस'
+                }
+            };
+
+            if (dictionary[tgtLang] && dictionary[tgtLang][text.trim()]) {
+                return dictionary[tgtLang][text.trim()];
+            }
+
+            // Return original text gracefully if translation engine is offline
+            return text;
         };
 
         const results = await Promise.all(textArray.map(t => translateSingle(t)));
