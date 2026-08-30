@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const ForesightController = require('../controllers/ForesightController');
-const { authorizeRole } = require('../middleware/authMiddleware');
+const { authorizeRole } = require('../middleware/authorize.middleware');
 
 // Public/Officer accessible endpoints (Decision-support only)
 router.get('/model-card', ForesightController.getModelCard);
