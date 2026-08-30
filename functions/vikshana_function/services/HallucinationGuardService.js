@@ -44,13 +44,11 @@ class HallucinationGuardService {
         }
 
         // 2. Detect unsupported Proper Nouns (Entities, Locations)
-        // Heuristic: Words starting with capital letter, length > 3, not a stop word
-        const words = answer.match(/\b[A-Z][a-z]{3,}\b/g) || [];
+        // Heuristic: Match two or more consecutive capitalized words to avoid catching sentence starters (e.g. "Three", "However")
+        const words = answer.match(/\b[A-Z][a-z]+\s[A-Z][a-z]+\b/g) || [];
         for (const word of words) {
-            if (stopWords.has(word)) continue;
-            
-            // Common words that might be capitalized in reports
-            if (['Police', 'Case', 'Record', 'Suspect', 'Witness', 'Evidence', 'Victim', 'Accused', 'Timeline', 'Date', 'Time', 'Location', 'Officer', 'Station', 'Report', 'Summary', 'Investigation', 'Catalyst', 'Datastore'].includes(word)) {
+            // Common compound words that might be capitalized in reports
+            if (['Police Station', 'Crime Scene', 'Forensic Report', 'Investigation Hub', 'First Information'].some(w => word.includes(w))) {
                 continue;
             }
 

@@ -82,9 +82,9 @@ const DEFAULT_DASHBOARD_DATA = {
     'Night (00-06)': 210
   },
   recentCases: [
-    { id: '101', caseNumber: 'CR-101/2025', title: 'Commercial Burglary at Bull Temple Rd', status: 'Active', priority: 'High', date: '2025-01-15' },
-    { id: '102', caseNumber: 'CR-102/2025', title: 'Two-Wheeler Theft Ring - Indiranagar', status: 'Active', priority: 'Medium', date: '2025-01-16' },
-    { id: '103', caseNumber: 'CR-103/2025', title: 'Armed Robbery at Financial Brokerage', status: 'Active', priority: 'High', date: '2025-01-18' }
+    { id: '101', caseNumber: '0101/2025', title: 'Commercial Burglary at Bull Temple Rd', status: 'Active', priority: 'High', date: '2025-01-15' },
+    { id: '102', caseNumber: '0102/2025', title: 'Two-Wheeler Theft Ring - Indiranagar', status: 'Active', priority: 'Medium', date: '2025-01-16' },
+    { id: '103', caseNumber: '0103/2025', title: 'Armed Robbery at Financial Brokerage', status: 'Active', priority: 'High', date: '2025-01-18' }
   ]
 };
 

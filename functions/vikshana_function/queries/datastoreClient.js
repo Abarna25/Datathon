@@ -17,7 +17,7 @@ const path = require('path');
         {
             ROWID: '101',
             CaseMasterID: '101',
-            CrimeNo: 'CR-101/2025',
+            CrimeNo: '0101/2025',
             CaseNo: 'CC-101',
             CrimeRegisteredDate: '2025-01-15 22:30:00',
             PoliceStationID: 'PS-12',
@@ -31,7 +31,7 @@ const path = require('path');
         {
             ROWID: '102',
             CaseMasterID: '102',
-            CrimeNo: 'CR-102/2025',
+            CrimeNo: '0102/2025',
             CaseNo: 'CC-102',
             CrimeRegisteredDate: '2025-01-20 23:15:00',
             PoliceStationID: 'PS-12',
@@ -45,7 +45,7 @@ const path = require('path');
         {
             ROWID: '103',
             CaseMasterID: '103',
-            CrimeNo: 'CR-103/2025',
+            CrimeNo: '0103/2025',
             CaseNo: 'CC-103',
             CrimeRegisteredDate: '2025-02-01 14:00:00',
             PoliceStationID: 'PS-05',
@@ -59,7 +59,7 @@ const path = require('path');
         {
             ROWID: '104',
             CaseMasterID: '104',
-            CrimeNo: 'CR-104/2025',
+            CrimeNo: '0104/2025',
             CaseNo: 'CC-104',
             CrimeRegisteredDate: '2025-02-05 01:45:00',
             PoliceStationID: 'PS-12',
@@ -73,7 +73,7 @@ const path = require('path');
         {
             ROWID: '187',
             CaseMasterID: '187',
-            CrimeNo: 'CR-187/2024',
+            CrimeNo: '0187/2024',
             CaseNo: 'CC-187',
             CrimeRegisteredDate: '2024-11-10 23:00:00',
             PoliceStationID: 'PS-12',
@@ -169,7 +169,9 @@ function loadDatasetFromCSV() {
 
     try {
         const potentialPaths = [
+            'E:/Datathon/Vikshana/dataset', // Hardcoded fallback for local Hackathon environment
             path.join(__dirname, '../../../dataset'),
+            path.join(__dirname, '../../../../dataset'), // To escape .build/functions/vikshana_function/queries
             path.join(__dirname, '../../dataset'),
             path.join(process.cwd(), 'dataset'),
             path.join(process.cwd(), 'Vikshana/dataset')
