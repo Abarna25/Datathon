@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAppContext } from '../context/AppContext';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   Shield, 
   FileText, 
@@ -23,6 +24,7 @@ import {
 import FIRSummaryPanel from '../components/investigation/FIRSummaryPanel';
 
 export default function ForensicIntelligence() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('evidence');
   const { activeCaseId, setActiveCaseId, currentCase } = useAppContext();
   const caseId = activeCaseId || '101';
@@ -99,7 +101,7 @@ export default function ForensicIntelligence() {
         }));
       }
     } catch (err) {
-      console.error('Error fetching forensic data:', err);
+      console.debug('Failed to fetch forensic data:', err);
     } finally {
       setLoading(false);
     }
@@ -107,11 +109,14 @@ export default function ForensicIntelligence() {
 
   const handleCreateEvidence = async (e) => {
     e.preventDefault();
-    if (!newEvidence.description) return;
+    if (!newEvidence.description.trim()) {
+      alert('Please enter evidence description');
+      return;
+    }
+    setLoading(true);
     try {
-      setLoading(true);
       await api.post('/forensics/evidence', {
-        caseMasterId: caseId,
+        caseId,
         ...newEvidence
       });
       setNewEvidence({ evidenceType: 'Physical Weapon', description: '', storageLocation: 'HQ Vault A-12', fileName: 'sample_item.jpg' });
@@ -138,18 +143,18 @@ export default function ForensicIntelligence() {
   };
 
   const tabs = [
-    { id: 'evidence', label: 'Evidence & Chain of Custody', icon: Shield },
-    { id: 'cctv', label: 'CCTV Surveillance', icon: Camera },
-    { id: 'cdr', label: 'CDR Phone Intelligence', icon: PhoneCall },
-    { id: 'financial', label: 'Financial Intelligence', icon: CreditCard },
-    { id: 'reports', label: 'Forensic Lab Reports', icon: FileText },
-    { id: 'weapons', label: 'Weapons & Ballistics', icon: Crosshair },
-    { id: 'vehicles', label: 'Vehicle Seizures', icon: Truck },
-    { id: 'biometrics', label: 'Biometrics & DNA', icon: Fingerprint },
-    { id: 'court', label: 'Court Proceedings', icon: Scale },
-    { id: 'interrogation', label: 'Interrogations', icon: MessageSquare },
-    { id: 'rag', label: 'Semantic Vector RAG', icon: Search },
-    { id: 'ml', label: 'Python ML Pipeline', icon: Cpu },
+    { id: 'evidence', label: t('forensics.tabs.evidence', 'Evidence & Chain of Custody'), icon: Shield },
+    { id: 'cctv', label: t('forensics.tabs.cctv', 'CCTV Surveillance'), icon: Camera },
+    { id: 'cdr', label: t('forensics.tabs.cdr', 'CDR Phone Intelligence'), icon: PhoneCall },
+    { id: 'financial', label: t('forensics.tabs.financial', 'Financial Intelligence'), icon: CreditCard },
+    { id: 'reports', label: t('forensics.tabs.reports', 'Forensic Lab Reports'), icon: FileText },
+    { id: 'weapons', label: t('forensics.tabs.weapons', 'Weapons & Ballistics'), icon: Crosshair },
+    { id: 'vehicles', label: t('forensics.tabs.vehicles', 'Vehicle Seizures'), icon: Truck },
+    { id: 'biometrics', label: t('forensics.tabs.biometrics', 'Biometrics & DNA'), icon: Fingerprint },
+    { id: 'court', label: t('forensics.tabs.court', 'Court Proceedings'), icon: Scale },
+    { id: 'interrogation', label: t('forensics.tabs.interrogation', 'Interrogations'), icon: MessageSquare },
+    { id: 'rag', label: t('forensics.tabs.rag', 'Semantic Vector RAG'), icon: Search },
+    { id: 'ml', label: t('forensics.tabs.ml', 'Python ML Pipeline'), icon: Cpu },
   ];
 
   return (
@@ -158,16 +163,16 @@ export default function ForensicIntelligence() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Database size={24} color="#2563eb" /> Multi-Modal Forensic & Intelligence Hub
+            <Database size={24} color="#2563eb" /> {t('forensics.title', 'Multi-Modal Forensic & Intelligence Hub')}
           </h1>
           <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-            Unified data layer covering 10 operational forensic domains, Vector-RAG retrieval, and Scikit-Learn Python ML.
+            {t('forensics.subtitle', 'Unified data layer covering 10 operational forensic domains, Vector-RAG retrieval, and Scikit-Learn Python ML.')}
           </p>
         </div>
 
         {/* Case Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Active Case ID:</label>
+          <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>{t('forensics.activeCaseId', 'Active Case ID:')}</label>
           <input
             type="text"
             value={caseId}
@@ -178,7 +183,7 @@ export default function ForensicIntelligence() {
             onClick={fetchActiveData}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
           >
-            <RefreshCw size={14} /> Refresh
+            <RefreshCw size={14} /> {t('forensics.refresh', 'Refresh')}
           </button>
         </div>
       </div>
@@ -226,7 +231,7 @@ export default function ForensicIntelligence() {
         {loading && (
           <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
             <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} />
-            <p style={{ marginTop: '10px', fontSize: '14px' }}>Loading authenticated forensic records...</p>
+            <p style={{ marginTop: '10px', fontSize: '14px' }}>{t('common.loading', 'Loading authenticated forensic records...')}</p>
           </div>
         )}
 
@@ -234,8 +239,10 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'evidence' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>Physical Evidence & Chain of Custody (Case #{caseId})</h2>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>{data.evidence?.length || 0} recorded items</span>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>
+                {t('forensics.tabs.evidence', 'Physical Evidence & Chain of Custody')} ({t('nav.activeCase', 'Case')} #{caseId})
+              </h2>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>{data.evidence?.length || 0} {t('forensics.recordedItems', 'recorded items')}</span>
             </div>
 
             {/* Evidence Registration Form */}
@@ -245,22 +252,23 @@ export default function ForensicIntelligence() {
                 onChange={e => setNewEvidence({ ...newEvidence, evidenceType: e.target.value })}
                 style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
               >
-                <option>Physical Weapon</option>
-                <option>Biological Sample</option>
-                <option>Digital Media / Flash Drive</option>
-                <option>Narcotic Substance</option>
-                <option>Documentary Evidence</option>
+                <option value="Physical Weapon">{t('forensics.types.physicalWeapon', 'Physical Weapon')}</option>
+                <option value="Fingerprint Lift Card">{t('forensics.types.fingerprintLift', 'Fingerprint Lift Card')}</option>
+                <option value="Blood / Biological Swab">{t('forensics.types.bloodSwab', 'Blood / Biological Swab')}</option>
+                <option value="Digital Media / Flash Drive">{t('forensics.types.digitalMedia', 'Digital Media / Flash Drive')}</option>
+                <option value="Narcotic Substance">{t('forensics.types.narcotic', 'Narcotic Substance')}</option>
+                <option value="Documentary Evidence">{t('forensics.types.documentary', 'Documentary Evidence')}</option>
               </select>
               <input
                 type="text"
-                placeholder="Description of item..."
+                placeholder={t('forensics.descriptionPlaceholder', 'Description of item...')}
                 value={newEvidence.description}
                 onChange={e => setNewEvidence({ ...newEvidence, description: e.target.value })}
                 style={{ flex: 1, minWidth: '200px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
               />
               <input
                 type="text"
-                placeholder="Vault Storage Location"
+                placeholder={t('forensics.vaultPlaceholder', 'HQ Vault A-12')}
                 value={newEvidence.storageLocation}
                 onChange={e => setNewEvidence({ ...newEvidence, storageLocation: e.target.value })}
                 style={{ width: '180px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
@@ -269,26 +277,26 @@ export default function ForensicIntelligence() {
                 type="submit"
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
               >
-                <PlusCircle size={15} /> Record Evidence
+                <PlusCircle size={15} /> {t('forensics.recordEvidence', 'Record Evidence')}
               </button>
             </form>
 
             {!data.evidence || data.evidence.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Shield size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
-                <p>No physical evidence logged for Case #{caseId} in Catalyst Datastore.</p>
+                <p>{t('forensics.noEvidenceLogged', 'No physical evidence logged for Case #{caseId} in Catalyst Datastore.').replace('{caseId}', caseId)}</p>
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                      <th style={{ padding: '10px 14px' }}>Evidence ID</th>
-                      <th style={{ padding: '10px 14px' }}>Type</th>
-                      <th style={{ padding: '10px 14px' }}>Description</th>
-                      <th style={{ padding: '10px 14px' }}>Storage Location</th>
-                      <th style={{ padding: '10px 14px' }}>SHA-256 Hash</th>
-                      <th style={{ padding: '10px 14px' }}>Chain of Custody</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.evidenceId', 'Evidence ID')}</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.type', 'Type')}</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.description', 'Description')}</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.storageLocation', 'Storage Location')}</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.hash', 'SHA-256 Hash')}</th>
+                      <th style={{ padding: '10px 14px' }}>{t('forensics.table.chainOfCustody', 'Chain of Custody')}</th>
                     </tr>
                   </thead>
                   <tbody>

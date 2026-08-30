@@ -30,14 +30,14 @@ const Sidebar = () => {
 
   const allItems = [
     { id: 'dashboard', name: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, path: '/dashboard', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
-    { id: 'sentinel', name: 'VIKSHANA Sentinel', icon: ShieldAlert, path: '/sentinel', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'], isFeatured: true },
+    { id: 'sentinel', name: t('nav.sentinel', 'VIKSHANA Sentinel'), icon: ShieldAlert, path: '/sentinel', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'], isFeatured: true },
     { id: 'investigate', name: t('nav.investigationWorkspace', 'Investigation Workspace'), icon: Search, path: '/investigate', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'forensics', name: 'Forensic Intelligence Hub', icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
-    { id: 'search', name: 'Investigation Search', icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
-    { id: 'sociological', name: 'Sociological Insights', icon: Network, path: '/sociological', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
-    { id: 'forecasting', name: 'Crime Forecasting', icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'forensics', name: t('nav.forensics', 'Forensic Intelligence Hub'), icon: Shield, path: '/forensics', roles: ['Administrator', 'Investigator', 'Supervisor', 'Officer'] },
+    { id: 'search', name: t('nav.search', 'Investigation Search'), icon: Database, path: '/search', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'sociological', name: t('nav.sociological', 'Sociological Insights'), icon: Network, path: '/sociological', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
+    { id: 'forecasting', name: t('nav.forecasting', 'Crime Forecasting'), icon: TrendingUp, path: '/forecasting', roles: ['Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'] },
     { id: 'reports', name: t('nav.reports', 'Investigation Report'), icon: FileText, path: '/reports', roles: ['Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'] },
-    { id: 'audit-logs', name: 'Audit Logs', icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
+    { id: 'audit-logs', name: t('nav.auditLogs', 'Audit Logs'), icon: ShieldAlert, path: '/audit-logs', roles: ['Administrator', 'Supervisor'] }
   ];
 
 
@@ -66,7 +66,7 @@ const Sidebar = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <UserCheck size={14} color={activeBadge.text} />
           <span style={{ fontSize: '11px', fontWeight: '800', color: activeBadge.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            ROLE: {role}
+            {t('nav.role', 'ROLE')}: {t(`roles.${role}`, role)}
           </span>
         </div>
         {role === 'Administrator' && <Lock size={12} color={activeBadge.text} />}
@@ -79,7 +79,7 @@ const Sidebar = () => {
           background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)',
           flexShrink: 0
         }}>
-          <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700', marginBottom: '2px' }}>Active Investigation</div>
+          <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700', marginBottom: '2px' }}>{t('nav.activeCase', 'Active Investigation')}</div>
           <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: '700' }}>{currentCase.caseNumber || currentCase.caseId}</div>
           <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{currentCase.category || ''}</div>
         </div>
@@ -102,7 +102,7 @@ const Sidebar = () => {
               transition: 'all 0.2s ease', fontWeight: isActive ? '600' : '500', fontSize: '13.5px'
             })}
           >
-            <item.icon size={18} /><span>{role === 'Analyst' ? 'Trends & Hotspots' : item.name}</span>
+            <item.icon size={18} /><span>{role === 'Analyst' ? t('nav.trends', 'Trends & Hotspots') : item.name}</span>
           </NavLink>
         ))}
 
@@ -125,16 +125,14 @@ const Sidebar = () => {
               <span>{item.name}</span>
             </div>
             <span style={{ fontSize: '9px', fontWeight: '800', background: '#ef4444', color: '#fff', padding: '2px 5px', borderRadius: '4px' }}>
-              TRIAGE
+              {t('nav.triage', 'TRIAGE')}
             </span>
           </NavLink>
         ))}
 
         {/* INVESTIGATION */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          {role === 'Investigator' || role === 'Officer' ? 'Case Workspace' : 
-           role === 'Analyst' ? 'Intelligence Hub' : 
-           role === 'Supervisor' ? 'Command Overview' : 'Primary Actions'}
+          {t('nav.primaryActions', 'PRIMARY ACTIONS')}
         </div>
         {filteredMenuItems.filter(i => ['investigate', 'forensics', 'search'].includes(i.id)).map((item) => (
           <NavLink
@@ -154,7 +152,7 @@ const Sidebar = () => {
 
         {/* INTELLIGENCE & FORECASTING */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          INTELLIGENCE
+          {t('nav.intelligence', 'INTELLIGENCE')}
         </div>
         {filteredMenuItems.filter(i => ['sociological', 'forecasting'].includes(i.id)).map((item) => (
           <NavLink
@@ -174,7 +172,7 @@ const Sidebar = () => {
 
         {/* REPORTING & OTHERS */}
         <div style={{ marginTop: '16px', marginBottom: '4px', paddingLeft: '12px', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          {role === 'Administrator' ? 'Admin & Reporting' : 'Reporting & Logs'}
+          {t('nav.adminReporting', 'ADMIN & REPORTING')}
         </div>
         {filteredMenuItems.filter(i => ['reports', 'audit-logs'].includes(i.id)).map((item) => (
           <NavLink

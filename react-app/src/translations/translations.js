@@ -1,13 +1,9 @@
 /**
  * translations.js
- * Comprehensive translation dictionary for English (en) and Kannada (kn).
- * Covers Navigation, Sidebar, Buttons, Forms, AI Assistant, Labels, Cards,
+ * Comprehensive translation dictionary for English (en), Kannada (kn), and Hindi (hi).
+ * Covers Navigation, Sidebar, Roles, Buttons, Forms, Forensics Hub, AI Assistant, Labels, Cards,
  * Tables, Empty States, Loading & Errors, Timeline, Dashboard, Evidence,
  * Reports, Settings, and Decision Support.
- *
- * For Hindi (hi) and Tamil (ta), static keys fall back to English.
- * Dynamic DB content (case titles, event descriptions) is translated
- * via the Zia API using useTranslateDynamic hook.
  */
 
 const translations = {
@@ -16,17 +12,83 @@ const translations = {
     nav: {
       appName: "VIKSHANA",
       dashboard: "Dashboard",
+      sentinel: "VIKSHANA Sentinel",
       investigationWorkspace: "Investigation Workspace",
+      forensics: "Forensic Intelligence Hub",
+      search: "Investigation Search",
+      sociological: "Sociological Insights",
+      forecasting: "Crime Forecasting",
+      reports: "Investigation Report",
+      auditLogs: "Audit Logs",
       crimeIntelligence: "Crime Intelligence",
       decisionSupport: "Decision Support",
       relationshipExplorer: "Relationship Explorer",
       caseTimeline: "Case Timeline",
       evidenceLedger: "Evidence Ledger",
-      reports: "Reports",
       settings: "Settings",
       searchPlaceholder: "Search everywhere (Cases, FIRs, Entities)...",
       activeCase: "Active Case",
       logout: "Logout",
+      primaryActions: "PRIMARY ACTIONS",
+      intelligence: "INTELLIGENCE",
+      adminReporting: "ADMIN & REPORTING",
+      role: "ROLE",
+      triage: "TRIAGE"
+    },
+
+    // ── Roles ─────────────────────────────────────────────────────────────
+    roles: {
+      Administrator: "Administrator",
+      Investigator: "Investigator",
+      Supervisor: "Supervisor",
+      Analyst: "Analyst",
+      Policymaker: "Policymaker",
+      Officer: "Officer",
+      Viewer: "Viewer"
+    },
+
+    // ── Forensics Hub ─────────────────────────────────────────────────────
+    forensics: {
+      title: "Multi-Modal Forensic & Intelligence Hub",
+      subtitle: "Unified data layer covering 10 operational forensic domains, Vector-RAG retrieval, and Scikit-Learn Python ML.",
+      activeCaseId: "Active Case ID:",
+      refresh: "Refresh",
+      tabs: {
+        evidence: "Evidence & Chain of Custody",
+        cctv: "CCTV Surveillance",
+        cdr: "CDR Phone Intelligence",
+        financial: "Financial Intelligence",
+        reports: "Forensic Lab Reports",
+        weapons: "Weapons & Ballistics",
+        vehicles: "Vehicle Seizures",
+        biometrics: "Biometrics & DNA",
+        court: "Court Proceedings",
+        interrogation: "Interrogations",
+        rag: "Semantic Vector RAG",
+        ml: "Python ML Pipeline"
+      },
+      evidenceSection: "Physical Evidence & Chain of Custody (Case #{caseId})",
+      recordEvidence: "Record Evidence",
+      descriptionPlaceholder: "Description of item...",
+      vaultPlaceholder: "HQ Vault A-12",
+      noEvidenceLogged: "No physical evidence logged for Case #{caseId} in Catalyst Datastore.",
+      recordedItems: "recorded items",
+      table: {
+        evidenceId: "Evidence ID",
+        type: "Type",
+        description: "Description",
+        storageLocation: "Storage Location",
+        hash: "SHA-256 Hash",
+        chainOfCustody: "Chain of Custody"
+      },
+      types: {
+        physicalWeapon: "Physical Weapon",
+        fingerprintLift: "Fingerprint Lift Card",
+        bloodSwab: "Blood / Biological Swab",
+        digitalMedia: "Digital Media / Flash Drive",
+        narcotic: "Narcotic Substance",
+        documentary: "Documentary Evidence"
+      }
     },
 
     // ── Timeline ──────────────────────────────────────────────────────────
@@ -132,6 +194,10 @@ const translations = {
       policyRecommendations: "Policy Recommendations",
       analysisEngineError: "Analysis Engine Error",
       retryAnalysis: "Retry Analysis",
+      sociologicalTitle: "Sociological Insights & Demographic Intelligence",
+      sociologicalDesc: "Demographic and socioeconomic correlations of registered crime incidents.",
+      forecastingTitle: "Crime Forecasting & Early Warning",
+      forecastingDesc: "Historical pattern analysis and predictive intelligence forecasting.",
     },
 
     // ── AI Assistant UI ───────────────────────────────────────────────────
@@ -208,17 +274,83 @@ const translations = {
     nav: {
       appName: "ವೀಕ್ಷಣ",
       dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+      sentinel: "ವೀಕ್ಷಣಾ ಸೆಂಟಿನೆಲ್",
       investigationWorkspace: "ತನಿಖಾ ಕ್ಷೇತ್ರ",
+      forensics: "ವಿಧಿವಿಜ್ಞಾನ ಗುಪ್ತಚರ ಕೇಂದ್ರ",
+      search: "ತನಿಖಾ ಹುಡುಕಾಟ",
+      sociological: "ಸಾಮಾಜಿಕ ಒಳನೋಟಗಳು",
+      forecasting: "ಅಪರಾಧ ಮುನ್ಸೂಚನೆ",
+      reports: "ತನಿಖಾ ವರದಿ",
+      auditLogs: "ಆಡಿಟ್ ಲಾಗ್‌ಗಳು",
       crimeIntelligence: "ಅಪರಾಧ ಬುದ್ಧಿಮತ್ತೆ",
       decisionSupport: "ನಿರ್ಧಾರ ಬೆಂಬಲ",
       relationshipExplorer: "ಸಂಬಂಧಗಳ ಎಕ್ಸ್‌ಪ್ಲೋರರ್",
       caseTimeline: "ಪ್ರಕರಣದ ಕಾಲರೇಖೆ",
       evidenceLedger: "ಸಾಕ್ಷ್ಯಗಳ ವಹಿ",
-      reports: "ವರದಿಗಳು",
       settings: "ಸಂಯೋಜನೆಗಳು",
-      searchPlaceholder: "ಎಲ್ಲಾ ಕಡೆ ಹುಡುಕಿ (ಪ್ರಕರಣಗಳು, ಎಫ್‌ಐಆರ್)...",
+      searchPlaceholder: "ಎಲ್ಲಾ ಕಡೆ ಹುಡುಕಿ (ಪ್ರಕರಣಗಳು, ಎಫ್‌ಐಆರ್, ವ್ಯಕ್ತಿಗಳು)...",
       activeCase: "ಸಕ್ರಿಯ ಪ್ರಕರಣ",
       logout: "ನಿರ್ಗಮಿಸಿ",
+      primaryActions: "ಪ್ರಾಥಮಿಕ ಕ್ರಮಗಳು",
+      intelligence: "ಗುಪ್ತಚರ",
+      adminReporting: "ಆಡಳಿತ ಮತ್ತು ವರದಿ",
+      role: "ಪಾತ್ರ",
+      triage: "ವಿಂಗಡಣೆ"
+    },
+
+    // ── Roles ─────────────────────────────────────────────────────────────
+    roles: {
+      Administrator: "ನಿರ್ವಾಹಕ",
+      Investigator: "ತನಿಖಾಧಿಕಾರಿ",
+      Supervisor: "ಮೇಲ್ವಿಚಾರಕ",
+      Analyst: "ವಿಶ್ಲೇಷಕ",
+      Policymaker: "ನೀತಿ ನಿರೂಪಕ",
+      Officer: "ಅಧಿಕಾರಿ",
+      Viewer: "ವೀಕ್ಷಕ"
+    },
+
+    // ── Forensics Hub ─────────────────────────────────────────────────────
+    forensics: {
+      title: "ಬಹು-ಮಾದರಿ ವಿಧಿವಿಜ್ಞಾನ ಮತ್ತು ಗುಪ್ತಚರ ಕೇಂದ್ರ",
+      subtitle: "10 ಕಾರ್ಯಾಚರಣಾ ವಿಧಿವಿಜ್ಞಾನ ಕ್ಷೇತ್ರಗಳು, ವೆಕ್ಟರ್-RAG ಮರುಪಡೆಯುವಿಕೆ ಮತ್ತು Scikit-Learn ಪೈಥಾನ್ ML ಅನ್ನು ಒಳಗೊಂಡಿರುವ ಏಕೀಕೃತ ಡೇಟಾ ಶ್ರೇಣಿ.",
+      activeCaseId: "ಸಕ್ರಿಯ ಪ್ರಕರಣ ಐಡಿ:",
+      refresh: "ನವೀಕರಿಸಿ",
+      tabs: {
+        evidence: "ಸಾಕ್ಷ್ಯ ಮತ್ತು ಪಾಲನೆಯ ಸರಪಳಿ",
+        cctv: "ಸಿಸಿಟಿವಿ ಕಣ್ಗಾವಲು",
+        cdr: "ಸಿಡಿಆರ್ ಫೋನ್ ಗುಪ್ತಚರ",
+        financial: "ಹಣಕಾಸು ಗುಪ್ತಚರ",
+        reports: "ವಿಧಿವಿಜ್ಞಾನ ಪ್ರಯೋಗಾಲಯ ವರದಿಗಳು",
+        weapons: "ಆಯುಧಗಳು ಮತ್ತು ಬ್ಯಾಲಿಸ್ಟಿಕ್ಸ್",
+        vehicles: "ವಾಹನ ಜಪ್ತಿಗಳು",
+        biometrics: "ಬಯೋಮೆಟ್ರಿಕ್ಸ್ ಮತ್ತು ಡಿಎನ್‌ಎ",
+        court: "ನ್ಯಾಯಾಲಯದ ಕಲಾಪಗಳು",
+        interrogation: "ವಿಚಾರಣೆಗಳು",
+        rag: "ಸೆಮ್ಯಾಂಟಿಕ್ ವೆಕ್ಟರ್ RAG",
+        ml: "ಪೈಥಾನ್ ML ಪೈಪ್‌ಲೈನ್"
+      },
+      evidenceSection: "ಭೌತಿಕ ಸಾಕ್ಷ್ಯ ಮತ್ತು ಪಾಲನೆಯ ಸರಪಳಿ (ಪ್ರಕರಣ #{caseId})",
+      recordEvidence: "ಸಾಕ್ಷ್ಯ ದಾಖಲಿಸಿ",
+      descriptionPlaceholder: "ವಸ್ತುವಿನ ವಿವರಣೆ...",
+      vaultPlaceholder: "ಪ್ರಧಾನ ಕಚೇರಿ ಕಪಾಟು A-12",
+      noEvidenceLogged: "ಪ್ರಕರಣ #{caseId} ಗೆ ಯಾವುದೇ ಭೌತಿಕ ಸಾಕ್ಷ್ಯ ದಾಖಲಾಗಿಲ್ಲ.",
+      recordedItems: "ದಾಖಲಾದ ವಸ್ತುಗಳು",
+      table: {
+        evidenceId: "ಸಾಕ್ಷ್ಯ ಐಡಿ",
+        type: "ವಿಧ",
+        description: "ವಿವರಣೆ",
+        storageLocation: "ಸಂಗ್ರಹ ಸ್ಥಳ",
+        hash: "SHA-256 ಹ್ಯಾಶ್",
+        chainOfCustody: "ಪಾಲನೆಯ ಸರಪಳಿ"
+      },
+      types: {
+        physicalWeapon: "ಭೌತಿಕ ಆಯುಧ",
+        fingerprintLift: "ಬೆರಳಚ್ಚು ಕಾರ್ಡ್",
+        bloodSwab: "ರಕ್ತ / ಜೈವಿಕ ಸ್ವ್ಯಾಬ್",
+        digitalMedia: "ಡಿಜಿಟಲ್ ಮಾಧ್ಯಮ / ಫ್ಲ್ಯಾಶ್ ಡ್ರೈವ್",
+        narcotic: "ಮಾದಕ ವಸ್ತು",
+        documentary: "ದಾಖಲಾತಿ ಸಾಕ್ಷ್ಯ"
+      }
     },
 
     // ── Timeline ──────────────────────────────────────────────────────────
@@ -324,6 +456,10 @@ const translations = {
       policyRecommendations: "ನೀತಿ ಶಿಫಾರಸುಗಳು",
       analysisEngineError: "ವಿಶ್ಲೇಷಣೆ ಇಂಜಿನ್ ದೋಷ",
       retryAnalysis: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      sociologicalTitle: "ಸಮಾಜಶಾಸ್ತ್ರೀಯ ಒಳನೋಟಗಳು ಮತ್ತು ಜನಸಂಖ್ಯಾ ಬುದ್ಧಿಮತ್ತೆ",
+      sociologicalDesc: "ದಾಖಲಾದ ಅಪರಾಧ ಘಟನೆಗಳ ಜನಸಂಖ್ಯಾಶಾಸ್ತ್ರೀಯ ಮತ್ತು ಸಾಮಾಜಿಕ-ಆರ್ಥಿಕ ಪರಸ್ಪರ ಸಂಬಂಧಗಳು.",
+      forecastingTitle: "ಅಪರಾಧ ಮುನ್ಸೂಚನೆ ಮತ್ತು ಮುನ್ನೆಚ್ಚರಿಕೆ",
+      forecastingDesc: "ಐತಿಹಾಸಿಕ ಪ್ರವೃತ್ತಿ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಭವಿಷ್ಯಸೂಚಕ ಗುಪ್ತಚರ ಮುನ್ಸೂಚನೆ.",
     },
 
     // ── AI Assistant UI ───────────────────────────────────────────────────
@@ -391,14 +527,92 @@ const translations = {
       noData: "ಯಾವುದೇ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
       languageName: "ಕನ್ನಡ",
       activeRole: "ತನಿಖಾಧಿಕಾರಿ",
-    },
+    }
+  },
 
-    // ── Framework 4 & 8 ────────────────────────────────────────────
-    intelligence: {
-      sociologicalTitle: "ಸಮಾಜಶಾಸ್ತ್ರೀಯ ಒಳನೋಟಗಳು",
-      sociologicalDesc: "ದಾಖಲಾದ ಅಪರಾಧಗಳ ಜನಸಂಖ್ಯಾಶಾಸ್ತ್ರೀಯ ವಿಶ್ಲೇಷಣೆ.",
-      forecastingTitle: "ಅಪರಾಧ ಮುನ್ಸೂಚನೆ ಮತ್ತು ಮುನ್ನೆಚ್ಚರಿಕೆ",
-      forecastingDesc: "ಐತಿಹಾಸಿಕ ಪ್ರವೃತ್ತಿ ಮತ್ತು ಮುನ್ಸೂಚನೆ ವಿಶ್ಲೇಷಣೆ.",
+  // ════════════════════════════════════════════════════════════════════════
+  hi: {
+    nav: {
+      appName: "वीक्षणा",
+      dashboard: "डैशबोर्ड",
+      sentinel: "वीक्षणा सेंटिनल",
+      investigationWorkspace: "जांच कार्यक्षेत्र",
+      forensics: "फोरेंसिक इंटेलिजेंस हब",
+      search: "जांच खोज",
+      sociological: "सामाजिक अंतर्दृष्टि",
+      forecasting: "अपराध पूर्वानुमान",
+      reports: "जांच रिपोर्ट",
+      auditLogs: "ऑडिट लॉग",
+      crimeIntelligence: "अपराध इंटेलिजेंस",
+      decisionSupport: "निर्णय समर्थन",
+      relationshipExplorer: "संबंध अन्वेषक",
+      caseTimeline: "मामला समयरेखा",
+      evidenceLedger: "साक्ष्य बहीखाता",
+      settings: "सेटिंग्स",
+      searchPlaceholder: "हर जगह खोजें (मामले, प्राथमिकी, संस्थाएं)...",
+      activeCase: "सक्रिय मामला",
+      logout: "लॉग आउट",
+      primaryActions: "प्राथमिक क्रियाएं",
+      intelligence: "इंटेलिजेंस",
+      adminReporting: "प्रशासन और रिपोर्टिंग",
+      role: "भूमिका",
+      triage: "ट्राएज"
+    },
+    roles: {
+      Administrator: "प्रशासक",
+      Investigator: "जांचकर्ता",
+      Supervisor: "पर्यवेक्षक",
+      Analyst: "विश्लेषक",
+      Policymaker: "नीति निर्माता",
+      Officer: "अधिकारी",
+      Viewer: "दर्शक"
+    },
+    forensics: {
+      title: "मल्टी-मॉडल फोरेंसिक और इंटेलिजेंस हब",
+      subtitle: "10 फोरेंसिक डोमेन, वेक्टर-RAG और Scikit-Learn पायथन ML को एकीकृत करने वाली डेटा परत।",
+      activeCaseId: "सक्रिय मामला आईडी:",
+      refresh: "ताज़ा करें",
+      tabs: {
+        evidence: "साक्ष्य और अभिरक्षा श्रृंखला",
+        cctv: "सीसीटीवी निगरानी",
+        cdr: "सीडीआर फोन इंटेलिजेंस",
+        financial: "वित्तीय इंटेलिजेंस",
+        reports: "फोरेंसिक लैब रिपोर्ट",
+        weapons: "हथियार और बैलिस्टिक",
+        vehicles: "वाहन जब्ती",
+        biometrics: "बायोमेट्रिक्स और डीएनए",
+        court: "न्यायालय की कार्यवाही",
+        interrogation: "पूछताछ",
+        rag: "सिमेंटिक वेक्टर RAG",
+        ml: "पायथन ML पाइपलाइन"
+      },
+      evidenceSection: "भौतिक साक्ष्य और अभिरक्षा श्रृंखला (मामला #{caseId})",
+      recordEvidence: "साक्ष्य दर्ज करें",
+      descriptionPlaceholder: "वस्तु का विवरण...",
+      vaultPlaceholder: "मुख्यालय वॉल्ट A-12",
+      noEvidenceLogged: "मामला #{caseId} के लिए कोई भौतिक साक्ष्य लॉग नहीं है।",
+      recordedItems: "दर्ज की गई वस्तुएं",
+      table: {
+        evidenceId: "साक्ष्य आईडी",
+        type: "प्रकार",
+        description: "विवरण",
+        storageLocation: "भंडारण स्थान",
+        hash: "SHA-256 हैश",
+        chainOfCustody: "अभिरक्षा श्रृंखला"
+      }
+    },
+    common: {
+      loading: "लोड हो रहा है...",
+      error: "त्रुटि",
+      success: "सफलता",
+      retry: "पुनः प्रयास करें",
+      close: "बंद करें",
+      cancel: "रद्द करें",
+      save: "सहेजें",
+      confirm: "पुष्टि करें",
+      noData: "कोई डेटा उपलब्ध नहीं है",
+      languageName: "हिन्दी",
+      activeRole: "जांचकर्ता",
     }
   }
 };

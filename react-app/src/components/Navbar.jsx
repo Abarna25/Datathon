@@ -222,11 +222,11 @@ const Navbar = () => {
                   }}
                 >
                   <option value="all" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                    🌐 All Cases (Global View)
+                    {isKannada ? '🌐 ಎಲ್ಲಾ ಪ್ರಕರಣಗಳು (ಜಾಗತಿಕ ನೋಟ)' : '🌐 All Cases (Global View)'}
                   </option>
                   {cases.map((c) => (
                     <option key={c.id} value={String(c.id)} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                      {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 30 ? c.briefFacts.substring(0, 27) + '...' : c.briefFacts) : 'No Facts'}
+                      {c.caseNumber} - {c.briefFacts ? (c.briefFacts.length > 30 ? c.briefFacts.substring(0, 27) + '...' : c.briefFacts) : (isKannada ? 'ವಿವರಗಳಿಲ್ಲ' : 'No Facts')}
                     </option>
                   ))}
                 </select>
