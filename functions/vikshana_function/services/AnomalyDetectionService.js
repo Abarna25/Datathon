@@ -1,3 +1,4 @@
+
 class AnomalyDetectionService {
     /**
      * Scans the case context for logical inconsistencies deterministically.
@@ -14,6 +15,8 @@ class AnomalyDetectionService {
         const suspects = context.suspects || [];
         const chargesheets = context.chargesheet || [];
 
+
+
         // 1. Conflicting Dates / Impossible Chronology
         for (const occurrence of occurrences) {
             for (const arrest of arrests) {
@@ -27,7 +30,7 @@ class AnomalyDetectionService {
                             what: "Timeline Conflict",
                             why: `Arrest recorded on ${arrest.event_time} occurs before the crime occurrence on ${occurrence.event_time}.`,
                             source: `Arrest #${arrest.ROWID}, Occurrence #${occurrence.ROWID}`,
-                            confidence: "HIGH",
+                            confidence: 0.85,
                             priority: "HIGH"
                         });
                     }
@@ -43,7 +46,7 @@ class AnomalyDetectionService {
                     what: "Missing Event Time",
                     why: `Crime occurrence record is missing the event time.`,
                     source: `Occurrence #${occurrence.ROWID}`,
-                    confidence: "HIGH",
+                    confidence: 0.85,
                     priority: "HIGH"
                 });
             }
@@ -53,7 +56,7 @@ class AnomalyDetectionService {
                     what: "Missing Location Coordinates",
                     why: `Crime occurrence record is missing exact location coordinates.`,
                     source: `Occurrence #${occurrence.ROWID}`,
-                    confidence: "HIGH",
+                    confidence: 0.85,
                     priority: "MEDIUM"
                 });
             }
@@ -69,7 +72,7 @@ class AnomalyDetectionService {
                     what: "Duplicate Suspect Record",
                     why: `Multiple suspect records found with identical name (${suspect.name}) and age (${suspect.age}).`,
                     source: `Accused #${suspect.ROWID}`,
-                    confidence: "HIGH",
+                    confidence: 0.85,
                     priority: "LOW"
                 });
             }
@@ -83,7 +86,7 @@ class AnomalyDetectionService {
                 what: "Missing Arrest Records",
                 why: `A chargesheet is filed but no arrest or surrender records are found for suspects.`,
                 source: `Chargesheet, Accused`,
-                confidence: "HIGH",
+                confidence: 0.85,
                 priority: "MEDIUM"
             });
         }
@@ -95,7 +98,7 @@ class AnomalyDetectionService {
                 what: "Orphaned Arrest Record",
                 why: `Arrest records exist, but no Accused records are associated with the case.`,
                 source: `Arrest`,
-                confidence: "HIGH",
+                confidence: 0.85,
                 priority: "CRITICAL"
             });
         }

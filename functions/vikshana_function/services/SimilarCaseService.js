@@ -151,6 +151,12 @@ class SimilarCaseService {
                 let explanation = `${normalizedScore}% similarity because both cases share ${reasons.join(', ')}.`;
                 if (reasons.length === 0) explanation = `${normalizedScore}% similarity based on secondary factors.`;
 
+                const matchDetails = {};
+                if (reasons.includes('Crime Category')) matchDetails.crimeType = `Category ID: ${activeCategory}`;
+                if (reasons.includes('Police Station')) matchDetails.location = `Station: ${activeLocation}`;
+                if (reasons.includes('Legal Section')) matchDetails.mo = `Shared Legal Sections (Modus Operandi)`;
+                if (reasons.includes('Temporal Proximity')) matchDetails.temporal = `Month/Year: ${activeMonthYear}`;
+
                 scoredCases.push({
                     caseId: candidateId,
                     crimeType: candidate.CaseCategoryID || candidate.CrimeMajorHeadID || 'Unknown',
@@ -158,6 +164,7 @@ class SimilarCaseService {
                     location: candidate.PoliceStationID ? `PS ${candidate.PoliceStationID}` : 'Unknown',
                     similarityScore: normalizedScore,
                     matchedAttributes: reasons,
+                    matchDetails: matchDetails,
                     explanation,
                     dataUsed: Array.from(dataUsed).join(' + '),
                     outcomes: outcomes,
@@ -184,7 +191,7 @@ class SimilarCaseService {
         const topGap = intelligence.gaps?.[0]; // Best recommendation
         
         let leadText = `${topCases.length} historically similar cases share significant attributes with this investigation. `;
-        if (topCases[0].reasons.includes('Same police station')) {
+        if (topCases[0] && topCases[0].matchedAttributes && topCases[0].matchedAttributes.includes('Police Station')) {
             leadText += `They share the same police station and crime category. `;
         }
         

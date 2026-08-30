@@ -34,6 +34,7 @@ class EntityResolutionService {
                         entityB: accused.AccusedName,
                         matchScore: 1.0,
                         matchingFactors: matchingFactors,
+                        resolutionStatus: "Potential Match - Requires Investigator Verification",
                         supportingCases: [accused.CaseMasterID],
                         rawRecord: accused,
                         CaseMasterID: accused.CaseMasterID

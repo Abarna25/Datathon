@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useAppContext } from '../context/AppContext';
 import { 
   Shield, 
   FileText, 
@@ -19,10 +20,13 @@ import {
   PlusCircle,
   Database
 } from 'lucide-react';
+import FIRSummaryPanel from '../components/investigation/FIRSummaryPanel';
 
 export default function ForensicIntelligence() {
   const [activeTab, setActiveTab] = useState('evidence');
-  const [caseId, setCaseId] = useState('101');
+  const { activeCaseId, setActiveCaseId, currentCase } = useAppContext();
+  const caseId = activeCaseId || '101';
+  const setCaseId = setActiveCaseId;
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     evidence: [],
@@ -179,6 +183,13 @@ export default function ForensicIntelligence() {
         </div>
       </div>
 
+      {/* Pinned Case Summary */}
+      {currentCase && (
+        <div style={{ marginBottom: '10px' }}>
+          <FIRSummaryPanel bundle={currentCase} />
+        </div>
+      )}
+
       {/* Domain Navigation Tabs */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
         {tabs.map(tab => {
@@ -224,7 +235,7 @@ export default function ForensicIntelligence() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>Physical Evidence & Chain of Custody (Case #{caseId})</h2>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>{data.evidence.length} recorded items</span>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>{data.evidence?.length || 0} recorded items</span>
             </div>
 
             {/* Evidence Registration Form */}
@@ -262,7 +273,7 @@ export default function ForensicIntelligence() {
               </button>
             </form>
 
-            {data.evidence.length === 0 ? (
+            {!data.evidence || data.evidence.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Shield size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No physical evidence logged for Case #{caseId} in Catalyst Datastore.</p>
@@ -308,7 +319,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'cctv' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>CCTV Surveillance Archives (Case #{caseId})</h2>
-            {data.cctv.length === 0 ? (
+            {!data.cctv || data.cctv.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Camera size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No CCTV footage segments recorded for Case #{caseId} in Catalyst Datastore.</p>
@@ -441,7 +452,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'reports' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>State Forensic Science Laboratory (SFSL) Reports</h2>
-            {data.reports.length === 0 ? (
+            {!data.reports || data.reports.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <FileText size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No FSL laboratory reports registered for Case #{caseId} in Catalyst Datastore.</p>
@@ -468,7 +479,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'weapons' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Weapons & Ballistics Seizures (Case #{caseId})</h2>
-            {data.weapons.length === 0 ? (
+            {!data.weapons || data.weapons.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Crosshair size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No recovered weapons recorded for Case #{caseId} in Catalyst Datastore.</p>
@@ -506,7 +517,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'vehicles' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Vehicle Seizures & Impounds (Case #{caseId})</h2>
-            {data.vehicles.length === 0 ? (
+            {!data.vehicles || data.vehicles.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Truck size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No seized vehicles recorded for Case #{caseId} in Catalyst Datastore.</p>
@@ -544,7 +555,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'biometrics' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Biometric Reference Registry (AFIS / DNA Profile IDs)</h2>
-            {data.biometrics.length === 0 ? (
+            {!data.biometrics || data.biometrics.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Fingerprint size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No biometric reference matches logged for Case #{caseId} in Catalyst Datastore.</p>
@@ -584,7 +595,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'court' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Judicial Court Hearings & Orders (Case #{caseId})</h2>
-            {data.court.length === 0 ? (
+            {!data.court || data.court.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <Scale size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No court proceedings logged for Case #{caseId} in Catalyst Datastore.</p>
@@ -613,7 +624,7 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'interrogation' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Recorded Interrogations & Admissions (Case #{caseId})</h2>
-            {data.interrogations.length === 0 ? (
+            {!data.interrogations || data.interrogations.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <MessageSquare size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
                 <p>No interrogation summaries recorded for Case #{caseId} in Catalyst Datastore.</p>

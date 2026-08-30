@@ -76,7 +76,7 @@ class InvestigationService {
                 query: query,
                 plan: plan, // Include the plan for the UI
                 steps: steps,
-                confidence: plan.confidence + "%",
+                confidence: plan.confidence,
                 recommendations: recommendations,
                 evidence: finalEvidence
             };
@@ -85,7 +85,7 @@ class InvestigationService {
             return {
                 query,
                 steps: [{ id: 1, action: "Error", status: "failed", detail: error.message }],
-                confidence: "0%",
+                confidence: 0,
                 recommendations: [],
                 evidence: []
             };

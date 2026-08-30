@@ -1,27 +1,21 @@
 const evidenceAggregatorService = require('./EvidenceAggregatorService');
 
+const glmClient = require('./glmClient');
+
 class InvestigationRecommendationService {
     async generateRecommendationsAndGaps(req, caseId, context = null, anomalies = []) {
         const unified = await evidenceAggregatorService.getAggregatedEvidence(req, caseId);
         
-        const intelligence = {
-            readiness: {
-                score: 0,
-                evaluated: 0,
-                present: 0,
-                components: [],
-                why: "",
-                sourceTables: ["CaseMaster", "Accused", "Victim", "Evidence", "ArrestSurrender", "ChargesheetDetails"]
-            },
-            gaps: []
+        let intelligence = {
+            gapAnalysis: {
+                critical: [],
+                important: [],
+                optional: []
+            }
         };
         
-        let hasVictim = false;
-        let accused = [];
-        let arrests = [];
-        let hasChargesheet = false;
-        let hasCaseInfo = false;
-        let hasEvidence = false;
+        let hasVictim = false, accused = [], arrests = [], hasChargesheet = false, hasCaseInfo = false, hasEvidence = false;
+        let evidenceContextStr = '';
         
         if (context) {
             hasCaseInfo = !!context.caseDetails;
@@ -30,97 +24,65 @@ class InvestigationRecommendationService {
             arrests = (context.timeline || []).filter(t => t.source_type === 'arrest_record');
             hasChargesheet = context.chargesheet && context.chargesheet.length > 0;
             hasEvidence = context.evidence && context.evidence.length > 0;
+            evidenceContextStr = JSON.stringify({ 
+                case: context.case, 
+                victims: context.victims, 
+                suspects: context.suspects, 
+                evidence: context.evidence 
+            });
         } else if (unified && unified.evidence) {
-            const evidence = unified.evidence;
             hasCaseInfo = true;
-            hasVictim = evidence.some(e => e.type === 'Victim');
-            accused = evidence.filter(e => e.source === 'Accused');
-            arrests = evidence.filter(e => e.source === 'ArrestSurrender');
-            hasChargesheet = evidence.some(e => e.source === 'ChargesheetDetails');
-            hasEvidence = evidence.some(e => e.source === 'Evidence');
+            hasVictim = unified.evidence.some(e => e.type === 'Victim');
+            accused = unified.evidence.filter(e => e.source === 'Accused');
+            arrests = unified.evidence.filter(e => e.source === 'ArrestSurrender');
+            hasChargesheet = unified.evidence.some(e => e.source === 'ChargesheetDetails');
+            hasEvidence = unified.evidence.some(e => e.source === 'Evidence');
+            evidenceContextStr = JSON.stringify(unified.evidence);
         }
 
-        // Feature 5: Investigation Readiness Score
-        const components = [
-            { name: "Case information", present: hasCaseInfo },
-            { name: "Suspect information", present: accused.length > 0 },
-            { name: "Victim information", present: hasVictim },
-            { name: "Evidence links", present: hasEvidence },
-            { name: "Chargesheet", present: hasChargesheet }
-        ];
 
-        let presentCount = components.filter(c => c.present).length;
-        let evaluatedCount = components.length;
 
-        intelligence.readiness.evaluated = evaluatedCount;
-        intelligence.readiness.present = presentCount;
-        intelligence.readiness.score = Math.round((presentCount / evaluatedCount) * 100);
-        intelligence.readiness.components = components;
-        
-        const missingCount = evaluatedCount - presentCount;
-        if (missingCount === 0) {
-            intelligence.readiness.why = `All ${evaluatedCount} evaluated investigation components are present.`;
-        } else {
-            intelligence.readiness.why = `${missingCount} of ${evaluatedCount} evaluated investigation components are incomplete.`;
-        }
+        // --- GLM Evidence Gap Analysis Engine ---
+const prompt = `You are a forensic AI engine. Analyze the following Evidence Ledger for Case ${caseId}.
+Identify exactly what evidence is logically MISSING to secure a conviction, and categorize them STRICTLY into:
+- CRITICAL: Absolutely necessary to prove corpus delicti or tie the main suspect to the crime (e.g. CCTV, Phone locations, Arrests if suspect known).
+- IMPORTANT: Corroborating evidence (e.g. Transactions, Witness statements).
+- OPTIONAL: Nice to have (e.g. Social media).
 
-        // Feature 1 & 2: Investigation Gap -> Next Best Action + Why it Matters
-        if (!hasVictim) {
-            intelligence.gaps.push({
-                gap: "Missing Victim Details",
-                whyItMatters: "No formal victim records have been associated with this incident, making it difficult to establish corpus delicti.",
-                recommendedAction: "Identify and register victim details if applicable to the crime category.",
-                dataUsed: ["Victim Records", "Case Records"],
-                sourceTables: ["Victim", "CaseMaster"],
-                confidence: "HIGH",
-                explanation: "The absence of a victim record in the datastore indicates an incomplete investigation context for person-centric crimes."
-            });
-        }
+Return ONLY valid JSON in this exact structure:
+{
+  "critical": ["Missing evidence 1", "Missing evidence 2"],
+  "important": ["Missing evidence 3"],
+  "optional": ["Missing evidence 4"]
+}
 
-        if (accused.length === 0) {
-            intelligence.gaps.push({
-                gap: "Missing Suspect Identification",
-                whyItMatters: "The investigation cannot proceed to prosecution without formally identifying suspects linked to the case.",
-                recommendedAction: "Investigate available evidence to identify and register suspects.",
-                dataUsed: ["Accused Records"],
-                sourceTables: ["Accused"],
-                confidence: "HIGH",
-                explanation: "Zero accused records found in the datastore associated with this Case ID."
-            });
-        } else {
-            let arrestedIds = new Set();
-            if (context) {
-                arrestedIds = new Set(arrests.map(a => String(a.accused_id || a.description.match(/ID (\d+)/)?.[1])));
-            } else {
-                arrestedIds = new Set(arrests.map(a => a.description?.match(/ID (\d+)/)?.[1]));
-            }
+Evidence Ledger:
+${evidenceContextStr}
+`;
+
+        try {
+            const glmRes = await glmClient.generate([
+                { role: 'system', content: 'You output strictly valid JSON and nothing else.' },
+                { role: 'user', content: prompt }
+            ], { timeoutMs: 8000, temperature: 0.1 });
             
-            accused.forEach(acc => {
-                const accId = String(acc.ROWID || acc.id);
-                if (!arrestedIds.has(accId) && acc.name !== 'Unknown Accused') {
-                    intelligence.gaps.push({
-                        gap: `Missing Arrest Record for ${acc.name || acc.title}`,
-                        whyItMatters: "Suspect is formally accused but no formal arrest or surrender has been recorded, indicating an unresolved status.",
-                        recommendedAction: `Consider executing arrest or verifying legal status for ${acc.name || acc.title}.`,
-                        dataUsed: ["Arrest Records", "Accused Records"],
-                        sourceTables: ["ArrestSurrender", "Accused"],
-                        confidence: "HIGH",
-                        explanation: `The suspect ID ${accId} has no corresponding arrest record mapped in the datastore.`
-                    });
-                }
-            });
-        }
-
-        if (accused.length > 0 && !hasChargesheet) {
-            intelligence.gaps.push({
-                gap: "Missing Chargesheet",
-                whyItMatters: "The case has identified suspects but no formal chargesheet filed, meaning the court phase cannot begin.",
-                recommendedAction: "Review accumulated evidence to draft and file the chargesheet.",
-                dataUsed: ["Chargesheet Records", "Accused Records"],
-                sourceTables: ["ChargesheetDetails", "CaseMaster"],
-                confidence: "HIGH",
-                explanation: "No chargesheet details found mapped to the current case ID despite suspects existing."
-            });
+            if (glmRes && glmRes.content) {
+                const parsed = JSON.parse(glmRes.content);
+                intelligence.gapAnalysis = {
+                    critical: parsed.critical || [],
+                    important: parsed.important || [],
+                    optional: parsed.optional || []
+                };
+            }
+        } catch (e) {
+            console.error("GLM Gap Analysis failed, falling back to rule-based:", e.message);
+            // Fallback logic
+            if (!hasVictim) intelligence.gapAnalysis.critical.push("Identify and register formal victim details.");
+            if (accused.length === 0) intelligence.gapAnalysis.critical.push("Identify and register primary suspects.");
+            else if (arrests.length === 0) intelligence.gapAnalysis.critical.push("Execute and record arrest for identified suspects.");
+            if (!hasEvidence) intelligence.gapAnalysis.important.push("Collect physical or digital evidence (CCTV, Phone records).");
+            if (accused.length > 0 && !hasChargesheet) intelligence.gapAnalysis.important.push("Draft and file formal chargesheet.");
+            intelligence.gapAnalysis.optional.push("Collect supplementary social media evidence.");
         }
 
         return intelligence;

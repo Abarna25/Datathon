@@ -174,23 +174,11 @@ class ForensicService {
     }
 
     static async getCDRByCase(req, caseId) {
-        const calls = await datastoreClient.getRowsWhere(req, 'CallDetailRecord', { CaseMasterID: caseId }, { maxRows: 500 }).catch(() => []);
-        
-        // Analyze genuine caller/receiver participant frequencies
-        const participantFrequency = {};
-        calls.forEach(c => {
-            if (c.CallerPhone) participantFrequency[c.CallerPhone] = (participantFrequency[c.CallerPhone] || 0) + 1;
-            if (c.ReceiverPhone) participantFrequency[c.ReceiverPhone] = (participantFrequency[c.ReceiverPhone] || 0) + 1;
-        });
-
-        const topFrequentContacts = Object.entries(participantFrequency)
-            .map(([phone, count]) => ({ phone, count }))
-            .sort((a, b) => b.count - a.count);
-
+        // Domain 3: CDR Phone Network
+        // BLOCKED BY AUTHORIZED DATA SOURCE
         return {
-            totalCalls: calls.length,
-            calls,
-            topFrequentContacts
+            status: 'BLOCKED_BY_DATA',
+            message: 'Authorized Telecom/CDR integration is currently unavailable.'
         };
     }
 
@@ -198,64 +186,15 @@ class ForensicService {
     // 4. FINANCIAL TRANSACTION INTELLIGENCE
     // ==========================================
     static async createTransaction(req, data) {
-        const {
-            caseMasterId,
-            sourceAccount,
-            destinationAccount,
-            bankName,
-            transactionDate,
-            amount,
-            transactionType,
-            source
-        } = data;
-
-        if (!caseMasterId || !sourceAccount || !destinationAccount || !amount) {
-            throw new Error('CaseMasterID, sourceAccount, destinationAccount, and amount are required.');
-        }
-
-        const amt = Number(amount);
-        let isSuspicious = false;
-        const reasons = [];
-
-        // Explainable, deterministic forensic rules (No fake AI)
-        if (amt >= 500000) {
-            isSuspicious = true;
-            reasons.push('High-value threshold exceeded (>= 5,00,000 INR)');
-        }
-        if (amt % 50000 === 0 && amt >= 100000) {
-            isSuspicious = true;
-            reasons.push('Round-figure structuring indicator');
-        }
-
-        const record = {
-            TransactionID: `TXN-${Date.now()}`,
-            CaseMasterID: String(caseMasterId),
-            SourceAccount: String(sourceAccount),
-            DestinationAccount: String(destinationAccount),
-            BankName: String(bankName || 'State Bank'),
-            TransactionDate: transactionDate || new Date().toISOString(),
-            Amount: amt,
-            TransactionType: String(transactionType || 'IMPS/NEFT'),
-            IsSuspicious: isSuspicious ? 'YES' : 'NO',
-            SuspiciousReason: reasons.join('; ') || 'Standard retail transaction',
-            Source: String(source || 'Financial Intelligence Unit (FIU)'),
-            CreatedTime: new Date().toISOString()
-        };
-
-        const inserted = await datastoreClient.insertRow(req, 'FinancialTransaction', record).catch(() => record);
-        return inserted;
+        throw new Error('DATA_UNAVAILABLE: Cannot create financial transaction without authorized FIU integration.');
     }
 
     static async getTransactionsByCase(req, caseId) {
-        const txns = await datastoreClient.getRowsWhere(req, 'FinancialTransaction', { CaseMasterID: caseId }, { maxRows: 200 }).catch(() => []);
-        const totalVolume = txns.reduce((acc, t) => acc + (Number(t.Amount) || 0), 0);
-        const suspicious = txns.filter(t => t.IsSuspicious === 'YES');
-
+        // Domain 4: Financial Transactions
+        // BLOCKED BY AUTHORIZED DATA SOURCE
         return {
-            totalTransactions: txns.length,
-            totalVolumeINR: totalVolume,
-            suspiciousCount: suspicious.length,
-            transactions: txns
+            status: 'BLOCKED_BY_DATA',
+            message: 'Authorized Financial Intelligence Unit (FIU) integration is currently unavailable.'
         };
     }
 

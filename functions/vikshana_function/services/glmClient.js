@@ -46,7 +46,7 @@ class GLMClient {
             tools = undefined,
             tool_choice = undefined,
             retries = 1,
-            timeoutMs = 4000
+            timeoutMs = 30000
         } = options;
 
         let currentApiKey = process.env.GLM_API_KEY || process.env.CATALYST_TOKEN;
@@ -117,6 +117,10 @@ class GLMClient {
 
                 if (error.response && (error.response.status === 401 || error.response.status === 403)) {
                     throw new Error('[GLMClient] Authentication token expired or invalid (HTTP 401/403).');
+                }
+                
+                if (error.response && (error.response.status === 400 || error.response.status === 404)) {
+                    throw new Error(`[GLMClient] Permanent error ${error.response.status}.`);
                 }
 
                 if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {

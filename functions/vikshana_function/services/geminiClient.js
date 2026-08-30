@@ -15,7 +15,7 @@ function stripReasoning(text) {
 
 class GeminiClient {
     constructor() {
-        this.model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+        this.model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
         this.apiKey = process.env.GEMINI_API_KEY;
         if (this.apiKey) {
              this.ai = new GoogleGenAI({ apiKey: this.apiKey });
@@ -81,6 +81,13 @@ class GeminiClient {
                 attempt++;
                 lastError = error;
                 console.warn(`[GeminiClient] Attempt ${attempt} failed:`, error.message);
+                
+                // Do not retry permanent configuration/auth errors
+                const status = error.status || error.response?.status;
+                if (status === 400 || status === 401 || status === 403 || status === 404) {
+                    throw new Error(`[GeminiClient] Permanent error ${status}: ${error.message}`);
+                }
+                
                 if (attempt < retries) {
                     await new Promise(res => setTimeout(res, 1000 * attempt));
                 }

@@ -4,5 +4,6 @@ const evidenceIntelligenceController = require('../controllers/EvidenceIntellige
 
 router.get('/workspace', evidenceIntelligenceController.getWorkspaceData);
 router.post('/copilot', evidenceIntelligenceController.chatWithCopilot);
+router.get('/copilot/history/:caseId', evidenceIntelligenceController.getConversationHistory);
 
 module.exports = router;

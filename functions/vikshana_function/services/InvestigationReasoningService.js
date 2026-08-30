@@ -10,7 +10,6 @@
 const ContextBuilderService = require('./ContextBuilderService');
 const SimilarCaseService = require('./SimilarCaseService');
 const AnomalyDetectionService = require('./AnomalyDetectionService');
-const ConfidenceEngineService = require('./ConfidenceEngineService');
 const datastoreClient = require('../queries/datastoreClient');
 const LLMService = require('./LLMService');
 
@@ -27,8 +26,6 @@ class InvestigationReasoningService {
                 caseId,
                 leadCount: 0,
                 leads: [],
-                confidenceScore: 0,
-                classification: 'UNAVAILABLE',
                 executionTimeMs: Date.now() - startTime
             };
         }
@@ -36,7 +33,6 @@ class InvestigationReasoningService {
         const anomalies = AnomalyDetectionService.detectAnomalies(context);
         const similarCasesRes = await SimilarCaseService.findSimilarCases(req, caseId).catch(() => ({ similarCases: [] }));
         const similarCases = similarCasesRes.similarCases || [];
-        const confidenceScore = ConfidenceEngineService.calculateScore(context);
 
         const leads = [];
         let leadCounter = 1;
@@ -59,10 +55,8 @@ class InvestigationReasoningService {
                             supportingEvidence: [`Accused: ${suspectName}`, ...otherCaseIds.map(cid => `Case #${cid}`)],
                             relatedCases: otherCaseIds,
                             relatedEntities: [suspectName],
-                            reasoning: `Direct name match across separate FIR records indicates repeat criminal activity or syndicate involvement.`,
-                            confidence: 0.92,
-                            classification: 'CONFIRMED',
-                            recommendedVerification: `Review prior interrogation reports and chargesheet history in Case #${otherCaseIds[0]} for matching MO or associates.`,
+                            reasoning: 'Individuals repeatedly involved in crime events warrant priority verification.',
+                            recommendedVerification: 'Check current custody status and verify alibi against CCTV/CDR timelines.',
                             status: 'OPEN',
                             createdAt: new Date().toISOString()
                         });
@@ -84,8 +78,6 @@ class InvestigationReasoningService {
                 relatedCases: [String(topMatch.caseId)],
                 relatedEntities: topMatch.suspects || [],
                 reasoning: `Shared crime category, geographic proximity, and overlapping narrative keywords suggest possible shared perpetrators or copycat pattern.`,
-                confidence: topMatch.similarityScore,
-                classification: 'EVIDENCE_BACKED',
                 recommendedVerification: `Compare CCTV footage, vehicle descriptions, and weapon seizure records between Case #${caseId} and Case #${topMatch.caseId}.`,
                 status: 'OPEN',
                 createdAt: new Date().toISOString()
@@ -106,9 +98,7 @@ class InvestigationReasoningService {
                     supportingEvidence: [primeAnomaly.title || 'Timeline/Arrest Anomaly'],
                     relatedCases: [String(caseId)],
                     relatedEntities: [],
-                    reasoning: `Detected inconsistency violates standard investigative protocol or chronological integrity.`,
-                    confidence: 0.95,
-                    classification: 'CONFIRMED',
+                    reasoning: 'Identified contextual anomalies conflict with standard investigation baseline models.',
                     recommendedVerification: primeAnomaly.recommendation || `Inspect occurrence timestamps and verify arrest memo documentation with precinct officer.`,
                     status: 'ACTION_REQUIRED',
                     createdAt: new Date().toISOString()
@@ -127,9 +117,7 @@ class InvestigationReasoningService {
                 supportingEvidence: ['ComplainantDetails: 0 records'],
                 relatedCases: [String(caseId)],
                 relatedEntities: [],
-                reasoning: 'Cases lacking independent witness testimony have a 45% lower court conviction readiness score.',
-                confidence: 0.85,
-                classification: 'CONFIRMED',
+                reasoning: 'Independent corroboration is essential for court presentation.',
                 recommendedVerification: 'Canvas neighborhood near incident coordinates and record statements from immediate first responders.',
                 status: 'OPEN',
                 createdAt: new Date().toISOString()
@@ -148,9 +136,7 @@ class InvestigationReasoningService {
                 supportingEvidence: ['ArrestSurrender Table', 'ChargesheetDetails Table'],
                 relatedCases: [String(caseId)],
                 relatedEntities: [],
-                reasoning: 'Statutory remand custody guidelines require chargesheet submission within the designated judicial window.',
-                confidence: 0.95,
-                classification: 'CONFIRMED',
+                reasoning: 'A physical arrest requires a linked prosecution or release document.',
                 recommendedVerification: 'Prepare final draft chargesheet and compile physical evidence chain of custody for public prosecutor review.',
                 status: 'URGENT',
                 createdAt: new Date().toISOString()
@@ -161,8 +147,6 @@ class InvestigationReasoningService {
             caseId,
             leadCount: leads.length,
             leads,
-            confidenceScore,
-            classification: leads.some(l => l.classification === 'CONFIRMED') ? 'EVIDENCE_BACKED' : 'AI_INFERRED',
             executionTimeMs: Date.now() - startTime
         };
     }

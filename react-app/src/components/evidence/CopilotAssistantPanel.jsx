@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bot, Send, Loader2, User, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import api from '../../services/api';
@@ -9,6 +9,41 @@ const CopilotAssistantPanel = ({ caseId }) => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!caseId || caseId === 'UNASSIGNED') return;
+    let isMounted = true;
+    
+    const fetchHistory = async () => {
+      setIsHistoryLoading(true);
+      try {
+        const res = await api.get(`/evidence-intelligence/copilot/history/${caseId}`);
+        if (res.data.success && res.data.messages && res.data.messages.length > 0) {
+          if (isMounted) {
+            setMessages(res.data.messages.map(m => ({
+              role: m.role,
+              content: m.content,
+              evidenceUsed: m.citations,
+              isError: false
+            })));
+          }
+        } else {
+          if (isMounted) {
+             setMessages([{ role: 'assistant', content: 'Hello! I am your AI Copilot for this investigation. Ask me to summarize the case, list suspects, find investigation gaps, or generate a charge sheet.' }]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch copilot history", err);
+      } finally {
+        if (isMounted) setIsHistoryLoading(false);
+      }
+    };
+    
+    fetchHistory();
+    
+    return () => { isMounted = false; };
+  }, [caseId]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -47,7 +82,12 @@ const CopilotAssistantPanel = ({ caseId }) => {
       </div>
       
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {messages.map((msg, i) => (
+        {isHistoryLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+            <Loader2 className="spin" size={24} style={{ marginRight: '8px' }} /> Loading previous conversation...
+          </div>
+        ) : (
+          messages.map((msg, i) => (
           <div key={i} style={{ display: 'flex', gap: '12px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
             <div style={{ 
               width: '32px', height: '32px', borderRadius: '50%', 

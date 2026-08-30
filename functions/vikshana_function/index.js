@@ -15,6 +15,8 @@ const reportRoutes = require('./routes/report.routes');
 const devRoutes = require('./routes/dev.routes');
 const conversationRoutes = require('./routes/conversation.routes');
 const caseRoutes = require('./routes/case.routes');
+const hypothesisRoutes = require('./routes/hypothesis.routes');
+const actionRoutes = require('./routes/action.routes');
 const signalRoutes = require('./routes/signal.routes');
 const jobRoutes = require('./routes/job.routes');
 const mlRoutes = require('./routes/ml.routes');
@@ -25,9 +27,7 @@ const auditRoutes = require('./routes/audit.routes');
 const textToSqlRoutes = require('./routes/textToSql.routes');
 const firIntelligenceRoutes = require('./routes/firIntelligence.routes');
 const evidenceIntelligenceRoutes = require('./routes/evidenceIntelligence.routes');
-const forecastingRoutes = require('./routes/forecasting.routes');
 const forensicRoutes = require('./routes/forensic.routes');
-
 const app = express();
 
 const requiredTables = [
@@ -119,6 +119,8 @@ app.use('/audit', authorizeRole('Administrator', 'Supervisor'), auditRoutes);
 app.use('/dashboard', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), dashboardRoutes);
 app.use('/investigate', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), investigateRoutes);
 app.use('/conversations', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), conversationRoutes);
+app.use('/cases/:caseId/hypotheses', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), hypothesisRoutes);
+app.use('/cases/:caseId/actions', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), actionRoutes);
 app.use('/cases', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), caseRoutes);
 app.use('/decision', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), decisionRoutes);
 app.use('/offender', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), offenderRoutes);
@@ -126,7 +128,6 @@ app.use('/evidence', authorizeRole('Administrator', 'Investigator', 'Supervisor'
 app.use('/forensics', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), forensicRoutes);
 
 app.use('/relationships', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'), relationshipRoutes);
-app.use('/forecasting', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), forecastingRoutes);
 app.use('/ml', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Officer'), mlRoutes);
 
 app.use('/reports', authorizeRole('Administrator', 'Investigator', 'Analyst', 'Supervisor', 'Policymaker', 'Officer'), reportRoutes);
@@ -134,14 +135,17 @@ app.use('/signals', authorizeRole('Administrator', 'Investigator', 'Analyst', 'S
 app.use('/jobs', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), jobRoutes);
 app.use('/convokraft', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), convokraftRoutes);
 const advancedIntelligenceRoutes = require('./routes/advancedIntelligence.routes');
-const sociologicalRoutes = require('./routes/sociological.routes');
 const intelligenceRoutes = require('./routes/intelligence.routes');
+
+const sociologicalRoutes = require('./routes/sociological.routes');
+const forecastRoutes = require('./routes/forecast.routes');
 
 app.use('/text-to-sql', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), textToSqlRoutes);
 app.use('/fir-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), firIntelligenceRoutes);
 app.use('/evidence-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), evidenceIntelligenceRoutes);
 app.use('/advanced-intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Officer'), advancedIntelligenceRoutes);
-app.use('/sociological', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), sociologicalRoutes);
+app.use('/intelligence/sociological', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), sociologicalRoutes);
+app.use('/intelligence/forecast', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), forecastRoutes);
 app.use('/intelligence', authorizeRole('Administrator', 'Investigator', 'Supervisor', 'Analyst', 'Policymaker', 'Officer'), intelligenceRoutes);
 
 // Fallback for missing routes

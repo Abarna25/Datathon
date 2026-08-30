@@ -172,16 +172,20 @@ class ConversationController {
             // Generate suggestions
             const suggestions = await SuggestionService.generateFollowUps(assistantText, `Case #${detectedCaseId}`);
 
-            // Save assistant message with ledger as citations
+            const uiCitations = [
+                { type: 'Case', label: `Case File #${detectedCaseId}`, details: { name: 'Verified Case Context' } }
+            ];
+
+            // Save assistant message with citations
             const assistantMessage = await ConversationService.appendMessage(req, conversation.id, {
                 role: 'assistant',
                 content: assistantText,
-                citations: ledger, // Pass the structured ledger to the UI as citations
+                citations: uiCitations, // Pass the formatted citation
                 suggestions
             });
 
             if (streaming) {
-                LLMService.sendEvent(res, 'citations', { citations: ledger });
+                LLMService.sendEvent(res, 'citations', { citations: uiCitations });
                 LLMService.sendEvent(res, 'suggestions', { suggestions });
                 LLMService.sendEvent(res, 'done', { messageId: assistantMessage.id, userMessageId: userMessage.id });
                 LLMService.endStream(res);

@@ -2,7 +2,7 @@ const LLMService = require('./LLMService');
 const datastoreClient = require('../queries/datastoreClient');
 const PatternDetectionService = require('./PatternDetectionService');
 const SimilarCaseService = require('./SimilarCaseService');
-const InvestigationReadinessService = require('./InvestigationReadinessService');
+
 
 class TextToSQLService {
     constructor() {
@@ -753,10 +753,12 @@ Karnataka State Police Datastore Schema (Official Catalyst Tables):
 
             const list = data.slice(0, 8).map((c, i) => `${i + 1}. **Case ${c.CaseNo || c.CrimeNo || c.CaseMasterID}** (\`${c.CrimeRegisteredDate || 'N/A'}\`)\n   - **Station**: Station \`${c.PoliceStationID || 'N/A'}\` | **Status**: \`${c.CaseStatusID || 'Active'}\`\n   - **Facts**: ${c.BriefFacts ? c.BriefFacts.slice(0, 140) + '...' : 'Incident recorded.'}`).join('\n\n');
 
-            return `${headline}\n\n${list}`;
+            const footer = count >= 50 ? '\n\n*Note: Results are limited to the current retrieval window to optimize performance.*' : '';
+            return `${headline}\n\n${list}${footer}`;
         }
 
-        return `Retrieved **${count} record(s)** from the police datastore matching your criteria.`;
+        const footer = count >= 50 ? ' *Results are limited to the current retrieval window to optimize performance.*' : '';
+        return `Retrieved **${count} record(s)** from the police datastore matching your criteria.${footer}`;
     }
 
     /**
@@ -769,7 +771,7 @@ Karnataka State Police Datastore Schema (Official Catalyst Tables):
             primaryEntity: info.entity,
             sql: sql,
             filters: sql.includes('WHERE') ? sql.split(/WHERE/i)[1].split(/ORDER BY|GROUP BY|LIMIT/i)[0].trim() : 'None (Full scan / Limit applied)',
-            confidence: 'Verified (High)',
+            confidence: 'System Verified',
             executionTimeMs: durationMs,
             recordsReturned: data.length,
             reasoning: `Classified natural language intent as '${info.intent}' with target entity '${info.entity}'. Executed validated ZCQL query against Karnataka State Police datastore with sub-millisecond local indexing.`
@@ -778,7 +780,7 @@ Karnataka State Police Datastore Schema (Official Catalyst Tables):
 
     async explainResults(naturalLanguageQuery, sql, data = []) {
         const info = this.classifyIntentAndEntity(naturalLanguageQuery);
-        return `Reasoning: Classified intent as ${info.intent} (Entity: ${info.entity}). Filtered ${data.length} records from verified Karnataka Police Datastore.\nFilters Applied: ${sql}\nConfidence: High`;
+        return `Reasoning: Classified intent as ${info.intent} (Entity: ${info.entity}). Filtered ${data.length} records from verified Karnataka Police Datastore.\nFilters Applied: ${sql}\nConfidence: System Verified`;
     }
 
     /**
@@ -860,12 +862,8 @@ Return ONLY the exact string label. Do not add any explanation.`;
                 explanation = `**WHAT:** Found ${results.length} similar historical cases.\n**WHY:** ${res.investigativeLead?.whyItMatters || 'Leverages established precedent.'}\n**DATA USED:** Crime category, location, and legal sections.\n**SOURCE:** Catalyst Datastore (Similarity Engine)\n**BASIS:** ${res.investigativeLead?.observation || 'Deterministic multi-factor scoring.'}\n**ACTION:** ${res.investigativeLead?.nextBestAction || 'Review returned case files.'}`;
             }
             else if (intent === 'READINESS') {
-                if (!caseId) {
-                    return { handled: false };
-                }
-                const res = await InvestigationReadinessService.calculateReadiness(req, caseId);
-                results = res.items || [];
-                explanation = `**WHAT:** Investigation Readiness Score is ${res.score}%.\n**WHY:** Quantifies the completeness of essential legal and investigative elements.\n**DATA USED:** Case, Victim, Accused, Timeline, Legal, and Arrest records.\n**SOURCE:** Multiple Datastore Tables.\n**BASIS:** Deterministic evaluation of required fields.\n**ACTION:** ${res.topGap ? res.topGap.action : 'Proceed with prosecution phase.'}`;
+                explanation = `**WHAT:** Investigation Readiness Score is not supported.\n**WHY:** Predictive readiness scores have been removed as per the NO EVIDENCE NO CLAIM mandate.`;
+                results = [];
             }
             
             return {

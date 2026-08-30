@@ -3,9 +3,17 @@ const tablesSchema = require('./tables');
 const fs = require('fs');
 const path = require('path');
 
-// In-Memory seed dataset & cache
-const localStore = {
-    CaseMaster: [
+    // In-Memory seed dataset & cache
+    const localStore = {
+        InvestigationHypothesis: [],
+        HypothesisEvidence: [],
+        InvestigationAction: [],
+        InvestigationDecisionAudit: [],
+        EvidenceImpact: [],
+        Evidence: [
+            { ROWID: 'EVID-001', EvidenceID: 'EVID-001', CaseMasterID: '101', SourceType: 'CCTV', Verified: true, Description: 'Footage showing suspect near store', Timestamp: '2025-01-15 22:00:00' }
+        ],
+        CaseMaster: [
         {
             ROWID: '101',
             CaseMasterID: '101',

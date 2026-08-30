@@ -182,15 +182,7 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
                             </div>
                         )}
 
-                        {/* Confidence Score Header */}
-                        {!streaming && body && (
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-                                <span style={{ fontSize: '11px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                    Confidence: 98%
-                                </span>
-                            </div>
-                        )}
-
+                        {/* Fake confidence removed as per zero-fabrication mandate */}
                         {/* AI Reasoning Panel */}
                         {thinking && (
                             <div style={{ marginBottom: '12px', padding: '12px', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', borderLeft: '3px solid #60a5fa', fontSize: '13px', color: '#94a3b8' }}>
@@ -224,10 +216,13 @@ const ChatMessageBubble = ({ message, onOpenEvidence, onFollowUp, onRegenerate, 
                             </div>
                         )}
 
-                        {/* Evidence Citations */}
+                        {/* Evidence Citations - Enhanced for Trail Transparency */}
                         {!streaming && message.citations && message.citations.length > 0 && (
-                            <div className={styles.evidenceRow}>
-                                <div className={styles.evidenceLabel}>Cited Evidence</div>
+                            <div className={styles.evidenceRow} style={{ marginTop: '16px', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', borderLeft: '3px solid var(--accent-primary)' }}>
+                                <div className={styles.evidenceLabel} style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Shield size={14} color="var(--accent-primary)" />
+                                    Evidence Chain (Source of Truth)
+                                </div>
                                 <div className={styles.evidenceGrid}>
                                     {message.citations.map((c, i) => (
                                         <EvidenceCard key={i} citation={c} onOpen={onOpenEvidence} compact />

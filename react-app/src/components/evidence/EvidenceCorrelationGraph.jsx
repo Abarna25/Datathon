@@ -96,7 +96,8 @@ const EvidenceCorrelationGraph = ({ correlations = [], evidence = [], caseId }) 
                 target: tgt,
                 label: corr.reason || corr.relationship_type || 'Linked',
                 status: corr.status || 'EVIDENCE-BACKED',
-                provenance: corr.provenance || 'Datastore'
+                provenance: corr.provenance || 'Datastore',
+                supporting_records: corr.supporting_records || []
             });
         }
     });
@@ -239,11 +240,17 @@ const EvidenceCorrelationGraph = ({ correlations = [], evidence = [], caseId }) 
             linkDirectionalArrowRelPos={1}
             onNodeHover={handleNodeHover}
             onLinkHover={handleLinkHover}
-            linkLabel={(link) => `<div style="background: rgba(15,23,42,0.95); padding: 8px; border-radius: 4px; border: 1px solid #3b82f6; font-family: sans-serif; font-size: 12px;">
-              <div style="color: #3b82f6; font-weight: bold; margin-bottom: 4px;">${link.status}</div>
-              <div style="color: #fff; margin-bottom: 4px;">${link.label}</div>
-              <div style="color: #94a3b8; font-size: 10px;">Source: ${link.provenance}</div>
-            </div>`}
+            linkLabel={(link) => {
+              const records = link.supporting_records && link.supporting_records.length > 0 
+                ? `<div style="color: #64748b; font-size: 10px; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1)">Supporting Records: ${link.supporting_records.join(', ')}</div>`
+                : '';
+              return `<div style="background: rgba(15,23,42,0.95); padding: 8px; border-radius: 4px; border: 1px solid #3b82f6; font-family: sans-serif; font-size: 12px; max-width: 250px; white-space: normal;">
+                <div style="color: #3b82f6; font-weight: bold; margin-bottom: 4px;">${link.status}</div>
+                <div style="color: #fff; margin-bottom: 4px;">${link.label}</div>
+                <div style="color: #94a3b8; font-size: 10px;">Source: ${link.provenance}</div>
+                ${records}
+              </div>`;
+            }}
             cooldownTicks={100}
             onEngineStop={() => fgRef.current.zoomToFit(400, 50)}
           />

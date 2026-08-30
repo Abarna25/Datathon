@@ -8,16 +8,28 @@ class HallucinationGuardService {
      * @returns {Object} - The validated response (or a safe fallback if hallucination is detected).
      */
     static validate(response, ledger) {
-        if (!response || !response.answer) {
+        if (!response) {
             return this.getFallback();
         }
 
+        // Combine all text fields for validation
+        let allText = "";
+        if (response.answer) allText += response.answer + " ";
+        if (response.summary) allText += response.summary + " ";
+        if (Array.isArray(response.key_findings)) allText += response.key_findings.join(" ") + " ";
+        if (Array.isArray(response.timeline)) allText += response.timeline.join(" ") + " ";
+        if (Array.isArray(response.evidence_analysis)) allText += response.evidence_analysis.join(" ") + " ";
+
+        if (!allText.trim()) {
+             return this.getFallback();
+        }
+
         // If the LLM already determined it's unavailable, let it pass safely.
-        if (response.evidenceStatus === 'UNAVAILABLE' || response.answer.includes("Insufficient evidence")) {
+        if (response.evidenceStatus === 'UNAVAILABLE' || allText.includes("Insufficient evidence")) {
             return response;
         }
 
-        const answer = String(response.answer);
+        const answer = String(allText);
         const ledgerStr = JSON.stringify(ledger).toLowerCase();
 
         // 1. Detect unsupported dates/numbers (Length >= 4 like years or IDs)
@@ -69,7 +81,12 @@ class HallucinationGuardService {
         const baseMsg = message ? message.trim() : "Insufficient evidence in the available case records to verify this query.";
         return {
             success: true,
-            answer: baseMsg,
+            summary: baseMsg,
+            key_findings: [],
+            timeline: [],
+            evidence_analysis: [],
+            investigation_gaps: [],
+            next_best_actions: [],
             evidenceStatus: "UNAVAILABLE",
             sources: [],
             limitation: "The generated response contained unverified claims or unsupported entities and was safely contained by the Hallucination Guard."

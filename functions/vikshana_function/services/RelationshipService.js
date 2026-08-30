@@ -16,14 +16,16 @@ class RelationshipService {
                 accused,
                 complainants,
                 arrests,
-                chargesheets
+                chargesheets,
+                evidence
             ] = await Promise.all([
                 datastoreClient.getRows(req, 'CaseMaster', { maxRows: 500 }).catch(() => []),
                 datastoreClient.getRows(req, 'Victim', { maxRows: 500 }).catch(() => []),
                 datastoreClient.getRows(req, 'Accused', { maxRows: 500 }).catch(() => []),
                 datastoreClient.getRows(req, 'ComplainantDetails', { maxRows: 500 }).catch(() => []),
                 datastoreClient.getRows(req, 'ArrestSurrender', { maxRows: 500 }).catch(() => []),
-                datastoreClient.getRows(req, 'ChargesheetDetails', { maxRows: 500 }).catch(() => [])
+                datastoreClient.getRows(req, 'ChargesheetDetails', { maxRows: 500 }).catch(() => []),
+                datastoreClient.getRows(req, 'Evidence', { maxRows: 500 }).catch(() => [])
             ]);
 
             let rawData = {
@@ -68,6 +70,13 @@ class RelationshipService {
                     caseId: r.CaseMasterID,
                     date: r.csdate,
                     officerId: r.PolicePersonID
+                })),
+                evidence: (evidence || []).map(r => ({
+                    id: r.EvidenceID || r.ROWID,
+                    caseId: r.CaseMasterID,
+                    type: r.EvidenceType || r.Type,
+                    description: r.EvidenceDescription || r.Description,
+                    location: r.RecoveryLocation || r.Location
                 }))
             };
 

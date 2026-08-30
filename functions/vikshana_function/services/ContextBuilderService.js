@@ -1,5 +1,7 @@
 const datastoreClient = require('../queries/datastoreClient');
 const EntityResolutionService = require('./EntityResolutionService');
+const HypothesisEngineService = require('./HypothesisEngineService');
+const NextBestActionService = require('./NextBestActionService');
 
 /**
  * TABLE MAPPING — Actual Catalyst Data Store tables vs what the app expected:
@@ -237,6 +239,15 @@ class ContextBuilderService {
             throw new Error(`Case ID ${caseId} not found in datastore.`);
         }
 
+        let hypotheses = [];
+        let nextActions = [];
+        try {
+            hypotheses = await HypothesisEngineService.getHypothesesForCase(req, dbCaseId);
+            nextActions = await NextBestActionService.getActions(req, dbCaseId);
+        } catch (e) {
+            console.warn("Failed to load hypotheses or actions for context", e.message);
+        }
+
         return {
             caseId,
             case: normalizedCase,
@@ -246,6 +257,8 @@ class ContextBuilderService {
             timeline,
             chargesheet,
             sections,
+            hypotheses,
+            actions: nextActions,
             cctv: [],           // No CCTVFootage table in dataset
             phoneRecords: [],   // No PhoneRecord table in dataset
             financialTransactions: [], // No FinancialTransaction table in dataset

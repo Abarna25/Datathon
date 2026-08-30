@@ -35,15 +35,6 @@ function topK(rows, tokens, k = 5) {
 }
 
 class RetrievalService {
-    /**
-     * RAG-lite: there is no vector DB/embeddings store in this Catalyst
-     * project, so relevance is scored by keyword-overlap against the user's
-     * latest message (case-insensitive substring match count) over the case
-     * context already loaded by ContextBuilderService, plus ready
-     * attachments. This is a deliberate placeholder — swap in real
-     * embedding similarity once a vector store is available; callers only
-     * depend on the returned shape below, not the scoring method.
-     */
     static async retrieve(req, { caseId, query, context }) {
         const tokens = tokenize(query);
 

@@ -22,7 +22,7 @@ import styles from './ContextPanel.module.css';
 const RISK_COLORS = { low: 'var(--accent-success)', medium: 'var(--accent-warning)', high: 'var(--accent-danger)' };
 
 const ContextPanel = ({ caseId, collapsed, onToggle, refreshKey }) => {
-    const { currentCase: summary, loading } = useCaseData(caseId);
+    const { bundle: summary, loading } = useCaseData();
 
     // Accordion expand/collapse states
     const [overviewOpen, setOverviewOpen] = useState(true);

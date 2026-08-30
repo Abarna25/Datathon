@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
     ShieldCheck, Link, Camera, Truck, PhoneCall, CreditCard, 
-    Users, Scale, AlertTriangle, Loader2, CheckCircle2, ChevronRight, Hash
+    Users, Scale, AlertTriangle, Loader2, CheckCircle2, ChevronRight, FileSearch
 } from 'lucide-react';
 import api from '../../services/api';
 
-const EvidenceChainView = ({ caseId }) => {
+const EvidenceIntegrityView = ({ caseId }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -19,11 +19,11 @@ const EvidenceChainView = ({ caseId }) => {
                 if (res.data?.success) {
                     setData(res.data.data);
                 } else {
-                    setError(res.data?.error || 'Failed to load evidence chain');
+                    setError(res.data?.error || 'Failed to load evidence integrity data');
                 }
             })
             .catch(err => {
-                setError(err.message || 'Failed to load evidence chain');
+                setError(err.message || 'Failed to load evidence integrity data');
             })
             .finally(() => setLoading(false));
     }, [caseId]);
@@ -32,7 +32,7 @@ const EvidenceChainView = ({ caseId }) => {
         return (
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                 <Loader2 className="animate-spin" size={32} style={{ margin: '0 auto 12px', color: 'var(--accent-primary)' }} />
-                <div>Verifying Cryptographic Evidence Chain & SHA-256 Hashes...</div>
+                <div>Verifying Evidence Integrity & Source Traceability...</div>
             </div>
         );
     }
@@ -46,7 +46,7 @@ const EvidenceChainView = ({ caseId }) => {
         );
     }
 
-    const { nodes = [], chainLength = 0, classification = 'EVIDENCE_BACKED' } = data;
+    const { nodes = [], chainLength = 0 } = data;
 
     const getNodeIcon = (type) => {
         switch (type) {
@@ -67,18 +67,18 @@ const EvidenceChainView = ({ caseId }) => {
             <div className="glass-panel" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Link size={22} color="var(--accent-primary)" />
+                        <ShieldCheck size={22} color="var(--accent-primary)" />
                         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            Unified Multi-Modal Evidence Chain of Custody
+                            Evidence Integrity & Traceability
                         </h2>
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                        End-to-end evidence linking from initial FIR to CCTV, telecom CDRs, financial forensics, and judicial hearings
+                        End-to-end evidence linking from initial FIR to CCTV, telecom CDRs, financial forensics, and judicial hearings.
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700', background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
-                        <CheckCircle2 size={12} style={{ display: 'inline', marginRight: '4px' }} /> {chainLength} VERIFIED EVIDENCE NODES
+                        <CheckCircle2 size={12} style={{ display: 'inline', marginRight: '4px' }} /> {chainLength} TRACEABLE EVIDENCE NODES
                     </span>
                 </div>
             </div>
@@ -144,7 +144,7 @@ const EvidenceChainView = ({ caseId }) => {
 
                                     {node.integrityDigest && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '10.5px', color: '#10b981', background: 'rgba(16,185,129,0.08)', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                                            <Hash size={12} /> SHA-256: {node.integrityDigest} (INTEGRITY VERIFIED)
+                                            <FileSearch size={12} /> DATABSE INTEGRITY VERIFIED
                                         </div>
                                     )}
                                 </div>
@@ -157,4 +157,4 @@ const EvidenceChainView = ({ caseId }) => {
     );
 };
 
-export default EvidenceChainView;
+export default EvidenceIntegrityView;
