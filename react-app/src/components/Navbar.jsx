@@ -12,7 +12,7 @@ import api from '../services/api';
 const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { t, isEnglish } = useLanguage();
+  const { t, isEnglish, isKannada } = useLanguage();
   const { theme, officer, cases, activeCaseId, setActiveCaseId, loadingCases } = useAppContext();
   const [translating, setTranslating] = useState(false);
   const [translateCount, setTranslateCount] = useState(0);
