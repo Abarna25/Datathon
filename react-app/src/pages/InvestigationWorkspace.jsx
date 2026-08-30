@@ -35,7 +35,7 @@ const InvestigationWorkspace = () => {
     const navigate = useNavigate();
     const { caseId: paramCaseId } = useParams();
     const [searchParams] = useSearchParams();
-    const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases } = useAppContext();
+    const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases, refreshCases } = useAppContext();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
     const scrollContainerRef = useRef(null);
 
@@ -47,11 +47,11 @@ const InvestigationWorkspace = () => {
         }
     }, [searchParams, activeTab]);
 
-    // Sync URL param with activeCaseId or select default first case
+    // Sync URL param with activeCaseId or auto-select first available case
     useEffect(() => {
         if (paramCaseId && paramCaseId !== activeCaseId && setActiveCaseId) {
             setActiveCaseId(paramCaseId);
-        } else if (!activeCaseId && cases && cases.length > 0 && setActiveCaseId) {
+        } else if ((!activeCaseId || activeCaseId === 'all') && cases && cases.length > 0 && setActiveCaseId) {
             setActiveCaseId(String(cases[0].id));
         }
     }, [paramCaseId, activeCaseId, cases, setActiveCaseId]);
@@ -88,19 +88,70 @@ const InvestigationWorkspace = () => {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, transparent 70%)' }}>
                 {(!activeCaseId || activeCaseId === 'all') && !loadingCases ? (
-                    <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', maxWidth: '500px', borderTop: '4px solid #3b82f6', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', marginBottom: '24px' }}>
-                            <Search size={40} color="#3b82f6" style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.5))' }} />
+                    <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', maxWidth: '650px', borderTop: '4px solid #3b82f6', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', marginBottom: '20px' }}>
+                            <Search size={36} color="#3b82f6" style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.5))' }} />
                         </div>
-                        <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px' }}>Command Center Idle</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
-                            Awaiting case context. Please select an active investigation or global search from the top navigation to initialize the intelligence workspace.
+                        <h2 style={{ color: 'var(--text-primary)', margin: '0 0 10px 0', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px' }}>Command Center Idle</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
+                            Please select an active investigation docket below to initialize the intelligence workspace.
                         </p>
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(59,130,246,0.5)', animation: 'pulse 1.5s infinite' }}></div>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(59,130,246,0.3)', animation: 'pulse 1.5s infinite 0.2s' }}></div>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(59,130,246,0.1)', animation: 'pulse 1.5s infinite 0.4s' }}></div>
-                        </div>
+
+                        {cases && cases.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '240px', overflowY: 'auto', textAlign: 'left', marginBottom: '16px', paddingRight: '4px' }}>
+                                {cases.slice(0, 5).map(c => (
+                                    <div
+                                        key={c.id}
+                                        onClick={() => {
+                                            if (setActiveCaseId) setActiveCaseId(String(c.id));
+                                            navigate(`/investigate/${c.id}`);
+                                        }}
+                                        style={{
+                                            padding: '12px 16px',
+                                            borderRadius: '8px',
+                                            background: 'rgba(255, 255, 255, 0.03)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                                            e.currentTarget.style.borderColor = '#3b82f6';
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ fontWeight: '700', color: '#3b82f6', fontSize: '13px' }}>{c.caseNumber} ({c.category})</div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '2px', maxWidth: '440px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {c.briefFacts || 'No summary registered'}
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} color="#3b82f6" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => refreshCases && refreshCases()}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: '#3b82f6',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Reload Cases from Datastore
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

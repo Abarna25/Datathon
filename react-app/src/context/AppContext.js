@@ -26,31 +26,32 @@ export const AppProvider = ({ children }) => {
         }
     }, [user]);
 
-    // Fetch cases and initialize active case
-    useEffect(() => {
-        const loadCases = async () => {
-            try {
-                setLoadingCases(true);
-                const res = await api.get('/cases');
-                const caseList = res.data.data || [];
-                setCases(caseList);
+    const loadCases = useCallback(async () => {
+        try {
+            setLoadingCases(true);
+            const res = await api.get('/cases');
+            const caseList = res.data?.data || [];
+            setCases(caseList);
 
-                if (caseList.length > 0) {
-                    const savedId = localStorage.getItem('vikshana_active_case_id');
-                    const exists = caseList.some(c => String(c.id) === String(savedId));
-                    const initialId = exists ? savedId : caseList[0].id;
-                    
-                    setActiveCaseIdState(initialId);
-                    localStorage.setItem('vikshana_active_case_id', initialId);
-                }
-            } catch (err) {
-                console.debug('[AppContext] Failed to load cases:', err);
-            } finally {
-                setLoadingCases(false);
+            if (caseList.length > 0) {
+                const savedId = localStorage.getItem('vikshana_active_case_id');
+                const exists = caseList.some(c => String(c.id) === String(savedId));
+                const initialId = exists ? savedId : String(caseList[0].id);
+                
+                setActiveCaseIdState(initialId);
+                localStorage.setItem('vikshana_active_case_id', initialId);
             }
-        };
-        loadCases();
+        } catch (err) {
+            console.debug('[AppContext] Failed to load cases:', err);
+        } finally {
+            setLoadingCases(false);
+        }
     }, []);
+
+    // Fetch cases on mount and whenever user/auth state updates
+    useEffect(() => {
+        loadCases();
+    }, [loadCases, user]);
 
     // Load full bundle when active case changes
     useEffect(() => {
@@ -98,7 +99,8 @@ export const AppProvider = ({ children }) => {
         <AppContext.Provider value={{ 
             theme, toggleTheme, officer, setOfficer, 
             cases, activeCaseId, setActiveCaseId,
-            currentCase, setCurrentCase, loadingCases
+            currentCase, setCurrentCase, loadingCases,
+            refreshCases: loadCases
         }}>
             <div className={`app-container ${theme}-theme`}>
                 {children}
