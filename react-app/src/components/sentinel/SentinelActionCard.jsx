@@ -40,8 +40,9 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
   return (
     <div className="glass-panel" style={{
       padding: '20px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '14px',
-      borderLeft: `5px solid ${config.color}`, background: 'rgba(30, 41, 59, 0.85)',
-      border: '1px solid rgba(255,255,255,0.1)',
+      borderLeft: `5px solid ${config.color}`, background: 'var(--bg-secondary)',
+      border: '1px solid var(--border-color)',
+      boxShadow: 'var(--shadow-sm)',
       position: 'relative'
     }}>
       {/* Card Header */}
@@ -53,10 +54,10 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
           }}>
             {config.badge}
           </span>
-          <span style={{ fontSize: '13.5px', fontWeight: '700', color: '#60a5fa' }}>
+          <span style={{ fontSize: '13.5px', fontWeight: '800', color: 'var(--accent-primary)' }}>
             {action.caseNumber || `Case #${action.caseId}`}
           </span>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
             Score: <strong style={{ color: config.color }}>{action.priorityScore}/100</strong>
           </span>
         </div>
@@ -68,7 +69,7 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
               <CheckCircle size={12} /> APPROVED BY {action.reviewedBy || 'OFFICER'}
             </span>
           ) : action.status === 'DISMISSED' ? (
-            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(148, 163, 184, 0.15)', color: 'var(--text-muted)', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <XCircle size={12} /> DISMISSED
             </span>
           ) : (
@@ -81,23 +82,23 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
 
       {/* Action Title & Finding */}
       <div>
-        <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#f8fafc', fontWeight: '700' }}>
+        <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--text-primary)', fontWeight: '700' }}>
           {action.title}
         </h4>
-        <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5', fontWeight: '400' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', fontWeight: '400' }}>
           {action.finding}
         </p>
       </div>
 
       {/* Recommended Action Callout */}
       <div style={{
-        padding: '12px 14px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.12)',
-        border: '1px solid rgba(59, 130, 246, 0.3)', display: 'flex', flexDirection: 'column', gap: '4px'
+        padding: '12px 14px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.08)',
+        border: '1px solid rgba(59, 130, 246, 0.25)', display: 'flex', flexDirection: 'column', gap: '4px'
       }}>
-        <div style={{ fontSize: '11px', fontWeight: '800', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Recommended Procedural Action:
         </div>
-        <div style={{ fontSize: '13px', color: '#f8fafc', fontWeight: '500', lineHeight: '1.4' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500', lineHeight: '1.4' }}>
           {action.recommendedAction}
         </div>
       </div>
@@ -105,11 +106,11 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
       {/* Evidence Sources Preview */}
       {action.evidenceSources && action.evidenceSources.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>Evidence:</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>Evidence:</span>
           {action.evidenceSources.map((ev, i) => (
             <span key={i} style={{
               fontSize: '11px', padding: '2px 8px', borderRadius: '4px',
-              background: 'rgba(99, 102, 241, 0.15)', color: '#a5b4fc', border: '1px solid rgba(99, 102, 241, 0.3)'
+              background: 'rgba(99, 102, 241, 0.12)', color: 'var(--text-primary)', border: '1px solid rgba(99, 102, 241, 0.25)'
             }}>
               [{ev.type}] {ev.label || ev.id}
             </span>
@@ -120,12 +121,12 @@ export default function SentinelActionCard({ action, onDecision, isProcessing = 
       {/* Footer Controls & Human Gate */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap',
-        gap: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '14px', marginTop: '4px'
+        gap: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '4px'
       }}>
         <button
           onClick={handleDrillDown}
           style={{
-            background: 'rgba(59, 130, 246, 0.12)', border: '1px solid #3b82f6', color: '#60a5fa',
+            background: 'rgba(59, 130, 246, 0.08)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)',
             padding: '6px 14px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '700',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
           }}

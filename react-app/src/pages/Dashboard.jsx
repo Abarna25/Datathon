@@ -221,29 +221,29 @@ const Dashboard = () => {
       />
 
       {/* Data Transparency Banner */}
-      <motion.div variants={itemVariants} style={{ background: 'rgba(30, 41, 59, 0.85)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '12px 20px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+      <motion.div variants={itemVariants} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '12px 20px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Database size={16} color="#3b82f6" />
-            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                <strong style={{ color: '#f8fafc' }}>Source:</strong> Catalyst Datastore
+            <Database size={16} color="var(--accent-primary)" />
+            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Source:</strong> Catalyst Datastore
             </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <FileSearch size={16} color="#10b981" />
-            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                <strong style={{ color: '#f8fafc' }}>Records analyzed:</strong> {data.kpis?.totalCases || 12482} verified incidents
+            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Records analyzed:</strong> {data.kpis?.totalCases || 12482} verified incidents
             </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Clock size={16} color="#f59e0b" />
-            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                <strong style={{ color: '#f8fafc' }}>Last Refreshed:</strong> {new Date().toLocaleString()}
+            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Last Refreshed:</strong> {new Date().toLocaleString()}
             </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Server size={16} color="#8b5cf6" />
-            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                <strong style={{ color: '#f8fafc' }}>Method:</strong> Deterministic Aggregation
+            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Method:</strong> Deterministic Aggregation
             </span>
         </div>
       </motion.div>

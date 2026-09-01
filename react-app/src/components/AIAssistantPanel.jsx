@@ -22,24 +22,24 @@ const AIAssistantPanel = ({
         switch(type) {
             case 'alert':
                 return {
-                    bg: 'rgba(30, 41, 59, 0.85)',
-                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    bg: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
                     icon: <AlertTriangle size={16} color="#ef4444" />,
-                    titleColor: '#f87171'
+                    titleColor: '#ef4444'
                 };
             case 'action':
                 return {
-                    bg: 'rgba(30, 41, 59, 0.85)',
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    bg: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
                     icon: <Sparkles size={16} color="#10b981" />,
-                    titleColor: '#34d399'
+                    titleColor: '#10b981'
                 };
             default:
                 return {
-                    bg: 'rgba(30, 41, 59, 0.85)',
-                    border: '1px solid rgba(99, 102, 241, 0.35)',
-                    icon: <BrainCircuit size={16} color="#818cf8" />,
-                    titleColor: '#818cf8'
+                    bg: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    icon: <BrainCircuit size={16} color="var(--accent-primary)" />,
+                    titleColor: 'var(--accent-primary)'
                 };
         }
     };
@@ -67,7 +67,7 @@ const AIAssistantPanel = ({
                     <div className="vik-streaming-cursor" style={{ background: styles.titleColor }}></div>
                 </div>
             ) : (
-                <div className="vik-markdown" style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: '1.6', fontWeight: '400' }}>
+                <div className="vik-markdown" style={{ fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6', fontWeight: '400' }}>
                     <ReactMarkdown>{content}</ReactMarkdown>
                 </div>
             )}
