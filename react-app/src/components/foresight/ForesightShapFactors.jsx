@@ -7,73 +7,68 @@ export default function ForesightShapFactors({ factors = [], allFactors = [] }) 
 
     if (!factors || factors.length === 0) {
         return (
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 text-center text-slate-400 text-sm">
+            <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'center', fontSize: '13px' }}>
                 No feature attribution factors available.
             </div>
         );
     }
 
     return (
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-indigo-400" />
-                    <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">
+        <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', height: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BarChart3 size={18} color="#818cf8" />
+                    <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Key Contributing Factors (SHAP Attributions)
                     </h3>
                 </div>
                 {allFactors.length > factors.length && (
                     <button
                         onClick={() => setShowAll(!showAll)}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors"
+                        style={{ background: 'transparent', border: 'none', color: '#818cf8', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
                         {showAll ? (
-                            <>Show Top 5 <ChevronUp className="w-3.5 h-3.5" /></>
+                            <>Show Top 5 <ChevronUp size={14} /></>
                         ) : (
-                            <>View All 14 Factors <ChevronDown className="w-3.5 h-3.5" /></>
+                            <>View All 14 Factors <ChevronDown size={14} /></>
                         )}
                     </button>
                 )}
             </div>
 
-            <p className="text-xs text-slate-400 mb-4">
+            <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: 'var(--text-muted)' }}>
                 Features extracted strictly from time-safe historical records occurring on or before reference intake ($T$).
             </p>
 
-            <div className="space-y-3.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {displayList.map((factor, index) => {
                     const isIncreasing = factor.direction === 'INCREASING_ASSOCIATION';
                     const barWidth = Math.min(100, Math.max(10, factor.impactScore * 1.5));
 
                     return (
-                        <div key={factor.feature || index} className="space-y-1.5 bg-slate-850/40 p-2.5 rounded-lg border border-slate-800/80">
-                            <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1.5">
+                        <div key={factor.feature || index} style={{ padding: '10px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     {isIncreasing ? (
-                                        <ArrowUpRight className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                        <ArrowUpRight size={15} color="#ef4444" />
                                     ) : (
-                                        <ArrowDownRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                        <ArrowDownRight size={15} color="#10b981" />
                                     )}
-                                    <span className="font-medium text-slate-200">{factor.label}</span>
+                                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{factor.label}</span>
                                 </div>
-                                <div className="flex items-center gap-2 font-mono">
-                                    <span className="text-[11px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                                        Value: <strong className="text-slate-200">{factor.rawValue}</strong>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+                                        {factor.valueDisplay || 'Present'}
                                     </span>
-                                    <span className={`text-[11px] font-semibold ${isIncreasing ? 'text-red-400' : 'text-emerald-400'}`}>
+                                    <span style={{ fontWeight: '800', color: isIncreasing ? '#f87171' : '#34d399', fontSize: '12px' }}>
                                         {isIncreasing ? '+' : '-'}{factor.impactScore}%
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Progress bar */}
-                            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-500 ${
-                                        isIncreasing ? 'bg-gradient-to-r from-red-500 to-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                                    }`}
-                                    style={{ width: `${barWidth}%` }}
-                                />
+                            {/* SHAP Bar */}
+                            <div style={{ height: '5px', width: '100%', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${barWidth}%`, background: isIncreasing ? 'linear-gradient(90deg, #ef4444, #f87171)' : 'linear-gradient(90deg, #10b981, #34d399)', borderRadius: '3px', transition: 'width 0.5s ease' }} />
                             </div>
                         </div>
                     );

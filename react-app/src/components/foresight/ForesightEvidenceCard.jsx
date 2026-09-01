@@ -4,7 +4,7 @@ import { Database, Link2, ShieldCheck, Clock, AlertTriangle } from 'lucide-react
 export default function ForesightEvidenceCard({ evidence = [] }) {
     if (!evidence || evidence.length === 0) {
         return (
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 text-center text-slate-400 text-sm">
+            <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'center', fontSize: '13px' }}>
                 No grounded historical evidence records attached.
             </div>
         );
@@ -14,47 +14,47 @@ export default function ForesightEvidenceCard({ evidence = [] }) {
         switch (type) {
             case 'PRIOR_CASE_HISTORY':
             case 'HISTORICAL_DOCKET_LINKS':
-                return <Database className="w-4 h-4 text-blue-400" />;
+                return <Database size={16} color="#60a5fa" />;
             case 'RECIDIVISM_INTERVAL':
-                return <Clock className="w-4 h-4 text-amber-400" />;
+                return <Clock size={16} color="#f59e0b" />;
             case 'GRAVITY_ESCALATION':
-                return <AlertTriangle className="w-4 h-4 text-red-400" />;
+                return <AlertTriangle size={16} color="#ef4444" />;
             case 'MO_PATTERN_CONSISTENCY':
-                return <Link2 className="w-4 h-4 text-purple-400" />;
+                return <Link2 size={16} color="#c084fc" />;
             default:
-                return <ShieldCheck className="w-4 h-4 text-indigo-400" />;
+                return <ShieldCheck size={16} color="#818cf8" />;
         }
     };
 
     return (
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg backdrop-blur-md">
-            <div className="flex items-center gap-2 mb-4">
-                <Database className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">
+        <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Database size={18} color="#818cf8" />
+                <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Grounded Historical Evidence Trail
                 </h3>
             </div>
 
-            <p className="text-xs text-slate-400 mb-3">
+            <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: 'var(--text-muted)' }}>
                 Every factor shown to the officer is traceable to verified historical records in the Karnataka Police Datastore.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
                 {evidence.map((item, index) => (
                     <div
                         key={index}
-                        className="bg-slate-850/60 border border-slate-800 hover:border-slate-700 p-3.5 rounded-lg transition-all space-y-1.5"
+                        style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}
                     >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 font-medium text-xs text-slate-200">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', fontSize: '12.5px', color: 'var(--text-primary)' }}>
                                 {getIcon(item.type)}
                                 <span>{item.title}</span>
                             </div>
-                            <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/50">
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
                                 {item.source}
                             </span>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed pl-6">
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', paddingLeft: '24px' }}>
                             {item.detail}
                         </p>
                     </div>
