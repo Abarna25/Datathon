@@ -33,6 +33,7 @@ class RelationshipAgent {
         const activeSuspects = (rawData.suspects || []).filter(s => String(s.caseId) === String(caseId));
         const activeVictims = (rawData.victims || []).filter(v => String(v.caseId) === String(caseId));
         const activeWitnesses = (rawData.witnesses || []).filter(w => String(w.caseId) === String(caseId));
+        const activeArrests = (rawData.arrests || []).filter(a => String(a.caseId) === String(caseId));
 
         // Create sets of names to trace cross-case connections
         const suspectNames = new Set(activeSuspects.map(s => String(s.name || '').toLowerCase().trim()).filter(n => n.length > 2));

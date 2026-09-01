@@ -60,33 +60,62 @@ app.use((req, res, next) => {
     next();
 });
 
-// Startup Validation Middleware
-app.use(async (req, res, next) => {
-    if (!startupChecked && process.env.NODE_ENV !== 'test') {
-        startupChecked = true;
+// Dynamic Table Validation Routine
+async function validateCoreTables(req) {
+    if (startupChecked || process.env.NODE_ENV === 'test') return;
+    startupChecked = true;
 
-        console.log('[Startup Validation] Verifying 10 core tables in Catalyst Data Store...');
-        const missing = [];
-        for (const table of requiredTables) {
-            try {
-                await datastoreClient.getRows(req, table, { maxRows: 1 });
-            } catch (err) {
-                missing.push(`${table} (${err.message})`);
-            }
+    console.log(`[Startup Validation] Verifying ${requiredTables.length} core tables in Catalyst Data Store...`);
+    const results = await Promise.allSettled(
+        requiredTables.map(async (table) => {
+            await datastoreClient.getRows(req, table, { maxRows: 1 });
+            return table;
+        })
+    );
+
+    const missing = [];
+    results.forEach((res, idx) => {
+        if (res.status === 'rejected') {
+            missing.push(`${requiredTables[idx]} (${res.reason?.message || 'Check failed'})`);
         }
-        if (missing.length > 0) {
-            startupDiagnostic = `[STARTUP DIAGNOSTIC] Core tables missing in Catalyst:\n` + missing.map(m => `- ${m}`).join('\n');
-            console.error(startupDiagnostic);
-            app.set('startupDiagnostic', startupDiagnostic);
-        } else {
-            console.log('[Startup Validation] All 10 core tables verified successfully! 🚀');
-        }
+    });
+
+    if (missing.length > 0) {
+        startupDiagnostic = `[STARTUP DIAGNOSTIC] Core tables missing in Catalyst:\n` + missing.map(m => `- ${m}`).join('\n');
+        console.error(startupDiagnostic);
+        app.set('startupDiagnostic', startupDiagnostic);
+    } else {
+        console.log(`[Startup Validation] All ${requiredTables.length} core tables verified successfully! 🚀`);
+    }
+}
+
+// Background startup initialization trigger
+app.use((req, res, next) => {
+    if (!startupChecked && process.env.NODE_ENV !== 'test') {
+        validateCoreTables(req).catch(err => {
+            console.error('[Startup Validation Error]', err.message);
+        });
     }
     next();
 });
 
-// Global Middleware
-app.use(cors());
+// Environment-based CORS Configuration
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : ['http://localhost:3000', 'http://localhost:3001'];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS policy error: Origin ${origin} not permitted.`));
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Public Routes (Accessible without JWT)

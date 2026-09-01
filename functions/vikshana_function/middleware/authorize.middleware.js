@@ -10,7 +10,14 @@ const crypto = require('crypto');
  * Enforces fail-fast validation in runtime/production environments.
  */
 function getJWTSecret() {
-    return process.env.JWT_SECRET?.trim() || 'vikshana_ksp_enterprise_jwt_secret_key_2026_hs256_secure';
+    const secret = process.env.JWT_SECRET?.trim();
+    if (!secret) {
+        throw new Error('[SECURITY FATAL] JWT_SECRET environment variable is required. Please set JWT_SECRET in your environment (at least 32 characters).');
+    }
+    if (secret.length < 32) {
+        throw new Error('[SECURITY FATAL] JWT_SECRET must be at least 32 characters long for security compliance.');
+    }
+    return secret;
 }
 
 const AuditService = require('../services/AuditService');
@@ -79,7 +86,7 @@ function authenticateToken(req, res, next) {
     let token = null;
     if (authHeader) {
         token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
-    } else if (req.query?.token) {
+    } else if (process.env.NODE_ENV !== 'production' && req.query?.token) {
         token = String(req.query.token).trim();
     }
 
