@@ -84,7 +84,7 @@ export default function SentinelPriorityBreakdown({ breakdown, totalScore, sever
 
               {/* Reason Snippet */}
               {reasons.length > 0 && (
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                <div style={{ fontSize: '11.5px', color: '#cbd5e1', lineHeight: '1.4', marginTop: '4px' }}>
                   • {reasons[0]}
                 </div>
               )}
@@ -93,18 +93,18 @@ export default function SentinelPriorityBreakdown({ breakdown, totalScore, sever
         })}
       </div>
 
-      {/* Traceable Evidence Chips */}
+      {/* Traceable Evidence Sources */}
       {evidenceSources && evidenceSources.length > 0 && (
         <div style={{ marginTop: '8px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>
             Traceable Evidence Sources ({evidenceSources.length})
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {evidenceSources.map((ev, idx) => (
               <span key={idx} style={{
                 fontSize: '11px', padding: '3px 8px', borderRadius: '4px',
-                background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa',
-                border: '1px solid rgba(59, 130, 246, 0.25)', display: 'inline-flex', alignItems: 'center', gap: '4px'
+                background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa',
+                border: '1px solid rgba(59, 130, 246, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px'
               }}>
                 <CheckCircle2 size={11} color="#3b82f6" />
                 <span>[{ev.type}]: {ev.label || ev.id}</span>
