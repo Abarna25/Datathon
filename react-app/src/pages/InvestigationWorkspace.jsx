@@ -33,18 +33,23 @@ import CaseCompletenessCard from '../components/advanced-intelligence/CaseComple
 const InvestigationWorkspace = () => {
     const navigate = useNavigate();
     const { caseId: paramCaseId } = useParams();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { activeCaseId, setActiveCaseId, loadingCases, currentCase, cases, refreshCases } = useAppContext();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
     const scrollContainerRef = useRef(null);
 
-    // Sync query param tab if changed
+    const handleTabClick = (tabId) => {
+        setActiveTab(tabId);
+        setSearchParams({ tab: tabId }, { replace: true });
+    };
+
+    // Sync query param tab if changed externally
     useEffect(() => {
         const queryTab = searchParams.get('tab');
         if (queryTab && queryTab !== activeTab) {
             setActiveTab(queryTab);
         }
-    }, [searchParams, activeTab]);
+    }, [searchParams]);
 
     // Sync URL param with activeCaseId or auto-select first available case
     useEffect(() => {
@@ -193,7 +198,7 @@ const InvestigationWorkspace = () => {
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => handleTabClick(tab.id)}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px',
                                 background: activeTab === tab.id 
