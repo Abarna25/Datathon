@@ -47,12 +47,12 @@
   --accent-success: #10b981; 
 
   --text-primary: #f8fafc; /* Crisp white */
-  --text-secondary: #94a3b8; /* Slate 400 */
-  --text-muted: #475569; /* Slate 600 */
+  --text-secondary: #cbd5e1; /* High-contrast Slate 300 */
+  --text-muted: #94a3b8; /* High-contrast Slate 400 */
 
-  --border-color: rgba(255, 255, 255, 0.05); /* Very subtle borders */
-  --glass-bg: #0f172a; /* Flat color instead of heavy glass */
-  --glass-border: rgba(255, 255, 255, 0.03); /* Barely visible */
+  --border-color: rgba(255, 255, 255, 0.08); /* Subtle borders */
+  --glass-bg: #0f172a; /* Flat slate card color */
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 body {

@@ -285,31 +285,31 @@ export default function SentinelDashboard() {
                   style={{
                     padding: '16px', borderRadius: '8px', cursor: 'pointer',
                     borderLeft: `4px solid ${severityColor}`,
-                    background: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'rgba(15, 23, 42, 0.65)',
-                    border: isSelected ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.06)',
+                    background: isSelected ? 'rgba(59, 130, 246, 0.18)' : 'rgba(30, 41, 59, 0.85)',
+                    border: isSelected ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
                     transition: 'all 0.2s ease'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)' }}>#{idx + 1}</span>
-                      <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{caseItem.caseNumber}</span>
-                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: `${severityColor}22`, color: severityColor, fontWeight: '800' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8' }}>#{idx + 1}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: '#f8fafc' }}>{caseItem.caseNumber}</span>
+                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: `${severityColor}25`, color: severityColor, fontWeight: '800' }}>
                         {caseItem.severity}
                       </span>
                     </div>
                     <div style={{ fontSize: '16px', fontWeight: '800', color: severityColor }}>
-                      {caseItem.totalScore}<span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/100</span>
+                      {caseItem.totalScore}<span style={{ fontSize: '11px', color: '#94a3b8' }}>/100</span>
                     </div>
                   </div>
 
-                  <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '12.5px', color: '#e2e8f0', lineHeight: '1.5', fontWeight: '500' }}>
                     {caseItem.title}
                   </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
-                    <span>{caseItem.jurisdiction} • {caseItem.category}</span>
-                    <span style={{ color: caseItem.daysSinceActivity > 30 ? '#ef4444' : 'var(--text-muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#cbd5e1' }}>
+                    <span style={{ color: '#94a3b8' }}>{caseItem.jurisdiction} • {caseItem.category}</span>
+                    <span style={{ color: caseItem.daysSinceActivity > 30 ? '#f87171' : '#94a3b8', fontWeight: '600' }}>
                       {caseItem.daysSinceActivity}d inactive
                     </span>
                   </div>
