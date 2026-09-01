@@ -70,23 +70,23 @@ const SociologicalInsights = () => {
       />
 
       {/* Data Transparency Banner */}
-      <div style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '12px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ background: 'rgba(30, 41, 59, 0.85)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '12px 20px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Database size={16} color="#3b82f6" />
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Source:</strong> {data.evidence?.dataset?.join(', ') || 'Catalyst Datastore'}
+            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                <strong style={{ color: '#f8fafc' }}>Source:</strong> {data.evidence?.dataset?.join(', ') || 'Catalyst Datastore'}
             </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <FileSearch size={16} color="#10b981" />
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Records analyzed:</strong> {data.evidence?.records_analyzed || 0}
+            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                <strong style={{ color: '#f8fafc' }}>Records analyzed:</strong> {data.evidence?.records_analyzed || 0}
             </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <BarChartIcon size={16} color="#8b5cf6" />
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Method:</strong> {data.method || 'Deterministic Aggregation'}
+            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                <strong style={{ color: '#f8fafc' }}>Method:</strong> {data.method || 'Deterministic Aggregation'}
             </span>
         </div>
       </div>
