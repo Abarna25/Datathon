@@ -1,17 +1,17 @@
 :root {
-  /* Design Tokens */
-  --color-primary: #2563EB;      /* Primary Blue - buttons, links, active states */
-  --color-primary-light: #DBEAFE; /* Light Blue - hover states, subtle highlights, selected items */
+  /* Design Tokens - Light Theme */
+  --color-primary: #2563EB;      /* Primary Blue */
+  --color-primary-light: #DBEAFE; /* Light Blue hover */
   --color-bg: #F8FAFC;            /* Background */
   --color-card: #FFFFFF;          /* Cards / message bubbles / panels */
-  --color-border: #E5E7EB;        /* Borders / dividers */
-  --color-text: #111827;          /* Primary text */
-  --color-text-secondary: #6B7280; /* Secondary text / timestamps / metadata */
-  --color-success: #10B981;       /* Success states */
-  --color-warning: #F59E0B;       /* Warning states */
-  --color-danger: #EF4444;        /* Errors / destructive actions */
+  --color-border: #E2E8F0;        /* Borders */
+  --color-text: #0F172A;          /* Deep Slate text */
+  --color-text-secondary: #334155; /* Dark Slate secondary text */
+  --color-success: #10B981;       
+  --color-warning: #D97706;       
+  --color-danger: #DC2626;        
 
-  /* Legacy Theme Mappings for App Compatibility */
+  /* Theme Mappings */
   --bg-primary: var(--color-bg);
   --bg-secondary: var(--color-card);
   --bg-tertiary: #F1F5F9;
@@ -22,36 +22,36 @@
   --accent-warning: var(--color-warning);
   --accent-success: var(--color-success);
 
-  --text-primary: var(--color-text);
-  --text-secondary: var(--color-text-secondary);
-  --text-muted: #9CA3AF;
+  --text-primary: #0F172A;       /* Dark text for light mode */
+  --text-secondary: #334155;     /* Dark secondary text for light mode */
+  --text-muted: #64748B;         /* Muted text for light mode */
 
   --border-color: var(--color-border);
-  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-bg: #FFFFFF;
   --glass-border: var(--color-border);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 30px -4px rgba(0, 0, 0, 0.08);
 }
 
-/* Dark Theme overrides — applied via .dark-theme on the app root (see AppContext.js) */
+/* Dark Theme overrides — applied via .dark-theme on the app root */
 .dark-theme {
   --bg-primary: #09090b; /* Deep slate, almost black */
   --bg-secondary: #0f172a; /* Slate 900 for cards */
   --bg-tertiary: #1e293b; /* Slate 800 for hovers */
 
-  --accent-primary: #3b82f6; /* Single Accent: Electric Blue */
+  --accent-primary: #3b82f6; /* Electric Blue */
   --accent-secondary: #3b82f6;
   --accent-danger: #ef4444; 
   --accent-warning: #f59e0b; 
   --accent-success: #10b981; 
 
-  --text-primary: #f8fafc; /* Crisp white */
-  --text-secondary: #cbd5e1; /* High-contrast Slate 300 */
-  --text-muted: #94a3b8; /* High-contrast Slate 400 */
+  --text-primary: #f8fafc; /* Crisp white for dark mode */
+  --text-secondary: #cbd5e1; /* High-contrast Slate 300 for dark mode */
+  --text-muted: #94a3b8; /* High-contrast Slate 400 for dark mode */
 
-  --border-color: rgba(255, 255, 255, 0.08); /* Subtle borders */
-  --glass-bg: #0f172a; /* Flat slate card color */
+  --border-color: rgba(255, 255, 255, 0.08); 
+  --glass-bg: #0f172a; 
   --glass-border: rgba(255, 255, 255, 0.08);
 }
 
