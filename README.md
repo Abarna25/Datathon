@@ -96,11 +96,3 @@ VIKSHANA takes AI safety seriously in law enforcement contexts.
 - **Fail-Safe Generation:** Implements intelligent response parsers with automatic 1-time retry loops for malformed JSON or provider token limit hits.
 
 ---
-
-## 📜 License
-*Proprietary. Developed specifically for Datathon / Hackathon purposes.*
-
----
-<div align="center">
-  <i>Built with ❤️ for a safer tomorrow.</i>
-</div>
