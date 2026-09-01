@@ -27,18 +27,13 @@ import SentinelDashboard from './pages/SentinelDashboard';
 import SociologicalInsights from './pages/SociologicalInsights';
 import CrimeForecasting from './pages/CrimeForecasting';
 
-import GuidedDemoBar from './components/GuidedDemoBar';
-
 const DashboardLayout = ({ children }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-    <GuidedDemoBar />
-    <div style={{ display: 'flex', flex: 1, width: '100%' }}>
-      <Sidebar />
-      {/* Main Content Area */}
-      <div style={{ flex: 1, padding: '20px 24px 24px 0', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 75px)', overflowY: 'auto', minWidth: 0 }}>
-        <Navbar />
-        {children}
-      </div>
+  <div style={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <Sidebar />
+    {/* Main Content Area */}
+    <div style={{ flex: 1, padding: '20px 24px 24px 0', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0 }}>
+      <Navbar />
+      {children}
     </div>
   </div>
 );
