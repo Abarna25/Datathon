@@ -1,0 +1,29 @@
+{
+  "evaluated_at": "2026-09-01T23:25:00Z",
+  "dataset_info": {
+    "name": "Karnataka State Police Datastore (KSP 10-Table Relational Schema)",
+    "total_records_analyzed": 347492,
+    "case_master_dockets": 50005,
+    "train_test_split_strategy": "Strict Temporal Split (Historical cases T <= RefDate for Training; Later cases T > RefDate for Out-of-Time Testing)",
+    "data_leakage_guard": "VERIFIED (Future records excluded from historical feature aggregation)"
+  },
+  "selected_model": {
+    "architecture": "XGBoost Classifier (Gradient Boosted Decision Trees)",
+    "hyperparameters": {
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "random_state": 42
+    },
+    "metrics": {
+      "accuracy": 0.942,
+      "precision": 0.938,
+      "recall": 0.925,
+      "f1_score": 0.931,
+      "roc_auc": 0.968,
+      "pr_auc": 0.952
+    }
+  }
+}

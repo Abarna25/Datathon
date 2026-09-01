@@ -1,0 +1,75 @@
+{
+  "benchmarkDate": "2026-09-01T17:55:21.484Z",
+  "environment": "Localhost Prototype / Node.js 20.x Express Serverless Core",
+  "totalRequestsExecuted": 120,
+  "totalDurationSeconds": 29.05,
+  "overallRequestsPerSecond": 4.1,
+  "endpointResults": {
+    "GET /health": {
+      "endpoint": "GET /health",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 1398.8,
+      "p50LatencyMs": 1305,
+      "p95LatencyMs": 2099,
+      "p99LatencyMs": 2099
+    },
+    "GET /dashboard": {
+      "endpoint": "GET /dashboard",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 28.3,
+      "p50LatencyMs": 7,
+      "p95LatencyMs": 163,
+      "p99LatencyMs": 163
+    },
+    "GET /cases": {
+      "endpoint": "GET /cases",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 11.6,
+      "p50LatencyMs": 2,
+      "p95LatencyMs": 89,
+      "p99LatencyMs": 89
+    },
+    "GET /forensics/evidence/case/100070382202100001": {
+      "endpoint": "GET /forensics/evidence/case/100070382202100001",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 0.55,
+      "p50LatencyMs": 1,
+      "p95LatencyMs": 1,
+      "p99LatencyMs": 1
+    },
+    "GET /audit": {
+      "endpoint": "GET /audit",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 6.25,
+      "p50LatencyMs": 1,
+      "p95LatencyMs": 95,
+      "p99LatencyMs": 95
+    },
+    "GET /intelligence/forecast/overview": {
+      "endpoint": "GET /intelligence/forecast/overview",
+      "totalRequests": 20,
+      "successCount": 20,
+      "failCount": 0,
+      "errorRatePct": "0.0%",
+      "avgLatencyMs": 6.1,
+      "p50LatencyMs": 1,
+      "p95LatencyMs": 91,
+      "p99LatencyMs": 91
+    }
+  }
+}
