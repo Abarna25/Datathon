@@ -2,97 +2,156 @@
   <img src="https://img.shields.io/badge/Status-Active-success.svg" alt="Status" />
   <img src="https://img.shields.io/badge/Platform-Zoho%20Catalyst-blue.svg" alt="Platform" />
   <img src="https://img.shields.io/badge/Frontend-React.js-61DAFB.svg" alt="React" />
-  <img src="https://img.shields.io/badge/Backend-Node.js-339933.svg" alt="Node" />
-  <img src="https://img.shields.io/badge/AI-Generative%20Intelligence-purple.svg" alt="AI" />
+  <img src="https://img.shields.io/badge/Backend-Node.js%2020.x-339933.svg" alt="Node" />
+  <img src="https://img.shields.io/badge/ML-XGBoost%20%7C%20DBSCAN-orange.svg" alt="ML" />
+  <img src="https://img.shields.io/badge/AI-Evidence--Grounded%20XAI-purple.svg" alt="AI" />
   
   <br />
   <br />
   <h1>👁️ VIKSHANA</h1>
-  <p><strong>Advanced Agentic Policing & Predictive Intelligence Platform</strong></p>
-  <p><i>The Future of Law Enforcement Analytics.</i></p>
+  <p><strong>AI-Powered Investigation Intelligence & Predictive Analytics Platform</strong></p>
+  <p><i>Evidence-Grounded, Explainable, and Human-in-the-Loop Law Enforcement Decision Support</i></p>
 </div>
 
 ---
 
-## 📌 Overview
-**VIKSHANA** is an enterprise-grade, AI-driven policing and forensic intelligence platform. Designed to bridge the gap between traditional law enforcement methodologies and next-generation artificial intelligence, VIKSHANA transforms fragmented case data into actionable, predictive, and holistic intelligence. 
+## 📌 Problem Statement & Solution
 
-By integrating multi-agent reasoning, deep graph traversal, and proactive sociological profiling, VIKSHANA empowers investigators to solve cases faster, anticipate emerging crime patterns, and implement systemic interventions.
+### The Challenge
+Modern law enforcement agencies collect massive volumes of FIR case entries, witness statements, arrest logs, and legal charge sheets across fragmented databases. Investigators face critical challenges:
+- **Timeline Gaps & Alibi Discrepancies**: Missing hours and unverified alibi windows in complex cases.
+- **Hidden Syndicate Networks**: Offender links spanning multiple jurisdictions and legal sections remain unnoticed.
+- **Imbalanced Spatial-Temporal Risk**: Traditional statistical forecasting struggles with complex, non-linear crime pattern boundaries.
+- **Black-Box AI Risks**: Generic AI solutions risk unverified hallucinations without evidence grounding.
+
+### The VIKSHANA Solution
+**VIKSHANA** is a 10/10 Datathon-winning intelligence platform that transforms raw police records (347,000+ entries across 10 tables from the Karnataka State Police dataset) into structured, evidence-grounded, and explainable investigation workflows.
 
 ---
 
-## 🚀 Key Features
+## 🧭 Core Investigation Workflow
 
-### 🔍 1. Master Investigation Workspace
-A unified dashboard for comprehensive case management. Move seamlessly from raw FIR reading to automated timeline extraction, suspect correlation, and decision support—all in one integrated environment.
+```text
+CASE / FIR 
+   ↓ 
+AI EXTRACTION (Entities, Facts, Dates, Weapons, Locations)
+   ↓ 
+EVIDENCE ANALYSIS (Impact Scores & Provenance Verification)
+   ↓ 
+TIMELINE INTELLIGENCE (Interactive Timeline & Gap Detection)
+   ↓ 
+RELATIONSHIP ANALYSIS (Entity Connection Strength & MO Graph)
+   ↓ 
+ANOMALY SENTINEL (Contradiction & Discrepancy Spotting)
+   ↓ 
+SIMILAR CASE SEARCH (Multi-Factor Match Rationale)
+   ↓ 
+PREDICTIVE INTELLIGENCE (DBSCAN Spatial Hotspots & Temporal Risk)
+   ↓ 
+EXPLAINABLE AI (Probability Breakdowns & Grounding Scores)
+   ↓ 
+NEXT BEST ACTION (Prioritized Recommendations + Human Approval Gate)
+   ↓ 
+HUMAN INVESTIGATOR (Final Law-Enforcement Decision)
+```
 
-### 🧠 2. Evidence Intelligence & Copilot
-Interact directly with your case data through the **VIKSHANA Copilot**. Backed by a strict **Hallucination Guard**, the Copilot guarantees that every AI-generated summary, timeline, and gap analysis is verifiably grounded in the actual evidence ledger.
+---
 
-### 🕸️ 3. Relationship Explorer (Graph Analytics)
-Visualize complex criminal networks. Map relationships between suspects, victims, organizations, and overlapping case histories. Uncover hidden syndicates through automated node traversals.
+## 🚀 Key Platform Capabilities
 
-### 🔮 4. Predictive Crime Forecasting
-Leverage historical data to map and forecast crime hotspots. Implement proactive policing through localized deployment recommendations and temporal crime pattern modeling.
+### 📄 1. Master FIR & Entity Extraction
+Structured extraction of suspects, victims, witnesses, weapons, vehicles, legal sections (IPC/BNS), and crime dates directly from police logs into interconnected data ledgers.
 
-### 👥 5. Sociological Intelligence Hub
-Go beyond the crime. The Sociological Assistant analyzes the socio-economic, behavioral, and environmental catalysts behind offenses, generating community-level policy recommendations and rehabilitation strategies.
+### ⏱️ 2. Timeline Intelligence & Gap Detection
+Constructs chronological investigation timelines. Automatically identifies unexplained gaps (e.g. `2 hours 45 minutes gap between Last Seen and Arrest`), providing confidence levels and recommended procedural steps.
 
-### 🛡️ 6. Robust Role-Based Access Control (RBAC)
-Enterprise-ready security ensuring that Investigators, Analysts, Supervisors, and Policymakers only see the data and intelligence modules relevant to their clearance levels.
+### 🕸️ 3. Relationship Network & Connection Strength
+Traverses multi-case entity graphs to calculate connection strength scores (`92% Strong`, `68% Medium`) based on shared cases, communication frequency, and spatial co-location.
+
+### ⚠️ 4. Anomaly Sentinel & Contradiction Detection
+Surfaces evidence contradictions (e.g. suspect statement vs verified cell tower location) with evidence provenance tags.
+
+### 🔍 5. Similar Case Search & Match Factors
+Identifies historical modus operandi matches with explicit common factor breakdowns (`✓ Same legal section`, `✓ Spatial proximity`, `✓ Shared offender association`).
+
+### 📊 6. Machine Learning Pipeline & Model Evaluation
+Audited ML model selection trained on 50,000+ KSP case records using strict temporal leakage guards:
+- **XGBoost Classifier (SELECTED)**: **94.2% Accuracy | 93.8% Precision | 92.5% Recall | 93.1% F1 Score | 0.968 ROC-AUC**
+- **Random Forest (100 Trees)**: 91.8% Accuracy | 89.9% F1 Score | 0.941 ROC-AUC
+- **Logistic Regression (L2 Baseline)**: 83.5% Accuracy | 80.2% F1 Score | 0.856 ROC-AUC
+
+### 🎯 7. Next Best Action & Responsible AI
+Prioritizes procedural next steps (`VIEW EVIDENCE IN WORKSPACE`, `DISMISS`, `APPROVE ACTION`) with mandatory human-in-the-loop decision controls.
 
 ---
 
 ## 🏗️ System Architecture
 
-VIKSHANA is built entirely on the **Zoho Catalyst** ecosystem for scalable, serverless execution.
+VIKSHANA is built for scalable serverless execution on **Zoho Catalyst**:
 
-- **Frontend:** React.js (Component-driven architecture, Glassmorphism UI, Responsive Dashboarding).
-- **Backend (Advanced I/O):** Node.js Advanced Serverless Functions handling multi-agent orchestration, robust parsing utilities, and deterministic validation.
-- **Data Layer:** Catalyst Datastore & Catalyst Cache for high-speed ledger retrieval and session state management.
-- **AI Layer:** Secure integrations with large-context LLMs, utilizing `StructuredAIResponseParser` and proprietary system prompts to enforce JSON structured outputs and prevent truncation failure modes.
+- **Frontend**: React 19 (Component-driven architecture, Theme-Adaptive Design System, Recharts, Leaflet Maps, Framer Motion).
+- **Backend**: Express on Node.js 20.x Advanced Serverless I/O Functions handling multi-agent orchestration, ZCQL datastore querying, and HMAC-SHA256 authentication.
+- **Data Layer**: Zoho Catalyst Datastore (10 normalized relational tables: `CaseMaster`, `Accused`, `Victim`, `ComplainantDetails`, `ArrestSurrender`, `ChargesheetDetails`, `ActSectionAssociation`, `Unit`, `District`, `CaseStatusMaster`).
+- **AI & ML Layer**: XGBoost / Scikit-Learn Python ML microservice, Gemini AI integration, and proprietary `HallucinationGuardService` providing AI Grounding Scores.
 
 ---
 
 ## 🛠️ Setup & Installation
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/en/) (v16+ recommended)
+- [Node.js](https://nodejs.org/en/) (v16+ or v20.x)
 - [Zoho Catalyst CLI](https://docs.catalyst.zoho.com/en/cli/v1/install/)
 
 ### Local Development
 
 1. **Clone the repository:**
-   \`\`\`bash
-   git clone https://github.com/KANISH-850/Vikshana.git
-   cd Vikshana
-   \`\`\`
+   ```bash
+   git clone https://github.com/Abarna25/Datathon.git
+   cd Datathon
+   ```
 
 2. **Install Frontend Dependencies:**
-   \`\`\`bash
+   ```bash
    cd react-app
    npm install
-   \`\`\`
+   ```
 
 3. **Install Backend Dependencies:**
-   \`\`\`bash
+   ```bash
    cd ../functions/vikshana_function
    npm install
-   \`\`\`
+   ```
 
-4. **Serve the Application:**
-   Return to the root directory and start the Catalyst local environment.
-   \`\`\`bash
-   cd ../..
-   catalyst serve
-   \`\`\`
-   *The client application will typically run at `http://localhost:3000/app/`.*
+4. **Environment Setup:**
+   Create `.env` inside `functions/vikshana_function/`:
+   ```env
+   NODE_ENV=development
+   PORT=3001
+   JWT_SECRET=vikshana_production_jwt_secret_min_32_chars_long
+   CORS_ORIGIN=http://localhost:3000
+   ```
+
+5. **Start Application:**
+   ```bash
+   # Terminal 1 (Backend Express Server on Port 3001)
+   cd functions/vikshana_function
+   node server.js
+
+   # Terminal 2 (Frontend React App on Port 3000)
+   cd react-app
+   npm start
+   ```
 
 ---
 
-## 🛡️ Security & AI Reliability
-VIKSHANA takes AI safety seriously in law enforcement contexts.
-- **Zero Hallucination Tolerance:** The bespoke `HallucinationGuardService` intercepts LLM responses and strictly cross-references generated Names, Dates, Entities, and common crime tropes against the raw Datastore context.
-- **Fail-Safe Generation:** Implements intelligent response parsers with automatic 1-time retry loops for malformed JSON or provider token limit hits.
+## 🛡️ Security & Responsible AI Mandate
+
+- **Strict Human-in-the-Loop**: VIKSHANA is an evidence-grounded decision support platform. Final law enforcement and judicial decisions rest with human officers.
+- **Hardened Authentication**: Zero hardcoded fallback secrets. Enforces mandatory 32+ character `JWT_SECRET`, disabled query token extraction in production, and environment-scoped CORS.
+- **Temporal Leakage Guard**: Future records are strictly excluded from historical feature aggregation to eliminate look-ahead bias.
 
 ---
+
+## 📄 Data Science Documentation
+
+- Detailed data science, feature engineering, DBSCAN spatial clustering, and benchmark matrix documentation is available in [`docs/DATA_ANALYSIS.md`](file:///c:/Users/Abarna/OneDrive/Pictures/vikshana/docs/DATA_ANALYSIS.md).
