@@ -49,6 +49,7 @@ const InvestigationWorkspace = () => {
         if (queryTab && queryTab !== activeTab) {
             setActiveTab(queryTab);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
     // Sync URL param with activeCaseId or auto-select first available case

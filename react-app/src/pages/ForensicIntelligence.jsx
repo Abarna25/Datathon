@@ -54,6 +54,7 @@ export default function ForensicIntelligence() {
 
   useEffect(() => {
     fetchActiveData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, caseId]);
 
   const fetchActiveData = async () => {
