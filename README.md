@@ -155,3 +155,19 @@ VIKSHANA is built for scalable serverless execution on **Zoho Catalyst**:
 ## 📄 Data Science Documentation
 
 - Detailed data science, feature engineering, DBSCAN spatial clustering, and benchmark matrix documentation is available in [`docs/DATA_ANALYSIS.md`](file:///c:/Users/Abarna/OneDrive/Pictures/vikshana/docs/DATA_ANALYSIS.md).
+
+---
+
+## 🌟 Advanced Crime Intelligence Enhancements
+
+The platform has been enhanced with five modular intelligence capabilities:
+
+1. **Seasonal & Event Crime Intelligence**: Month-wise trends (Jan-Dec), day-of-week patterns, time-of-day distributions, and Karnataka festival window baseline deviation analysis.
+2. **Socio-Economic Intelligence Layer**: External demographic layer provider (`SocioEconomicDataProvider.js`) integrating population density, literacy, employment, and urbanization statistics.
+3. **Social Risk Correlation Engine**: Pearson & Spearman rank correlation analysis with explainable district-level Social Risk Index breakdowns. Enforces strict Responsible AI disclaimers (*Correlation ≠ Causation*).
+4. **Criminal Network Community Detection**: Connected Components and Louvain modularity clustering on relationship graphs with neutral cluster explainability (`High-Connectivity Cluster`, `Potential Association Network`).
+5. **Financial Intelligence Module**: Multi-hop money trail tracing, rapid/circular transaction pattern detection, transaction pattern risk scoring, and prominent synthetic data transparency banners.
+
+Documentation:
+- [`docs/DATA_PROVENANCE.md`](file:///c:/Users/Abarna/OneDrive/Pictures/vikshana/docs/DATA_PROVENANCE.md): Dataset transparency and data governance policies.
+- [`docs/ADVANCED_INTELLIGENCE.md`](file:///c:/Users/Abarna/OneDrive/Pictures/vikshana/docs/ADVANCED_INTELLIGENCE.md): System architecture and service specifications.

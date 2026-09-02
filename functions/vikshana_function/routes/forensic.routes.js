@@ -23,6 +23,9 @@ router.get('/cdr/case/:caseId', ForensicController.getCDRByCase);
 // 4. Financial Transactions
 router.post('/financial', ForensicController.createTransaction);
 router.get('/financial/case/:caseId', ForensicController.getTransactionsByCase);
+router.get('/financial/overview', ForensicController.getFinancialOverview);
+router.get('/financial/money-trail', ForensicController.getMoneyTrails);
+router.get('/financial/suspicious-patterns', ForensicController.getSuspiciousPatterns);
 
 // 5. Forensic Reports
 router.post('/reports', ForensicController.createReport);

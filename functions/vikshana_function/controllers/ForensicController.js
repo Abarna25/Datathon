@@ -96,6 +96,36 @@ class ForensicController {
         }
     }
 
+    static async getFinancialOverview(req, res) {
+        try {
+            const FinancialIntelligenceService = require('../services/FinancialIntelligenceService');
+            const result = await FinancialIntelligenceService.getFinancialOverview(req);
+            res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
+
+    static async getMoneyTrails(req, res) {
+        try {
+            const FinancialIntelligenceService = require('../services/FinancialIntelligenceService');
+            const result = await FinancialIntelligenceService.analyzeMoneyTrails(req);
+            res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
+
+    static async getSuspiciousPatterns(req, res) {
+        try {
+            const FinancialIntelligenceService = require('../services/FinancialIntelligenceService');
+            const result = await FinancialIntelligenceService.detectSuspiciousPatterns(req);
+            res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
+
     // 5. Forensic Reports
     static async createReport(req, res) {
         try {

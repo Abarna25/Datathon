@@ -190,8 +190,28 @@ const nodeTypes = {
 const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect, onEdgeSelect }) => {
     const [rfNodes, setNodes, onNodesChange] = useNodesState([]);
     const [rfEdges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [viewMode, setViewMode] = useState('all'); // 'all' | 'community'
+    const [communities, setCommunities] = useState([]);
+    const [selectedCommunity, setSelectedCommunity] = useState(null);
     const { fitView, setCenter } = useReactFlow();
     
+    useEffect(() => {
+        // Fetch communities from API when component mounts
+        fetchCommunities();
+    }, []);
+
+    const fetchCommunities = async () => {
+        try {
+            const api = require('../services/api').default;
+            const res = await api.get('/relationships/communities').catch(() => ({ data: { success: false } }));
+            if (res.data?.success && res.data?.data?.communities) {
+                setCommunities(res.data.data.communities);
+            }
+        } catch (e) {
+            console.error('Error loading community detection in GraphView:', e);
+        }
+    };
+
     useEffect(() => {
         // Center node anchoring (offset by half width/height so 0,0 is true center)
         const initialNodes = nodes.map(n => ({
@@ -205,7 +225,6 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
             const src = e.source.id || e.source;
             const tgt = e.target.id || e.target;
             const label = e.label || 'LINKED';
-            const color = '#94a3b8'; // Neutral edge until highlighted
             return {
                 id: `e-${src}-${tgt}`,
                 source: src,
@@ -242,6 +261,15 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
         }
         
     }, [nodes, edges, setNodes, setEdges, fitView]);
+
+    const toggleCommunityView = (mode) => {
+        setViewMode(mode);
+        if (mode === 'community' && communities.length > 0) {
+            setSelectedCommunity(communities[0]);
+        } else {
+            setSelectedCommunity(null);
+        }
+    };
     
     // Path calculation
     const getConnectedPath = useCallback((nodeId) => {
@@ -348,24 +376,6 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
         }
     }, [searchQuery, rfNodes, onNodeClick, setCenter]);
 
-    // Decorative Concentric Rings Background
-    const renderConcentricRings = () => {
-        return [280, 540, 800, 1060].map((radius, idx) => (
-            <div key={idx} style={{
-                position: 'absolute',
-                top: `calc(50% - ${radius}px)`,
-                left: `calc(50% - ${radius}px)`,
-                width: `${radius * 2}px`,
-                height: `${radius * 2}px`,
-                borderRadius: '50%',
-                border: '1px dashed rgba(255,255,255,0.03)',
-                pointerEvents: 'none',
-                zIndex: -1,
-                boxShadow: 'inset 0 0 100px rgba(0,0,0,0.2)'
-            }} />
-        ));
-    };
-
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', background: '#07111f', overflow: 'hidden', animation: 'fadeIn 1s ease-out' }}>
             {/* Subtle blueprint grid glow */}
@@ -405,6 +415,72 @@ const GraphViewInner = ({ nodes = [], edges = [], searchQuery = '', onNodeSelect
                     maskColor="rgba(7, 17, 31, 0.7)"
                     style={{ background: 'rgba(15,23,42,0.9)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', right: 16, bottom: 16 }}
                 />
+
+                {/* Top Control Panel: View Mode Toggle */}
+                <Panel position="top-right" style={{ margin: '16px' }}>
+                    <div style={{ display: 'flex', background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '4px', gap: '4px', backdropFilter: 'blur(8px)' }}>
+                        <button
+                            onClick={() => toggleCommunityView('all')}
+                            style={{
+                                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                                background: viewMode === 'all' ? '#2563EB' : 'transparent',
+                                color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+                            }}
+                        >
+                            All Relationships
+                        </button>
+                        <button
+                            onClick={() => toggleCommunityView('community')}
+                            style={{
+                                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                                background: viewMode === 'community' ? '#2563EB' : 'transparent',
+                                color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: '6px'
+                            }}
+                        >
+                            <Network size={14} /> Community View
+                        </button>
+                    </div>
+                </Panel>
+
+                {/* Community Clusters Side Panel */}
+                {viewMode === 'community' && (
+                    <Panel position="top-left" style={{ margin: '16px', maxWidth: '320px', background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '16px', color: '#fff', backdropFilter: 'blur(8px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+                        <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}>
+                            <Network size={16} /> Detected Network Clusters ({communities.length})
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto', marginBottom: '12px' }}>
+                            {communities.map((c, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={() => setSelectedCommunity(c)}
+                                    style={{
+                                        padding: '8px 12px', borderRadius: '6px',
+                                        background: selectedCommunity?.communityId === c.communityId ? 'rgba(59,130,246,0.25)' : 'rgba(255,255,255,0.05)',
+                                        border: `1px solid ${selectedCommunity?.communityId === c.communityId ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`,
+                                        cursor: 'pointer', fontSize: '12px'
+                                    }}
+                                >
+                                    <div style={{ fontWeight: '600' }}>{c.communityName}</div>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{c.entityCount} Entities | {c.caseCount} Cases</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {selectedCommunity && (
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', fontSize: '12px' }}>
+                                <strong style={{ color: '#3b82f6', display: 'block', marginBottom: '6px' }}>Cluster Explainability</strong>
+                                <div style={{ marginBottom: '4px' }}>Central Entity: <strong>{selectedCommunity.centralNode}</strong></div>
+                                <div style={{ marginBottom: '4px' }}>Connection Density: <strong>{(selectedCommunity.connectionDensity * 100).toFixed(0)}%</strong></div>
+                                <div style={{ marginBottom: '4px' }}>Confidence: <strong>{(selectedCommunity.confidenceScore * 100).toFixed(0)}%</strong></div>
+                                <p style={{ margin: '6px 0 0 0', color: '#cbd5e1', fontSize: '11px', lineHeight: '1.4' }}>
+                                    {selectedCommunity.explanation?.summary}
+                                </p>
+                            </div>
+                        )}
+                    </Panel>
+                )}
 
                 <Panel position="bottom-left" style={{ background: '#FFFFFF', padding: '16px', borderRadius: '16px', border: '1px solid #CBD5E1', boxShadow: '0 12px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(8px)', margin: '16px' }}>
                     <h4 style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#475569', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Entity Legend</h4>

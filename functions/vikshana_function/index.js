@@ -138,7 +138,11 @@ app.use(fieldFilter);
 // Development & Diagnostic routes (Administrator ONLY, disabled in production)
 if (process.env.NODE_ENV !== 'production') {
     app.use('/dev', authorizeRole('Administrator'), devRoutes);
-    app.use('/test_zcql', authorizeRole('Administrator'), require('./test_zcql'));
+    try {
+        app.use('/test_zcql', authorizeRole('Administrator'), require('./test_zcql'));
+    } catch (e) {
+        // Optional dev route
+    }
 }
 
 // Audit Routes (Restricted to Administrator and Supervisor)

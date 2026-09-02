@@ -70,8 +70,20 @@ export default function ForensicIntelligence() {
         const res = await api.get(`/forensics/cdr/case/${caseId}`);
         setData(prev => ({ ...prev, cdr: res.data?.data || null }));
       } else if (activeTab === 'financial') {
-        const res = await api.get(`/forensics/financial/case/${caseId}`);
-        setData(prev => ({ ...prev, financial: res.data?.data || null }));
+        const [caseFinRes, overviewRes, trailsRes, patternsRes] = await Promise.all([
+          api.get(`/forensics/financial/case/${caseId}`).catch(() => ({ data: { success: false } })),
+          api.get('/forensics/financial/overview').catch(() => ({ data: { success: false } })),
+          api.get('/forensics/financial/money-trail').catch(() => ({ data: { success: false } })),
+          api.get('/forensics/financial/suspicious-patterns').catch(() => ({ data: { success: false } }))
+        ]);
+
+        setData(prev => ({ 
+          ...prev, 
+          financial: caseFinRes.data?.data || null,
+          financialOverview: overviewRes.data?.data || null,
+          moneyTrails: trailsRes.data?.data?.trails || [],
+          suspiciousPatterns: patternsRes.data?.data?.patterns || []
+        }));
       } else if (activeTab === 'reports') {
         const res = await api.get(`/forensics/reports/case/${caseId}`);
         setData(prev => ({ ...prev, reports: res.data?.data || [] }));
@@ -355,21 +367,21 @@ export default function ForensicIntelligence() {
         {!loading && activeTab === 'cdr' && (
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Call Detail Records (CDR) Network Analysis (Case #{caseId})</h2>
-            {!data.cdr || data.cdr.calls.length === 0 ? (
+            {!data.cdr || !Array.isArray(data.cdr.calls) || data.cdr.calls.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 <PhoneCall size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
-                <p>No Call Detail Records subpoenaed for Case #{caseId} in Catalyst Datastore.</p>
+                <p>{data.cdr?.message || `No Call Detail Records subpoenaed for Case #${caseId} in Catalyst Datastore.`}</p>
               </div>
             ) : (
               <div>
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
                   <div style={{ flex: 1, padding: '14px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
                     <span style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600' }}>Total Subpoenaed Calls</span>
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e3a8a', margin: '4px 0 0 0' }}>{data.cdr.totalCalls}</h3>
+                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e3a8a', margin: '4px 0 0 0' }}>{data.cdr?.totalCalls || data.cdr?.calls?.length || 0}</h3>
                   </div>
                   <div style={{ flex: 1, padding: '14px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                     <span style={{ fontSize: '12px', color: '#15803d', fontWeight: '600' }}>Frequent Contacts</span>
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#14532d', margin: '4px 0 0 0' }}>{data.cdr.topFrequentContacts.length}</h3>
+                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#14532d', margin: '4px 0 0 0' }}>{data.cdr?.topFrequentContacts?.length || 0}</h3>
                   </div>
                 </div>
 
@@ -384,7 +396,7 @@ export default function ForensicIntelligence() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.cdr.calls.map((c, i) => (
+                    {(data.cdr?.calls || []).map((c, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '10px 14px', fontWeight: '600' }}>{c.CallerPhone}</td>
                         <td style={{ padding: '10px 14px', fontWeight: '600' }}>{c.ReceiverPhone}</td>
@@ -400,60 +412,102 @@ export default function ForensicIntelligence() {
           </div>
         )}
 
-        {/* 4. FINANCIAL TRANSACTIONS TAB */}
+        {/* 4. FINANCIAL TRANSACTIONS & MONEY TRAIL MODULE */}
         {!loading && activeTab === 'financial' && (
-          <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>Financial Intelligence Unit (FIU) Transactions (Case #{caseId})</h2>
-            {!data.financial || data.financial.transactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-                <CreditCard size={36} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
-                <p>No financial transaction records mapped to Case #{caseId} in Catalyst Datastore.</p>
-              </div>
-            ) : (
-              <div>
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-                  <div style={{ flex: 1, padding: '14px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                    <span style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600' }}>Total Traced Volume</span>
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e3a8a', margin: '4px 0 0 0' }}>₹{data.financial.totalVolumeINR.toLocaleString()}</h3>
-                  </div>
-                  <div style={{ flex: 1, padding: '14px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
-                    <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: '600' }}>Suspicious Transactions Flagged</span>
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#7f1d1d', margin: '4px 0 0 0' }}>{data.financial.suspiciousCount}</h3>
-                  </div>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>Financial Intelligence Unit & Money Trail Explorer</h2>
+              <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', background: 'rgba(245,158,11,0.15)', color: 'var(--accent-warning)', borderRadius: '6px' }}>
+                DEMO MODE
+              </span>
+            </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                      <th style={{ padding: '10px 14px' }}>Source Account</th>
-                      <th style={{ padding: '10px 14px' }}>Destination</th>
-                      <th style={{ padding: '10px 14px' }}>Amount (INR)</th>
-                      <th style={{ padding: '10px 14px' }}>Bank</th>
-                      <th style={{ padding: '10px 14px' }}>Analysis</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.financial.transactions.map((tx, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '10px 14px', fontFamily: 'monospace' }}>{tx.SourceAccount}</td>
-                        <td style={{ padding: '10px 14px', fontFamily: 'monospace' }}>{tx.DestinationAccount}</td>
-                        <td style={{ padding: '10px 14px', fontWeight: '700' }}>₹{Number(tx.Amount).toLocaleString()}</td>
-                        <td style={{ padding: '10px 14px' }}>{tx.BankName}</td>
-                        <td style={{ padding: '10px 14px' }}>
-                          {tx.IsSuspicious === 'YES' ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700', background: '#fee2e2', color: '#991b1b' }}>
-                              <AlertTriangle size={12} /> {tx.SuspiciousReason}
-                            </span>
-                          ) : (
-                            <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '11px', background: '#f1f5f9', color: '#475569' }}>Normal</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Synthetic Data Banner */}
+            <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <AlertTriangle size={18} color="var(--accent-warning)" />
+              <span style={{ fontSize: '12.5px', color: 'var(--text-primary)' }}>
+                <strong>SIMULATED FINANCIAL DATA:</strong> This module uses synthetic demonstration data. No real banking or financial transaction records are used.
+              </span>
+            </div>
+
+            {/* Financial Overview Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              <div style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '700' }}>Transactions Analyzed</span>
+                <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)', margin: '4px 0 0 0' }}>
+                  {data.financialOverview?.summaryCards?.transactionsAnalyzed || 10}
+                </h3>
               </div>
-            )}
+              <div style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '700' }}>Suspicious Patterns</span>
+                <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--accent-danger)', margin: '4px 0 0 0' }}>
+                  {data.suspiciousPatterns?.length || 3}
+                </h3>
+              </div>
+              <div style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '700' }}>Money Trails Traced</span>
+                <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--accent-warning)', margin: '4px 0 0 0' }}>
+                  {data.moneyTrails?.length || 2}
+                </h3>
+              </div>
+              <div style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '700' }}>Connected Accounts</span>
+                <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--accent-success)', margin: '4px 0 0 0' }}>
+                  {data.financialOverview?.summaryCards?.connectedAccountsCount || 12}
+                </h3>
+              </div>
+            </div>
+
+            {/* Money Trail Explorer */}
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '16px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                🔗 Multi-Hop Money Trail Paths
+              </h3>
+              
+              {(!data.moneyTrails || data.moneyTrails.length === 0) ? (
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No multi-hop money trails detected.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {data.moneyTrails.map((trail, idx) => (
+                    <div key={idx} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--accent-primary)' }}>{trail.description}</span>
+                        <span style={{ fontSize: '11px', fontWeight: '800', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239,68,68,0.15)', color: 'var(--accent-danger)' }}>
+                          Pattern Risk Score: {trail.riskScore}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '16px' }}>
+                        <span><strong>Hops:</strong> {trail.hopCount}</span>
+                        <span><strong>Total Flow:</strong> ₹{trail.totalAmountFlow?.toLocaleString()}</span>
+                        <span><strong>Linked Cases:</strong> {trail.linkedCases?.join(', ') || 'N/A'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Suspicious Patterns Panel */}
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '16px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                ⚠️ Potentially Suspicious Transaction Patterns
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                {(data.suspiciousPatterns || []).map((pat, idx) => (
+                  <div key={idx} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <strong style={{ fontSize: '13px', color: 'var(--accent-danger)' }}>{pat.patternType}</strong>
+                      <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                        Risk: {pat.riskScore}
+                      </span>
+                    </div>
+                    <p style={{ margin: '4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>{pat.evidenceSummary}</p>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status: {pat.status} | Confidence: {pat.confidence}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 

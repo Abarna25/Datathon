@@ -4,7 +4,7 @@ const RelationshipAgent = require('../agents/RelationshipAgent');
 class RelationshipService {
     static async getNetwork(req) {
         try {
-            const caseId = req.query.caseId;
+            const caseId = req?.query?.caseId;
             if (!caseId) {
                 return { nodes: [], edges: [] };
             }
